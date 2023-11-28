@@ -16,13 +16,9 @@ from pathlib import Path
 import numpy as np
 
 import torch
-from sklearn.metrics import average_precision_score, roc_auc_score
-from torch.nn import Linear
-
-from torch_geometric.datasets import JODIEDataset
 from torch_geometric.loader import TemporalDataLoader
+from tgb.linkproppred.dataset import LinkPropPredDataset
 
-from torch_geometric.nn import TransformerConv
 
 # internal imports
 from tgb.utils.utils import get_args, set_random_seed, save_results
@@ -179,9 +175,14 @@ def test(loader, neg_sampler, split_mode):
 
     return perf_metrics
 
-# ==========
-# ==========
-# ==========
+
+
+
+
+#! load DTDG timestamps for all edges
+dtdg_ts = np.genfromtxt('tgbl-wiki_ts.csv', delimiter=',', dtype=int)
+print (dtdg_ts.shape)
+
 
 
 # Start...
@@ -217,9 +218,17 @@ dataset = PyGLinkPropPredDataset(name=DATA, root="datasets")
 train_mask = dataset.train_mask
 val_mask = dataset.val_mask
 test_mask = dataset.test_mask
+metric = dataset.eval_metric
+
+
+#* load the DTDG timestamps
+dtdg_ts = torch.from_numpy(dtdg_ts)
+if dtdg_ts.dtype != torch.int64:
+    dtdg_ts = dtdg_ts.long()
+dataset.ts[train_mask] = dtdg_ts[train_mask]
+
 data = dataset.get_TemporalData()
 data = data.to(device)
-metric = dataset.eval_metric
 
 train_data = data[train_mask]
 val_data = data[val_mask]
