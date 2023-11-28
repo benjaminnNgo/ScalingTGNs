@@ -180,7 +180,8 @@ def test(loader, neg_sampler, split_mode):
 
 
 #! load DTDG timestamps for all edges
-dtdg_ts = np.genfromtxt('tgbl-wiki_ts.csv', delimiter=',', dtype=int)
+ts_file = "tgbl-wiki_ts_minutely.csv"
+dtdg_ts = np.genfromtxt(ts_file, delimiter=',', dtype=int)
 print (dtdg_ts.shape)
 
 
