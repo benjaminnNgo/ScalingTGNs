@@ -180,7 +180,8 @@ def test(loader, neg_sampler, split_mode):
 
 
 #! load DTDG timestamps for all edges
-ts_file = "tgbl-wiki_ts_minutely.csv"
+time_scale = "daily" #"hourly"
+ts_file = "tgbl-wiki_ts_" + time_scale + ".csv"
 dtdg_ts = np.genfromtxt(ts_file, delimiter=',', dtype=int)
 print (dtdg_ts.shape)
 
@@ -197,13 +198,13 @@ DATA = "tgbl-wiki"
 LR = args.lr
 BATCH_SIZE = args.bs
 K_VALUE = args.k_value  
-NUM_EPOCH = args.num_epoch
+NUM_EPOCH = 100 #args.num_epoch
 SEED = args.seed
 MEM_DIM = args.mem_dim
 TIME_DIM = args.time_dim
 EMB_DIM = args.emb_dim
 TOLERANCE = args.tolerance
-PATIENCE = args.patience
+PATIENCE = 20 # args.patience  #default is 5
 NUM_RUNS = args.num_run
 NUM_NEIGHBORS = 10
 
