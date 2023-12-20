@@ -17,11 +17,11 @@ import numpy as np
 
 import torch
 from torch_geometric.loader import TemporalDataLoader
-from tgb.linkproppred.dataset import LinkPropPredDataset
+from utils import get_args
 
 
 # internal imports
-from tgb.utils.utils import get_args, set_random_seed, save_results
+from tgb.utils.utils import set_random_seed, save_results
 from tgb.linkproppred.evaluate import Evaluator
 from modules.decoder import LinkPredictor
 from modules.emb_module import GraphAttentionEmbedding
@@ -178,15 +178,6 @@ def test(loader, neg_sampler, split_mode):
 
 
 
-
-#! load DTDG timestamps for all edges
-time_scale = "monthly"#"weekly" #"daily" #"hourly" #"minutely" #"daily" #"hourly"
-dataset_name = "tgbl-review" #"tgbl-wiki"
-ts_file = dataset_name + "_ts_" + time_scale + ".csv"
-dtdg_ts = np.genfromtxt(ts_file, delimiter=',', dtype=int)
-
-
-
 # Start...
 start_overall = timeit.default_timer()
 
@@ -194,7 +185,7 @@ start_overall = timeit.default_timer()
 args, _ = get_args()
 print("INFO: Arguments:", args)
 
-DATA = dataset_name #"tgbl-wiki"
+DATA = args.data #"tgbl-wiki"
 LR = args.lr
 BATCH_SIZE = args.bs
 K_VALUE = args.k_value  
@@ -207,6 +198,12 @@ TOLERANCE = args.tolerance
 PATIENCE = 20 # args.patience  #default is 5
 NUM_RUNS = args.num_run
 NUM_NEIGHBORS = 10
+
+#! load DTDG timestamps for all edges
+time_scale = args.time #"weekly" #"daily" #"hourly" #"minutely" #"daily" #"hourly"
+dataset_name = args.data #"tgbl-wiki"
+ts_file = dataset_name + "_ts_" + time_scale + ".csv"
+dtdg_ts = np.genfromtxt(ts_file, delimiter=',', dtype=int)
 
 
 MODEL_NAME = 'TGN'
