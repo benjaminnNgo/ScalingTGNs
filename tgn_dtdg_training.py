@@ -180,10 +180,10 @@ def test(loader, neg_sampler, split_mode):
 
 
 #! load DTDG timestamps for all edges
-time_scale = "daily" #"hourly"
-ts_file = "tgbl-wiki_ts_" + time_scale + ".csv"
+time_scale = "monthly"#"weekly" #"daily" #"hourly" #"minutely" #"daily" #"hourly"
+dataset_name = "tgbl-review" #"tgbl-wiki"
+ts_file = dataset_name + "_ts_" + time_scale + ".csv"
 dtdg_ts = np.genfromtxt(ts_file, delimiter=',', dtype=int)
-print (dtdg_ts.shape)
 
 
 
@@ -194,7 +194,7 @@ start_overall = timeit.default_timer()
 args, _ = get_args()
 print("INFO: Arguments:", args)
 
-DATA = "tgbl-wiki"
+DATA = dataset_name #"tgbl-wiki"
 LR = args.lr
 BATCH_SIZE = args.bs
 K_VALUE = args.k_value  
