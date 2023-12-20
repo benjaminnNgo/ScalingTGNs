@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --partition=long #unkillable #main #long
-#SBATCH --output=tgn_wiki_hour_s2_patience.txt 
-#SBATCH --error=tgn_wiki_hour_s2_patience_error.txt 
+#SBATCH --output=tgn_review_month_s3.txt 
+#SBATCH --error=tgn_review_month_s3_error.txt 
 #SBATCH --cpus-per-task=4                     # Ask for 4 CPUs
 #SBATCH --gres=gpu:rtx8000:1                  # Ask for 1 titan xp
 #SBATCH --mem=64G                             # Ask for 32 GB of RAM
@@ -13,5 +13,5 @@ source $HOME/tgbenv/bin/activate
 pwd
 
 
-CUDA_VISIBLE_DEVICES=0 python tgn_dtdg_training.py --seed 2
+CUDA_VISIBLE_DEVICES=0 python tgn_dtdg_training.py --seed 3
 
