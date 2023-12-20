@@ -1,6 +1,10 @@
 import numpy as np
 import argparse
 import sys
+import torch
+
+from torch_geometric.data import TemporalData
+
 
 def list2csv(lst: list,
              fname: str,
@@ -33,3 +37,32 @@ def get_args():
         parser.print_help()
         sys.exit(0)
     return args, sys.argv
+
+
+
+def remove_duplicate_edges(data):
+
+    src = data.src.numpy()
+    dst = data.dst.numpy()
+    ts = data.t.numpy()
+    msg = data.msg.numpy()
+    y = data.y.numpy()
+
+    query = np.stack([src, dst, ts], axis=0)
+    uniq, idx = np.unique(query, axis=1, return_index=True)
+    print ("number of edges reduced from ", query.shape[1], " to ", uniq.shape[1])
+
+    src = torch.from_numpy(src[idx])
+    dst = torch.from_numpy(dst[idx])
+    ts = torch.from_numpy(ts[idx])
+    msg = torch.from_numpy(msg[idx])
+    y = torch.from_numpy(y[idx])
+
+    new_data = TemporalData(
+            src=src,
+            dst=dst,
+            t=ts,
+            msg=msg,
+            y=y,
+        )
+    return new_data
