@@ -45,3 +45,6 @@ print ("there is time gap, ", dtdg.check_time_gap())
 list2csv(ts_list, data_name + "_ts" + "_" + time_scale + ".csv")
 
 # download from https://object-arbutus.cloud.computecanada.ca/tgb/dtdg_ts.zip
+
+
+#* tgbl-coin download from https://object-arbutus.cloud.computecanada.ca/tgb/dtdg_coin_ts.zip

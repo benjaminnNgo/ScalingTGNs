@@ -13,5 +13,5 @@ source $HOME/tgbenv/bin/activate
 pwd
 
 
-CUDA_VISIBLE_DEVICES=0 python tgn_dtdg_training.py -d tgbl-coin -t minutely --seed 3 
+CUDA_VISIBLE_DEVICES=0 python tgn_dtdg_training.py -d tgbl-coin -t minutely --seed 1
 
