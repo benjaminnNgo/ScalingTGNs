@@ -7,6 +7,13 @@ command for an example run:
     python examples/linkproppred/tgbl-wiki/tgn.py --data "tgbl-wiki" --num_run 1 --seed 1
 """
 
+#! requires the following pre-generated files
+#* 1. dtdg_ts.zip
+#* 2. tgbl-wiki_ns.zip
+
+
+
+
 import math
 import timeit
 
