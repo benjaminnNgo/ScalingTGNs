@@ -6,9 +6,11 @@ __pycache__/
 *.pth
 *.zip
 *.json
+*.pkl
+*.txt
 # C extensions
 *.so
-*.pkl
+
 
 # Distribution / packaging
 .Python
