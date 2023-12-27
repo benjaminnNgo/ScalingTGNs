@@ -19,6 +19,9 @@ def get_args():
     parser = argparse.ArgumentParser('*** discretized training ***')
     parser.add_argument('-d', '--data', type=str, help='Dataset name', default='tgbl-wiki')
     parser.add_argument('-t', '--time', type=str, help='time granularity', default='daily')
+    parser.set_defaults(dtrain=True)
+    parser.add_argument('-dt', '--dtrain', action='store_true')
+    parser.add_argument('-ndt', '--nodtrain', dest='dtrain', action='store_false')
     parser.add_argument('--lr', type=float, help='Learning rate', default=1e-4)
     parser.add_argument('--bs', type=int, help='Batch size', default=200)
     parser.add_argument('--k_value', type=int, help='k_value for computing ranking metrics', default=10)
@@ -42,11 +45,11 @@ def get_args():
 
 def remove_duplicate_edges(data):
 
-    src = data.src.numpy()
-    dst = data.dst.numpy()
-    ts = data.t.numpy()
-    msg = data.msg.numpy()
-    y = data.y.numpy()
+    src = data.src.cpu().numpy()
+    dst = data.dst.cpu().numpy()
+    ts = data.t.cpu().numpy()
+    msg = data.msg.cpu().numpy()
+    y = data.y.cpu().numpy()
 
     query = np.stack([src, dst, ts], axis=0)
     uniq, idx = np.unique(query, axis=1, return_index=True)

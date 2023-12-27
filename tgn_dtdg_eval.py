@@ -232,8 +232,11 @@ dtdg_ts = torch.from_numpy(dtdg_ts)
 if dtdg_ts.dtype != torch.int64:
     dtdg_ts = dtdg_ts.long()
 
-#! load the training set and see if performance improves
-dataset.ts[train_mask] = dtdg_ts[train_mask]
+#! decide to train with discrete data or not
+dtrain = args.dtrain
+if (dtrain):
+    print ("training with discrete time steps")
+    dataset.ts[train_mask] = dtdg_ts[train_mask]
 
 
 #* load the discrete val and test set 
@@ -243,12 +246,14 @@ dataset.ts[test_mask] = dtdg_ts[test_mask]
 data = dataset.get_TemporalData()
 data = data.to(device)
 
+
+
 train_data = data[train_mask]
 val_data = data[val_mask]
 test_data = data[test_mask]
 
-val_data = remove_duplicate_edges(val_data)
-test_data = remove_duplicate_edges(test_data)
+val_data = remove_duplicate_edges(val_data).to(device)
+test_data = remove_duplicate_edges(test_data).to(device)
 
 train_loader = TemporalDataLoader(train_data, batch_size=BATCH_SIZE)
 val_loader = TemporalDataLoader(val_data, batch_size=BATCH_SIZE)
