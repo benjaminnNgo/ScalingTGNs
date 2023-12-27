@@ -2,14 +2,12 @@
 Dynamic Link Prediction with a TGN model with Early Stopping
 Reference: 
     - https://github.com/pyg-team/pytorch_geometric/blob/master/examples/tgn.py
-
-command for an example run:
-    python examples/linkproppred/tgbl-wiki/tgn.py --data "tgbl-wiki" --num_run 1 --seed 1
 """
 
 #! requires the following pre-generated files
 #* 1. dtdg_ts.zip
 #* 2. tgbl-wiki_ns.zip
+#* python tgn_dtdg_eval.py --data "tgbl-wiki" -t daily --num_run 1 --seed 1
 
 
 
