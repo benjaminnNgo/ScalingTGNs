@@ -9,6 +9,11 @@ from utils import remove_duplicate_edges
 from negative_generator import NegativeEdgeGenerator
 from tgb.linkproppred.dataset_pyg import PyGLinkPropPredDataset
 
+"""
+usage:
+
+python tgbl-wiki_ns_gen.py -d tgbl-review -t minutely
+"""
 
 
 def get_args():
@@ -47,7 +52,9 @@ def main():
     print("*** Negative Sample Generation ***")
 
     # setting the required parameters
-    num_neg_e_per_pos = 12000 #11000 #10000 #20 #100
+    num_neg_e_per_pos = 100 
+    print ("generating {} negative samples per positive edge".format(num_neg_e_per_pos))
+    #12000 #11000 #10000 #20 #100
     neg_sample_strategy = "hist_rnd" #"rnd"
     rnd_seed = 42
 
