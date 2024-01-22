@@ -42,7 +42,9 @@ time_scale = args.time #"minutely"  #"monthly" #"weekly" #"daily"  #"hourly"
 dtdg, ts_list = ctdg.discretize(time_scale=time_scale, store_unix=True)
 print ("discretize to ", time_scale)
 print ("there is time gap, ", dtdg.check_time_gap())
-list2csv(ts_list, data_name + "_ts" + "_" + time_scale + ".csv")
+
+
+# list2csv(ts_list, data_name + "_ts" + "_" + time_scale + ".csv")
 
 # download from https://object-arbutus.cloud.computecanada.ca/tgb/dtdg_ts.zip
 

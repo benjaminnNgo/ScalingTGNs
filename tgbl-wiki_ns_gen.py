@@ -92,7 +92,8 @@ def main():
     data_splits['val'] = remove_duplicate_edges(data_splits['val'])
     data_splits['test'] = remove_duplicate_edges(data_splits['test'])
 
-
+    # print ("there are edges in test set", data_splits['test'].src.shape)
+    # quit()
 
 
     # Ensure to only sample actual destination nodes as negatives.
