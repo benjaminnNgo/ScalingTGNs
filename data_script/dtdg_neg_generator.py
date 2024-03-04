@@ -6,7 +6,6 @@ Negative samples are generated and saved to files ONLY once;
 
 import torch
 import random
-from torch import Tensor
 import numpy as np
 from torch_geometric.data import TemporalData
 from tgb.utils.utils import save_pkl, load_pkl
@@ -16,12 +15,9 @@ import os
 import time
 from tqdm import tqdm
 
-from torch_geometric.datasets import JODIEDataset
-from torch_geometric.loader import TemporalDataLoader
-
-from tgb.linkproppred.dataset_pyg import PyGLinkPropPredDataset
-
-
+"""
+loads PyG Temporal Data format and saves the generated samples, can be useed for link prediction evaluation
+"""
 class NegativeEdgeGenerator(object):
     def __init__(
         self,
@@ -79,7 +75,6 @@ class NegativeEdgeGenerator(object):
                                   data: TemporalData, 
                                   split_mode: str, 
                                   partial_path: str,
-                                  suffix: str = "ns",
                                   ) -> None:
         r"""
         Generate negative samples
@@ -97,7 +92,7 @@ class NegativeEdgeGenerator(object):
             + "_"
             + split_mode
             + "_"
-            + suffix
+            + "ns"
             + ".pkl"
         )
 

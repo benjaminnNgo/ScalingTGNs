@@ -7,17 +7,14 @@ command for an example run:
     python examples/linkproppred/tgbl-wiki/tgn.py --data "tgbl-wiki" --num_run 1 --seed 1
 """
 
-import math
 import timeit
-
 import os
 import os.path as osp
 from pathlib import Path
 import numpy as np
-
 import torch
 from torch_geometric.loader import TemporalDataLoader
-from utils import get_args
+from utils.configs import get_args
 
 
 # internal imports

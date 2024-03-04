@@ -22,8 +22,8 @@ import numpy as np
 
 import torch
 from torch_geometric.loader import TemporalDataLoader
-from utils import get_args
-from utils import remove_duplicate_edges
+from utils.configs import get_args
+from utils.utils_func import remove_duplicate_edges
 
 
 

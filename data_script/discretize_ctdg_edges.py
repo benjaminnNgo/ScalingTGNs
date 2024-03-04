@@ -1,5 +1,5 @@
 import tgx
-from utils import * 
+from utils.utils_func import * 
 import argparse
 import sys
 

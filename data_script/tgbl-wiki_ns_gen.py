@@ -5,8 +5,8 @@ import numpy as np
 import argparse
 import sys
 
-from utils import remove_duplicate_edges
-from negative_generator import NegativeEdgeGenerator
+from utils.utils_func import remove_duplicate_edges
+from data_script.negative_generator import NegativeEdgeGenerator
 from tgb.linkproppred.dataset_pyg import PyGLinkPropPredDataset
 
 """
