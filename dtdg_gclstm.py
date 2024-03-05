@@ -7,12 +7,12 @@ from models.tgn.decoder import LinkPredictor
 
 
 class RecurrentGCN(torch.nn.Module):
-    def __init__(self, node_feat_dim):
+    def __init__(self, node_feat_dim, hidden_dim, K=1):
         #https://pytorch-geometric-temporal.readthedocs.io/en/latest/modules/root.html#recurrent-graph-convolutional-layers
         super(RecurrentGCN, self).__init__()
         self.recurrent = GCLSTM(in_channels=node_feat_dim, 
-                                out_channels=32, 
-                                K=1,) #K is the Chebyshev filter size
+                                out_channels=hidden_dim, 
+                                K=K,) #K is the Chebyshev filter size
 
     def forward(self, x, edge_index, edge_weight, h, c):
         r"""
@@ -38,30 +38,29 @@ if __name__ == '__main__':
 
     #! add support for node features in the future
     node_feat_dim = 16 #all 0s for now
-    edge_feat_dim = 16 
+    edge_feat_dim = 1 #for edge weights
+    hidden_dim = 32
 
     train_data = data['train_data']
     val_data = data['val_data']
     test_data = data['test_data']
     num_nodes = data['train_data']['num_nodes'] + 1
     num_epochs = 200
-    lr = 0.01
+    lr = 0.001
 
     #* initialization of the model to prep for training
-    model = RecurrentGCN(node_feat_dim=node_feat_dim)
+    model = RecurrentGCN(node_feat_dim=node_feat_dim, hidden_dim=hidden_dim, K=1)
     node_feat = torch.zeros((num_nodes, node_feat_dim))
-    link_pred = LinkPredictor(in_channels=edge_feat_dim)
+    link_pred = LinkPredictor(in_channels=hidden_dim)
     optimizer = torch.optim.Adam(
         set(model.parameters()) | set(link_pred.parameters()), lr=lr)
     criterion = torch.nn.BCEWithLogitsLoss()
 
-
-
     for epoch in range(num_epochs):
         total_loss = 0
         model.train()
-        h, c = None, None
         snapshot_list = train_data['edge_index']
+        h, c = None, None
         for snapshot_idx in range(train_data['time_length']):
             optimizer.zero_grad()
             pos_index = snapshot_list[snapshot_idx]
@@ -79,6 +78,10 @@ if __name__ == '__main__':
                 if ('edge_attr' not in train_data):
                     edge_attr = torch.ones(edge_index.size(1), edge_feat_dim)
                 h, c = model(node_feat, edge_index, edge_attr, h, c)
+            
+            h = h.detach()
+            c = c.detach()
+
 
             pos_out = link_pred(h[edge_index[0]], h[edge_index[1]])
             neg_out = link_pred(h[neg_edges[0]], h[neg_edges[1]])
@@ -89,6 +92,7 @@ if __name__ == '__main__':
             loss.backward()
             optimizer.step()
             total_loss += float(loss) * edge_index.size(1)
+        print (f'Epoch {epoch}/{num_epochs}, Loss: {total_loss/num_nodes}')
 
 
 
