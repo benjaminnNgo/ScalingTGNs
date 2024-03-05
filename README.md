@@ -3,6 +3,15 @@ Unifying Temporal Graph (UTG) comparison between Continuous Time Dynamic Graphs 
 (merged from UTG_dis, 3/4/2024)
 
 
+## create branches and development
+
+```
+git fetch origin
+
+git checkout -b [branch] origin/[branch]
+```
+
+
 ## Workflow
 
 1. DTDG Datasets  (to compare CTDG with DTDG)
