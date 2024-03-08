@@ -8,6 +8,8 @@ from tgb.linkproppred.evaluate import Evaluator
 from tgb.linkproppred.negative_sampler import NegativeEdgeSampler
 
 
+#! not training properly, the model prediction doesn't change
+
 
 class RecurrentGCN(torch.nn.Module):
     def __init__(self, node_feat_dim, hidden_dim, K=1):
@@ -43,7 +45,7 @@ if __name__ == '__main__':
     #! add support for node features in the future
     node_feat_dim = 16 #all 0s for now
     edge_feat_dim = 1 #for edge weights
-    hidden_dim = 32
+    hidden_dim = 256
 
     train_data = data['train_data']
     val_data = data['val_data']
@@ -80,7 +82,8 @@ if __name__ == '__main__':
                     raise NotImplementedError("Edge attributes are not yet supported")
                 h, c = model(node_feat, edge_index, edge_attr, h, c)
             else: #subsequent snapshot, feed the previous snapshot
-                prev_index = snapshot_list[snapshot_idx-1]
+                #prev_index = snapshot_list[snapshot_idx-1]
+                prev_index = pos_index
                 edge_index = prev_index.long().to(args.device)
                 # TODO, also need to support edge attributes correctly in TGX
                 if ('edge_attr' not in train_data):
@@ -88,16 +91,16 @@ if __name__ == '__main__':
                 else:
                     raise NotImplementedError("Edge attributes are not yet supported")
                 h, c = model(node_feat, edge_index, edge_attr, h, c)
-
+    
             pos_out = link_pred(h[edge_index[0]], h[edge_index[1]])
             neg_out = link_pred(h[neg_edges[0]], h[neg_edges[1]])
 
-            total_loss += float(loss) * edge_index.size(1)
-            loss += criterion(pos_out, torch.ones_like(pos_out))
-            loss += criterion(neg_out, torch.zeros_like(neg_out))
+            loss += torch.mean(criterion(pos_out, torch.ones_like(pos_out)))
+            loss += torch.mean(criterion(neg_out, torch.zeros_like(neg_out)))
 
         #due to being recurrent model and takes in recurrent input, loss is outside the loop
         loss.backward()
+        total_loss = float(loss)
         optimizer.step()
         optimizer.zero_grad()
         print (f'Epoch {epoch}/{num_epochs}, Loss: {total_loss/num_nodes}')
@@ -116,11 +119,11 @@ if __name__ == '__main__':
         val_edges = val_data['original_edges'] #original edges unmodified
         ts_min = min(val_snapshots.keys())
 
-        perf_list = {}
-        perf_idx = 0
-
         h = h.detach()
         c = c.detach()
+
+        perf_list = {}
+        perf_idx = 0
 
         for snapshot_idx in val_snapshots.keys():
             pos_index = torch.from_numpy(val_edges[snapshot_idx])
@@ -134,7 +137,6 @@ if __name__ == '__main__':
                     edge_attr = torch.ones(prev_index.size(1), edge_feat_dim).to(args.device)
                 else:
                     raise NotImplementedError("Edge attributes are not yet supported")
-
                 h,c = model(node_feat, prev_index, edge_attr, h, c)
             
             for i in range(pos_index.shape[0]):
