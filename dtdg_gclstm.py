@@ -18,6 +18,7 @@ class RecurrentGCN(torch.nn.Module):
         self.recurrent = GCLSTM(in_channels=node_feat_dim, 
                                 out_channels=hidden_dim, 
                                 K=K,) #K is the Chebyshev filter size
+        self.linear = torch.nn.Linear(hidden_dim, hidden_dim)
 
     def forward(self, x, edge_index, edge_weight, h, c):
         r"""
@@ -27,8 +28,36 @@ class RecurrentGCN(torch.nn.Module):
         c: cell state matrix from previous time
         """
         h_0, c_0 = self.recurrent(x, edge_index, edge_weight, h, c)
-        h_0 = F.relu(h_0)
-        return h_0, c_0
+        h = F.relu(h_0)
+        h = self.linear(h)
+        return h, h_0, c_0
+
+
+class LinkPredictor(torch.nn.Module):
+    def __init__(self, in_channels, hidden_channels, out_channels, num_layers,
+                 dropout):
+        super(LinkPredictor, self).__init__()
+
+        self.lins = torch.nn.ModuleList()
+        self.lins.append(torch.nn.Linear(in_channels, hidden_channels))
+        for _ in range(num_layers - 2):
+            self.lins.append(torch.nn.Linear(hidden_channels, hidden_channels))
+        self.lins.append(torch.nn.Linear(hidden_channels, out_channels))
+
+        self.dropout = dropout
+
+    def reset_parameters(self):
+        for lin in self.lins:
+            lin.reset_parameters()
+
+    def forward(self, x_i, x_j):
+        x = x_i * x_j
+        for lin in self.lins[:-1]:
+            x = lin(x)
+            x = F.relu(x)
+            x = F.dropout(x, p=self.dropout, training=self.training)
+        x = self.lins[-1](x)
+        return torch.sigmoid(x)
 
 
 
@@ -55,9 +84,13 @@ if __name__ == '__main__':
     lr = args.lr
 
     #* initialization of the model to prep for training
-    model = RecurrentGCN(node_feat_dim=node_feat_dim, hidden_dim=hidden_dim, K=1).to(args.device)
+    model = RecurrentGCN(node_feat_dim=node_feat_dim, hidden_dim=hidden_dim, K=3).to(args.device)
     node_feat = torch.zeros((num_nodes, node_feat_dim)).to(args.device)
-    link_pred = LinkPredictor(in_channels=hidden_dim).to(args.device)
+    # link_pred = LinkPredictor(in_channels=hidden_dim).to(args.device)
+    link_pred = LinkPredictor(hidden_dim, hidden_dim, 1,
+                              2, 0.2).to(args.device)
+
+
     optimizer = torch.optim.Adam(
         set(model.parameters()) | set(link_pred.parameters()), lr=lr)
     criterion = torch.nn.BCEWithLogitsLoss()
@@ -65,8 +98,9 @@ if __name__ == '__main__':
     for epoch in range(num_epochs):
         total_loss = 0
         model.train()
+        link_pred.train()
         snapshot_list = train_data['edge_index']
-        h, c = None, None
+        h_0, c_0, h = None, None, None
         loss = 0
         for snapshot_idx in range(train_data['time_length']):
             pos_index = snapshot_list[snapshot_idx]
@@ -80,7 +114,7 @@ if __name__ == '__main__':
                     edge_attr = torch.ones(edge_index.size(1), edge_feat_dim).to(args.device)
                 else:
                     raise NotImplementedError("Edge attributes are not yet supported")
-                h, c = model(node_feat, edge_index, edge_attr, h, c)
+                h, h_0, c_0 = model(node_feat, edge_index, edge_attr, h_0, c_0)
             else: #subsequent snapshot, feed the previous snapshot
                 #prev_index = snapshot_list[snapshot_idx-1]
                 prev_index = pos_index
@@ -90,8 +124,8 @@ if __name__ == '__main__':
                     edge_attr = torch.ones(edge_index.size(1), edge_feat_dim).to(args.device)
                 else:
                     raise NotImplementedError("Edge attributes are not yet supported")
-                h, c = model(node_feat, edge_index, edge_attr, h, c)
-    
+                h, h_0, c_0 = model(node_feat, edge_index, edge_attr, h_0, c_0)
+
             pos_out = link_pred(h[edge_index[0]], h[edge_index[1]])
             neg_out = link_pred(h[neg_edges[0]], h[neg_edges[1]])
 
@@ -108,6 +142,7 @@ if __name__ == '__main__':
         #! Evaluation starts here
         #! need to optimize code to have train, test function, maybe in a class
         model.eval()
+        link_pred.eval()
         evaluator = Evaluator(name="tgbl-wiki") #reuse MRR evaluator from TGB
         metric = "mrr"
         neg_sampler = NegativeEdgeSampler(dataset_name=args.dataset, strategy="hist_rnd")
@@ -119,8 +154,9 @@ if __name__ == '__main__':
         val_edges = val_data['original_edges'] #original edges unmodified
         ts_min = min(val_snapshots.keys())
 
+        h_0 = h_0.detach()
+        c_0 = c_0.detach()
         h = h.detach()
-        c = c.detach()
 
         perf_list = {}
         perf_idx = 0
@@ -137,7 +173,7 @@ if __name__ == '__main__':
                     edge_attr = torch.ones(prev_index.size(1), edge_feat_dim).to(args.device)
                 else:
                     raise NotImplementedError("Edge attributes are not yet supported")
-                h,c = model(node_feat, prev_index, edge_attr, h, c)
+                h, h_0, c_0 = model(node_feat, prev_index, edge_attr, h_0, c_0)
             
             for i in range(pos_index.shape[0]):
                 pos_src = pos_index[i][0].item()
