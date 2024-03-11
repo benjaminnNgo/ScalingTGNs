@@ -3,6 +3,31 @@ Unifying Temporal Graph (UTG) comparison between Continuous Time Dynamic Graphs 
 (merged from UTG_dis, 3/4/2024)
 
 
+## Installation
+
+1. install torch
+
+```
+pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+```
+
+2. install PyG
+
+```
+pip install torch_geometric==2.4.0
+pip install pyg_lib torch_scatter torch_sparse torch_cluster torch_spline_conv -f https://data.pyg.org/whl/torch-2.2.0+cu121.html
+```
+
+3. install TGX dependencies
+
+see the instruction [here](https://github.com/ComplexData-MILA/TGX)
+
+
+4. install wandb
+```
+pip install wandb
+```
+
 ## create branches and development
 
 ```
@@ -45,20 +70,24 @@ use `--wandb` to turn of tracking with wandb
 1. TGN commands
 
 ```
-python dtdg_tgn.py -d enron -t monthly --lr 0.001 --max_epoch 500 --seed 1 --num_run 5 --patience 100
+python dtdg_tgn.py -d canparl -t biyearly --lr 0.001 --max_epoch 500 --seed 1 --num_runs 5 --patience 100
 
-python dtdg_tgn.py -d uci -t weekly --lr 0.001 --max_epoch 500 --seed 1 --num_run 5 --patience 100
+python dtdg_tgn.py -d enron -t monthly --lr 0.001 --max_epoch 500 --seed 1 --num_runs 5 --patience 100
 
-python dtdg_tgn.py -d mooc -t daily --lr 0.001 --max_epoch 500 --seed 1 --num_run 5 --patience 100
+python dtdg_tgn.py -d uci -t weekly --lr 0.001 --max_epoch 500 --seed 1 --num_runs 5 --patience 100
 
-python dtdg_tgn.py -d social_evo -t daily --lr 0.001 --max_epoch 500 --seed 1 --num_run 5 --patience 100
+python dtdg_tgn.py -d mooc -t daily --lr 0.001 --max_epoch 500 --seed 1 --num_runs 5 --patience 100
 
-python dtdg_tgn.py -d contacts -t hourly --lr 0.0001 --max_epoch 200 --seed 1 --num_run 5 --patience 50
+python dtdg_tgn.py -d social_evo -t daily --lr 0.001 --max_epoch 500 --seed 1 --num_runs 5 --patience 100
+
+python dtdg_tgn.py -d contacts -t hourly --lr 0.0001 --max_epoch 200 --seed 1 --num_runs 5 --patience 50
 ```
 
 2. HTGN commands
 
 ```
+python dtdg_main_htgn.py --model=HTGN --dataset=canparl -t biyearly --lr 0.001 --max_epoch 500 --num_runs 5 --patience 100
+
 python dtdg_main_htgn.py --model=HTGN --dataset=enron -t monthly --lr 0.001 --max_epoch 500 --num_runs 5 --patience 100
 
 python dtdg_main_htgn.py --model=HTGN --dataset=uci -t weekly --lr 0.001 --max_epoch 500 --num_runs 5 --patience 100

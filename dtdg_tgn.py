@@ -41,7 +41,7 @@ def get_args():
     parser.add_argument('--emb_dim', type=int, help='Embedding dimension', default=100)
     parser.add_argument('--tolerance', type=float, help='Early stopper tolerance', default=1e-6)
     parser.add_argument('--patience', type=float, help='Early stopper patience', default=20)
-    parser.add_argument('--num_run', type=int, help='Number of iteration runs', default=1)
+    parser.add_argument('--num_runs', type=int, help='Number of iteration runs', default=1)
     parser.add_argument("--wandb", action="store_true", default=False, help="now using wandb")
     try:
         args = parser.parse_args()
@@ -225,7 +225,7 @@ TIME_DIM = args.time_dim
 EMB_DIM = args.emb_dim
 TOLERANCE = args.tolerance
 PATIENCE = args.patience #100 #20 # args.patience
-NUM_RUNS = args.num_run
+NUM_RUNS = args.num_runs
 NUM_NEIGHBORS = 10
 
 

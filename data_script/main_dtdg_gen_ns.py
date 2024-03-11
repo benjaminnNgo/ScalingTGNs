@@ -3,10 +3,14 @@ import timeit
 import torch
 import numpy as np
 import argparse, sys
+import sys
+sys.path.append('../')
+
+
 from data_script.dtdg_neg_generator import NegativeEdgeGenerator
 from torch_geometric.data import TemporalData
 from typing import Optional, Dict, Any, Tuple
-from utils.util import generate_splits, convert2Torch
+from utils.utils_func import generate_splits, convert2Torch
 
 def get_args():
     parser = argparse.ArgumentParser('*** negative sample generating options ***')
@@ -53,6 +57,8 @@ def main():
         dataset = tgx.builtin.social_evo()
     elif (args.data == "canparl"):
         dataset = tgx.builtin.canparl()
+    elif (args.data == "lastfm"):
+        dataset = tgx.builtin.lastfm()
     else:
         raise ValueError("Invalid dataset name")
     
