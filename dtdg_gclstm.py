@@ -3,12 +3,10 @@ import numpy as np
 import torch.nn.functional as F
 from torch_geometric_temporal.nn.recurrent import GCLSTM 
 from torch_geometric.utils.negative_sampling import negative_sampling
-from models.tgn.decoder import LinkPredictor
+# from models.tgn.decoder import LinkPredictor
 from tgb.linkproppred.evaluate import Evaluator
 from tgb.linkproppred.negative_sampler import NegativeEdgeSampler
 
-
-#! not training properly, the model prediction doesn't change
 
 
 class RecurrentGCN(torch.nn.Module):
@@ -84,7 +82,7 @@ if __name__ == '__main__':
     lr = args.lr
 
     #* initialization of the model to prep for training
-    model = RecurrentGCN(node_feat_dim=node_feat_dim, hidden_dim=hidden_dim, K=3).to(args.device)
+    model = RecurrentGCN(node_feat_dim=node_feat_dim, hidden_dim=hidden_dim, K=1).to(args.device)
     node_feat = torch.zeros((num_nodes, node_feat_dim)).to(args.device)
     # link_pred = LinkPredictor(in_channels=hidden_dim).to(args.device)
     link_pred = LinkPredictor(hidden_dim, hidden_dim, 1,
@@ -93,19 +91,35 @@ if __name__ == '__main__':
 
     optimizer = torch.optim.Adam(
         set(model.parameters()) | set(link_pred.parameters()), lr=lr)
-    criterion = torch.nn.BCEWithLogitsLoss()
+    # criterion = torch.nn.BCEWithLogitsLoss()
 
     for epoch in range(num_epochs):
+        optimizer.zero_grad()
         total_loss = 0
         model.train()
         link_pred.train()
         snapshot_list = train_data['edge_index']
         h_0, c_0, h = None, None, None
-        loss = 0
+        total_loss = 0
         for snapshot_idx in range(train_data['time_length']):
             pos_index = snapshot_list[snapshot_idx]
             pos_index = pos_index.long().to(args.device)
-            neg_edges = negative_sampling(pos_index, num_nodes=num_nodes, num_neg_samples=(pos_index.size(1)*1))
+            # neg_edges = negative_sampling(pos_index, num_nodes=num_nodes, num_neg_samples=(pos_index.size(1)*1), force_undirected = True)
+
+            neg_dst = torch.randint(
+                    0,
+                    num_nodes,
+                    (pos_index.shape[1],),
+                    dtype=torch.long,
+                    device=args.device,
+                )
+
+            # edge_index = pos_index.long().to(args.device)
+            # if ('edge_attr' not in train_data):
+            #     edge_attr = torch.ones(edge_index.size(1), edge_feat_dim).to(args.device)
+            # else:
+            #     raise NotImplementedError("Edge attributes are not yet supported")
+            # h, h_0, c_0 = model(node_feat, edge_index, edge_attr, h_0, c_0)
 
             if (snapshot_idx == 0): #first snapshot, feed the current snapshot
                 edge_index = pos_index
@@ -127,16 +141,31 @@ if __name__ == '__main__':
                 h, h_0, c_0 = model(node_feat, edge_index, edge_attr, h_0, c_0)
 
             pos_out = link_pred(h[edge_index[0]], h[edge_index[1]])
-            neg_out = link_pred(h[neg_edges[0]], h[neg_edges[1]])
+            pos_loss = -torch.log(pos_out + 1e-15).mean()
 
-            loss += torch.mean(criterion(pos_out, torch.ones_like(pos_out)))
-            loss += torch.mean(criterion(neg_out, torch.zeros_like(neg_out)))
 
-        #due to being recurrent model and takes in recurrent input, loss is outside the loop
-        loss.backward()
-        total_loss = float(loss)
-        optimizer.step()
-        optimizer.zero_grad()
+            neg_out = link_pred(h[edge_index[0]], h[neg_dst])
+            neg_loss = -torch.log(1 - neg_out + 1e-15).mean()
+
+            loss = pos_loss + neg_loss
+            loss.backward()
+            optimizer.step()
+
+            total_loss += float(loss)
+
+
+            h_0 = h_0.detach()
+            c_0 = c_0.detach()
+
+
+
+
+            # pos_out = link_pred(h[edge_index[0]], h[edge_index[1]])
+            # neg_out = link_pred(h[neg_edges[0]], h[neg_edges[1]])
+
+            # loss += criterion(pos_out, torch.ones_like(pos_out))
+            # loss += criterion(neg_out, torch.zeros_like(neg_out))
+
         print (f'Epoch {epoch}/{num_epochs}, Loss: {total_loss/num_nodes}')
 
         #! Evaluation starts here
