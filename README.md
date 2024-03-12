@@ -111,10 +111,10 @@ python dtdg_edgebank.py -d enron -t monthly --mem_mode fixed_time_window
 
 ## Get Started with TGB Datasets
 
-use `--wandb` to turn of tracking with wandb
+use `--wandb` to turn on tracking with wandb
 
 ```
-python ctdg_main_htgn.py --model=HTGN --dataset=tgbl-wiki -t daily --lr 0.0001 --max_epoch 100
+python ctdg_main_htgn.py --model=HTGN --dataset=tgbl-wiki -t hourly --lr 0.0001 --max_epoch 100
 ```
 
 ## Generate negative samples for discrete datasets
