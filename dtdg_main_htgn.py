@@ -108,14 +108,6 @@ class Runner(object):
             pos_index = torch.from_numpy(test_edges[snapshot_idx])
             pos_index = pos_index.long().to(args.device)
 
-            #* update the node embeddings with edges from previous snapshot
-            if (snapshot_idx > ts_min):
-                #* update the snapshot embedding
-                prev_index = test_snapshots[snapshot_idx-1]
-                prev_index = prev_index.long().to(args.device)
-                z = self.model(prev_index, self.x)
-                embeddings = self.model.update_hiddens_all_with(z)
-
             for i in range(pos_index.shape[0]):
                 pos_src = pos_index[i][0].item()
                 pos_dst = pos_index[i][1].item()
@@ -137,6 +129,12 @@ class Runner(object):
                         }
                     perf_list[perf_idx] = evaluator.eval(input_dict)[metric]
                     perf_idx += 1
+
+            #* update the node embeddings with edges after the snapshot has been predicted
+            prev_index = test_snapshots[snapshot_idx]
+            prev_index = prev_index.long().to(args.device)
+            z = self.model(prev_index, self.x)
+            embeddings = self.model.update_hiddens_all_with(z)
 
         result = list(perf_list.values())
         perf_list = np.array(result)
@@ -190,11 +188,6 @@ class Runner(object):
                 if (snapshot_idx == 0):
                     edge_index = pos_index
                     z = self.model(edge_index, self.x)
-                else:
-                    #* feed the edge index from (t-1) into the model
-                    prev_index = snapshot_list[snapshot_idx-1]
-                    edge_index = prev_index.long().to(args.device)
-                    z = self.model(edge_index, self.x)
                                
 
                 if args.use_htc == 0:
@@ -206,15 +199,16 @@ class Runner(object):
                 optimizer.step()
                 epoch_losses.append(epoch_loss.item())
 
-                #* update the embedding for the final train snapshot
-                if (snapshot_idx == (self.train_data['time_length']-1)):
-                    pos_index = snapshot_list[snapshot_idx]
-                    pos_index = pos_index.long().to(args.device)
-                    z = self.model(pos_index, self.x)
+                #* update the embedding after the prediction of current snapshot
+                pos_index = snapshot_list[snapshot_idx]
+                pos_index = pos_index.long().to(args.device)
+                z = self.model(pos_index, self.x)
                 self.model.update_hiddens_all_with(z)
             
             average_epoch_loss = np.mean(epoch_losses)
             train_end_time = timeit.default_timer()
+
+            z = z.detach()
 
             self.model.eval()
 
