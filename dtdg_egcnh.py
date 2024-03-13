@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 import torch.nn.functional as F
-from torch_geometric_temporal.nn.recurrent import GCLSTM 
+from torch_geometric_temporal.nn.recurrent import EvolveGCNH
 from torch_geometric.utils.negative_sampling import negative_sampling
 # from models.tgn.decoder import LinkPredictor
 from tgb.linkproppred.evaluate import Evaluator
@@ -10,25 +10,16 @@ from tgb.linkproppred.negative_sampler import NegativeEdgeSampler
 
 
 class RecurrentGCN(torch.nn.Module):
-    def __init__(self, node_feat_dim, hidden_dim, K=1):
-        #https://pytorch-geometric-temporal.readthedocs.io/en/latest/modules/root.html#recurrent-graph-convolutional-layers
+    def __init__(self, num_nodes, node_feat_dim, hidden_dim):
         super(RecurrentGCN, self).__init__()
-        self.recurrent = GCLSTM(in_channels=node_feat_dim, 
-                                out_channels=hidden_dim, 
-                                K=K,) #K is the Chebyshev filter size
-        self.linear = torch.nn.Linear(hidden_dim, hidden_dim)
+        self.recurrent = EvolveGCNH(num_nodes, node_feat_dim)
+        self.linear = torch.nn.Linear(node_feat_dim, hidden_dim)
 
-    def forward(self, x, edge_index, edge_weight, h, c):
-        r"""
-        forward function for the model, 
-        this is used for each snapshot
-        h: node hidden state matrix from previous time
-        c: cell state matrix from previous time
-        """
-        h_0, c_0 = self.recurrent(x, edge_index, edge_weight, h, c)
-        h = F.relu(h_0)
+    def forward(self, x, edge_index, edge_weight):
+        h = self.recurrent(x, edge_index, edge_weight)
+        h = F.relu(h)
         h = self.linear(h)
-        return h, h_0, c_0
+        return h
 
 
 class LinkPredictor(torch.nn.Module):
@@ -70,7 +61,7 @@ if __name__ == '__main__':
 
 
     #! add support for node features in the future
-    node_feat_dim = 16 #all 0s for now
+    node_feat_dim = 16 
     edge_feat_dim = 1 #for edge weights
     hidden_dim = 256
 
@@ -82,8 +73,8 @@ if __name__ == '__main__':
     lr = args.lr
 
     #* initialization of the model to prep for training
-    model = RecurrentGCN(node_feat_dim=node_feat_dim, hidden_dim=hidden_dim, K=1).to(args.device)
-    node_feat = torch.zeros((num_nodes, node_feat_dim)).to(args.device)
+    model = RecurrentGCN(num_nodes, node_feat_dim=node_feat_dim, hidden_dim=hidden_dim).to(args.device)
+    node_feat = torch.ones((num_nodes, node_feat_dim)).to(args.device)
     # link_pred = LinkPredictor(in_channels=hidden_dim).to(args.device)
     link_pred = LinkPredictor(hidden_dim, hidden_dim, 1,
                               2, 0.2).to(args.device)
@@ -104,15 +95,15 @@ if __name__ == '__main__':
         for snapshot_idx in range(train_data['time_length']):
             pos_index = snapshot_list[snapshot_idx]
             pos_index = pos_index.long().to(args.device)
-            # neg_edges = negative_sampling(pos_index, num_nodes=num_nodes, num_neg_samples=(pos_index.size(1)*1), force_undirected = True)
+            neg_edges = negative_sampling(pos_index, num_nodes=num_nodes, num_neg_samples=(pos_index.size(1)*1))
 
-            neg_dst = torch.randint(
-                    0,
-                    num_nodes,
-                    (pos_index.shape[1],),
-                    dtype=torch.long,
-                    device=args.device,
-                )
+            # neg_dst = torch.randint(
+            #         0,
+            #         num_nodes,
+            #         (pos_index.shape[1],),
+            #         dtype=torch.long,
+            #         device=args.device,
+            #     )
 
             # edge_index = pos_index.long().to(args.device)
             # if ('edge_attr' not in train_data):
@@ -128,7 +119,7 @@ if __name__ == '__main__':
                     edge_attr = torch.ones(edge_index.size(1), edge_feat_dim).to(args.device)
                 else:
                     raise NotImplementedError("Edge attributes are not yet supported")
-                h, h_0, c_0 = model(node_feat, edge_index, edge_attr, h_0, c_0)
+                h = model(node_feat, edge_index, edge_attr)
             else: #subsequent snapshot, feed the previous snapshot
                 #prev_index = snapshot_list[snapshot_idx-1]
                 prev_index = pos_index
@@ -138,27 +129,19 @@ if __name__ == '__main__':
                     edge_attr = torch.ones(edge_index.size(1), edge_feat_dim).to(args.device)
                 else:
                     raise NotImplementedError("Edge attributes are not yet supported")
-                h, h_0, c_0 = model(node_feat, edge_index, edge_attr, h_0, c_0)
+                h = model(node_feat, edge_index, edge_attr)
 
             pos_out = link_pred(h[edge_index[0]], h[edge_index[1]])
-            pos_loss = -torch.log(pos_out + 1e-15).mean()
+            pos_loss = torch.mean((pos_out-torch.ones(pos_out.shape).to(args.device))**2)
 
-
-            neg_out = link_pred(h[edge_index[0]], h[neg_dst])
-            neg_loss = -torch.log(1 - neg_out + 1e-15).mean()
+            neg_out = link_pred(h[neg_edges[0]], h[neg_edges[1]])
+            neg_loss = torch.mean((neg_out-torch.zeros(neg_out.shape).to(args.device))**2)
 
             loss = pos_loss + neg_loss
             loss.backward()
             optimizer.step()
 
             total_loss += float(loss)
-
-
-            h_0 = h_0.detach()
-            c_0 = c_0.detach()
-
-
-
 
             # pos_out = link_pred(h[edge_index[0]], h[edge_index[1]])
             # neg_out = link_pred(h[neg_edges[0]], h[neg_edges[1]])
@@ -183,8 +166,6 @@ if __name__ == '__main__':
         val_edges = val_data['original_edges'] #original edges unmodified
         ts_min = min(val_snapshots.keys())
 
-        h_0 = h_0.detach()
-        c_0 = c_0.detach()
         h = h.detach()
 
         perf_list = {}
@@ -202,7 +183,7 @@ if __name__ == '__main__':
                     edge_attr = torch.ones(prev_index.size(1), edge_feat_dim).to(args.device)
                 else:
                     raise NotImplementedError("Edge attributes are not yet supported")
-                h, h_0, c_0 = model(node_feat, prev_index, edge_attr, h_0, c_0)
+                h = model(node_feat, prev_index, edge_attr)
             
             for i in range(pos_index.shape[0]):
                 pos_src = pos_index[i][0].item()

@@ -152,9 +152,13 @@ class Runner(object):
                     }
                 perf_list[perf_idx] = evaluator.eval(input_dict)[metric]
                 perf_idx += 1
-
+        
+        #* update to the final snapshot
+        pos_index = test_snapshots['edge_index'][ts_idx]
+        pos_index = pos_index.long().to(args.device)
+        z = self.model(pos_index, self.x)
+        embeddings = self.model.update_hiddens_all_with(z)
         perf_metrics = float(np.mean(perf_list))
-
         return perf_metrics, embeddings
 
     def run(self, seed=1):
@@ -218,11 +222,6 @@ class Runner(object):
                 if (snapshot_idx == 0):
                     edge_index = pos_index
                     z = self.model(edge_index, self.x)
-                else:
-                    #* feed the edge index from (t-1) into the model
-                    prev_index = snapshot_list[snapshot_idx-1]
-                    edge_index = prev_index.long().to(args.device)
-                    z = self.model(edge_index, self.x)
                                
 
                 if args.use_htc == 0:
@@ -235,10 +234,9 @@ class Runner(object):
                 epoch_losses.append(epoch_loss.item())
 
                 #* update the embedding for the final train snapshot
-                if (snapshot_idx == (self.train_data['time_length']-1)):
-                    pos_index = snapshot_list[snapshot_idx]
-                    pos_index = pos_index.long().to(args.device)
-                    z = self.model(pos_index, self.x)
+                pos_index = snapshot_list[snapshot_idx]
+                pos_index = pos_index.long().to(args.device)
+                z = self.model(pos_index, self.x)
                 self.model.update_hiddens_all_with(z)
             
             average_epoch_loss = np.mean(epoch_losses)
