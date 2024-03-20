@@ -283,12 +283,15 @@ if __name__ == '__main__':
     from utils.data_util import loader, prepare_dir
 
     set_random(args.seed)
-    data = loader(dataset=args.dataset, time_scale=args.time_scale)
+    data = loader(dataset="tgbl-wiki", time_scale="hourly")
+    print("====================" + args.time_scale)
     init_logger(prepare_dir(args.output_folder) + args.dataset + '_timeScale_' + str(args.time_scale) + '_seed_' + str(args.seed) + '.log')
 
-    runner = Runner()
-    for seed in range(args.seed, args.seed + args.num_runs):
-        print ("--------------------------------")
-        print ("excuting run with seed ", seed)
-        runner.run(seed=seed)
-        print ("--------------------------------")
+    # print(data)
+    #
+    # runner = Runner()
+    # for seed in range(args.seed, args.seed + args.num_runs):
+    #     print ("--------------------------------")
+    #     print ("excuting run with seed ", seed)
+    #     runner.run(seed=seed)
+    #     print ("--------------------------------")
