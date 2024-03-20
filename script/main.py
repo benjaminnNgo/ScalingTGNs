@@ -56,7 +56,8 @@ class Runner(object):
         t_total0 = time.time()
         test_results, min_loss = [0] * 5, 10
         self.model.train()
-        for epoch in range(1, args.max_epoch + 1):
+        # for epoch in range(1, args.max_epoch + 1):
+        for epoch in range(1, 2):
             t0 = time.time()
             epoch_losses = []
             self.model.init_hiddens()
