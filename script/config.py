@@ -34,7 +34,7 @@ parser.add_argument('--debug_mode', type=int, default=0, help='debug_mode, 0: no
 parser.add_argument('--min_epoch', type=int, default=100, help='min epoch')
 
 # 3.models
-parser.add_argument('--models', type=str, default='HTGN', help='models name')
+parser.add_argument('--model', type=str, default='HTGN', help='models name')
 parser.add_argument('--manifold', type=str, default='PoincareBall', help='Hyperbolic models')
 parser.add_argument('--use_gru', type=bool, default=True, help='use gru or not')
 parser.add_argument('--use_hyperdecoder', type=bool, default=True, help='use hyperbolic decoder or not')
@@ -60,9 +60,9 @@ else:
     args.device = torch.device("cpu")
     print('INFO: using cpu to train the models')
 
-print(args.models)
-args.output_folder = '../data/output/log/{}/{}/'.format(args.dataset, args.models)
-args.result_txt = '../data/output/results/{}_{}_result.txt'.format(args.dataset, args.models)
+print(args.model)
+args.output_folder = '../data/output/log/{}/{}/'.format(args.dataset, args.model)
+args.result_txt = '../data/output/results/{}_{}_result.txt'.format(args.dataset, args.model)
 
 # open debugging mode
 if args.debug_mode == 1:
