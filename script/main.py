@@ -53,11 +53,11 @@ class Runner(object):
 
     def run(self):
         optimizer = self.optimizer()  # @TODO: should I use Adam to be consistent with other baselines?!
-        t_total0 = time.time()
+        t_total0 = time.time()#=======================fix this
         test_results, min_loss = [0] * 5, 10
         self.model.train()
-        # for epoch in range(1, args.max_epoch + 1):
-        for epoch in range(1, 2):
+        for epoch in range(1, args.max_epoch + 1):
+        # for epoch in range(1, 2):
             t0 = time.time()
             epoch_losses = []
             self.model.init_hiddens()
