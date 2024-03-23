@@ -134,6 +134,10 @@ class Runner(object):
                                                                                    np.mean(ap_new_list)))
         return epoch, np.mean(auc_list), np.mean(ap_list), np.mean(auc_new_list), np.mean(ap_new_list)
 
+def load_multiple_datasets(datasets_package):
+
+    print("INFO: Dataset: {}".format(args.dataset))
+    print(datasets_package)
 
 if __name__ == '__main__':
     from script.config import args
@@ -144,6 +148,7 @@ if __name__ == '__main__':
     from script.inits import prepare
 
     print("INFO: Dataset: {}".format(args.dataset))
+    print("========================" + args.neg_sample)
     data = loader(dataset=args.dataset, neg_sample=args.neg_sample)
     args.num_nodes = data['num_nodes']
     set_random(args.seed)
