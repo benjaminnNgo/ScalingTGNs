@@ -66,58 +66,65 @@ class Runner(object):
         self.model.train()
         for epoch in range(1, args.max_epoch + 1):
             # for epoch in range(1, 2):
-            t0 = time.time()
-            epoch_losses = []
-            self.model.init_hiddens()
-            # train
-            self.model.train()
+            for dataset_idx in range(self.num_datasets):
+                t0 = time.time()
+                epoch_losses = []
+                self.model.init_hiddens()
+                # train
+                self.model.train()
 
-            #================== training on every snapshot================
+                #================== training on every snapshot================
+                # for t in self.train_shots:
+                for t in self.train_shots[dataset_idx]:     #Changed
+                        # edge_index, pos_index, neg_index, activate_nodes, edge_weight, _, _ = prepare(data, t)
+                        edge_index, pos_index, neg_index, activate_nodes, edge_weight, _, _ = prepare(data[dataset_idx], t) #Changed
+                        optimizer.zero_grad()
+                        z = self.model(edge_index, self.x)
+                        if args.use_htc == 0:
+                            # epoch_loss = self.loss(z, edge_index)  # this was default!!! It doesn't make sense to me!!!
+                            epoch_loss = self.loss(z, pos_index, neg_index)
+                        else:
+                            # epoch_loss = self.loss(z, edge_index) + self.models.htc(z)  # so as this one!
+                            epoch_loss = self.loss(z, pos_index, neg_index) + self.model.htc(z)
+                        epoch_loss.backward()
+                        optimizer.step()
+                        epoch_losses.append(epoch_loss.item())
+                        self.model.update_hiddens_all_with(z)
 
-            for t in self.train_shots:
-                    edge_index, pos_index, neg_index, activate_nodes, edge_weight, _, _ = prepare(data, t)
-                    optimizer.zero_grad()
-                    z = self.model(edge_index, self.x)
-                    if args.use_htc == 0:
-                        # epoch_loss = self.loss(z, edge_index)  # this was default!!! It doesn't make sense to me!!!
-                        epoch_loss = self.loss(z, pos_index, neg_index)
-                    else:
-                        # epoch_loss = self.loss(z, edge_index) + self.models.htc(z)  # so as this one!
-                        epoch_loss = self.loss(z, pos_index, neg_index) + self.model.htc(z)
-                    epoch_loss.backward()
-                    optimizer.step()
-                    epoch_losses.append(epoch_loss.item())
-                    self.model.update_hiddens_all_with(z)
+               #================== Evaluation step ==================
+                self.model.eval()
+                average_epoch_loss = np.mean(epoch_losses)
+                if average_epoch_loss < min_loss:
+                    min_loss = average_epoch_loss
+                    # test_results = self.test(epoch, z)
+                    test_results = self.test(epoch,dataset_idx, z) # Changed
+                    patience = 0
+                else:
+                    patience += 1
+                    if epoch > args.min_epoch and patience > args.patience:
+                        print('INFO: Early Stopping...')
+                        break
+                gpu_mem_alloc = torch.cuda.max_memory_allocated() / 1000000 if torch.cuda.is_available() else 0
 
-           #================== Evaluation step ==================
-            self.model.eval()
-            average_epoch_loss = np.mean(epoch_losses)
-            if average_epoch_loss < min_loss:
-                min_loss = average_epoch_loss
-                test_results = self.test(epoch,0, z) # @TODO:Need to switch 0 to index of dataset training on
-                patience = 0
-            else:
-                patience += 1
-                if epoch > args.min_epoch and patience > args.patience:
-                    print('INFO: Early Stopping...')
+                if epoch == 1 or epoch % args.log_interval == 0:
+                    logger.info('==' * 27)
+                    logger.info(
+                        "INFO: Epoch:{}, Loss: {:.4f}, Time: {:.3f}, GPU: {:.1f}MiB".format(epoch, average_epoch_loss,
+                                                                                            time.time() - t0,
+                                                                                            gpu_mem_alloc))
+                    logger.info(
+                        "Epoch:{:}, Test AUC: {:.4f}, AP: {:.4f}, New AUC: {:.4f}, New AP: {:.4f}".format(test_results[0],
+                                                                                                          test_results[1],
+                                                                                                          test_results[2],
+                                                                                                          test_results[3],
+                                                                                                          test_results[4]))
+                if isnan(epoch_loss):
+                    print('nan loss')
                     break
-            gpu_mem_alloc = torch.cuda.max_memory_allocated() / 1000000 if torch.cuda.is_available() else 0
 
-            if epoch == 1 or epoch % args.log_interval == 0:
-                logger.info('==' * 27)
-                logger.info(
-                    "INFO: Epoch:{}, Loss: {:.4f}, Time: {:.3f}, GPU: {:.1f}MiB".format(epoch, average_epoch_loss,
-                                                                                        time.time() - t0,
-                                                                                        gpu_mem_alloc))
-                logger.info(
-                    "Epoch:{:}, Test AUC: {:.4f}, AP: {:.4f}, New AUC: {:.4f}, New AP: {:.4f}".format(test_results[0],
-                                                                                                      test_results[1],
-                                                                                                      test_results[2],
-                                                                                                      test_results[3],
-                                                                                                      test_results[4]))
-            if isnan(epoch_loss):
-                print('nan loss')
-                break
+
+
+        # ================== End of training================
         logger.info('>> Total time : %6.2f' % (time.time() - t_total0))
         logger.info(">> Parameters: lr:%.4f |Dim:%d |Window:%d |" % (args.lr, args.nhid, args.nb_window))
 
