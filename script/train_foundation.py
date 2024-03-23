@@ -65,10 +65,12 @@ class Runner(object):
         test_results, min_loss = [0] * 5, 10
         self.model.train()
         for epoch in range(1, args.max_epoch + 1):
+            epoch_losses = []
             # for epoch in range(1, 2):
             for dataset_idx in range(self.num_datasets):
+                # @TODO: need to find the way to handle epoch lost
                 t0 = time.time()
-                epoch_losses = []
+                dataset_losses = [] #Changed to dataset lost?
                 self.model.init_hiddens()
                 # train
                 self.model.train()
@@ -82,20 +84,23 @@ class Runner(object):
                         z = self.model(edge_index, self.x)
                         if args.use_htc == 0:
                             # epoch_loss = self.loss(z, edge_index)  # this was default!!! It doesn't make sense to me!!!
-                            epoch_loss = self.loss(z, pos_index, neg_index)
+                            dataset_loss = self.loss(z, pos_index, neg_index)
                         else:
                             # epoch_loss = self.loss(z, edge_index) + self.models.htc(z)  # so as this one!
-                            epoch_loss = self.loss(z, pos_index, neg_index) + self.model.htc(z)
-                        epoch_loss.backward()
+                            dataset_loss = self.loss(z, pos_index, neg_index) + self.model.htc(z)
+                        dataset_loss.backward()
                         optimizer.step()
-                        epoch_losses.append(epoch_loss.item())
+                        dataset_losses.append(dataset_loss.item())
                         self.model.update_hiddens_all_with(z)
+
 
                #================== Evaluation step ==================
                 self.model.eval()
-                average_epoch_loss = np.mean(epoch_losses)
-                if average_epoch_loss < min_loss:
-                    min_loss = average_epoch_loss
+
+                average_dataset_loss = np.mean(dataset_losses)
+                epoch_losses.append(average_dataset_loss)
+                if average_dataset_loss < min_loss:
+                    min_loss = average_dataset_loss
                     # test_results = self.test(epoch, z)
                     test_results = self.test(epoch,dataset_idx, z) # Changed
                     patience = 0
@@ -106,7 +111,13 @@ class Runner(object):
                         break
                 gpu_mem_alloc = torch.cuda.max_memory_allocated() / 1000000 if torch.cuda.is_available() else 0
 
-                if epoch == 1 or epoch % args.log_interval == 0:
+                if isnan(dataset_loss):
+                    print('nan loss')
+                    break
+
+            average_epoch_loss =  np.mean(epoch_losses)
+            # ================== End of an epoch================
+            if epoch == 1 or epoch % args.log_interval == 0:
                     logger.info('==' * 27)
                     logger.info(
                         "INFO: Epoch:{}, Loss: {:.4f}, Time: {:.3f}, GPU: {:.1f}MiB".format(epoch, average_epoch_loss,
@@ -118,9 +129,7 @@ class Runner(object):
                                                                                                           test_results[2],
                                                                                                           test_results[3],
                                                                                                           test_results[4]))
-                if isnan(epoch_loss):
-                    print('nan loss')
-                    break
+
 
 
 
@@ -174,4 +183,4 @@ if __name__ == '__main__':
     set_random(args.seed)
     init_logger(prepare_dir(args.output_folder) + args.dataset + '_seed_' + str(args.seed) + '.txt')
     runner = Runner()
-    # runner.run()
+    runner.run()
