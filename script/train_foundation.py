@@ -11,11 +11,19 @@ sys.path.append(BASE_DIR)
 
 class Runner(object):
     def __init__(self):
-        self.len = data['time_length']
+        self.num_datasets = len(data)
+        # self.len = data['time_length']
+        self.len = [data[i]['time_length'] for i in range(self.num_datasets)] #Changed
         self.start_train = 0
-        self.train_shots = list(range(0, self.len - args.testlength))
-        self.test_shots = list(range(self.len - args.testlength, self.len))
+        # self.train_shots = list(range(0, self.len - args.testlength))
+        self.train_shots = [list(range(0, self.len[i] - args.testlength)) for i in range(self.num_datasets)] #Changed
+        # self.test_shots = list(range(self.len - args.testlength, self.len))
+        self.test_shots = [list(range(self.len[i] - args.testlength, self.len[i])) for i in range(self.num_datasets)] #Changed
+
+        args.num_nodes = max(args.num_nodes)  # set to the maximum number of node among datasets?
         self.load_feature()
+
+
         self.model = load_model(args).to(args.device)
         self.model_path = '../saved_models/{}/{}_{}_seed_{}.pth'.format(args.dataset, args.dataset,
                                                                         args.model, args.seed)
@@ -148,9 +156,9 @@ if __name__ == '__main__':
 
     # print("INFO: Dataset: {}".format(args.dataset))
     # data = loader(dataset=args.dataset, neg_sample=args.neg_sample)
-    data = load_multiple_datasets(args.dataset, args.neg_sample)[0]
-    # args.num_nodes = data['num_nodes']
-    # set_random(args.seed)
-    # init_logger(prepare_dir(args.output_folder) + args.dataset + '_seed_' + str(args.seed) + '.txt')
-    # runner = Runner()
+    data = load_multiple_datasets(args.dataset, args.neg_sample)
+    args.num_nodes = [data[i]['num_nodes'] for i in range(len(data))]
+    set_random(args.seed)
+    init_logger(prepare_dir(args.output_folder) + args.dataset + '_seed_' + str(args.seed) + '.txt')
+    runner = Runner()
     # runner.run()

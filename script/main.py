@@ -27,7 +27,7 @@ class Runner(object):
 
     def load_feature(self):
         if args.trainable_feat:
-            self.x = None
+
             logger.info("INFO: using trainable feature, feature dim: {}".format(args.nfeat))
         else:
             if args.pre_defined_feature is not None:
@@ -57,6 +57,7 @@ class Runner(object):
         test_results, min_loss = [0] * 5, 10
         self.model.train()
         for epoch in range(1, args.max_epoch + 1):
+            print("DEBUG-Bao:{}".format(self.x))
         # for epoch in range(1, 2):
             t0 = time.time()
             epoch_losses = []
@@ -144,11 +145,10 @@ if __name__ == '__main__':
     from script.utils.data_util import loader, prepare_dir, load_multiple_datasets
     from script.inits import prepare
 
-    # print("INFO: Dataset: {}".format(args.dataset))
-    # data = loader(dataset=args.dataset, neg_sample=args.neg_sample)
-    data = load_multiple_datasets(args.dataset,args.neg_sample)[0]
-    # args.num_nodes = data['num_nodes']
-    # set_random(args.seed)
-    # init_logger(prepare_dir(args.output_folder) + args.dataset + '_seed_' + str(args.seed) + '.txt')
-    # runner = Runner()
-    # runner.run()
+    print("INFO: Dataset: {}".format(args.dataset))
+    data = loader(dataset=args.dataset, neg_sample=args.neg_sample)
+    args.num_nodes = data['num_nodes']
+    set_random(args.seed)
+    init_logger(prepare_dir(args.output_folder) + args.dataset + '_seed_' + str(args.seed) + '.txt')
+    runner = Runner()
+    runner.run()
