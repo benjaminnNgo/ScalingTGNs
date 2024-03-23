@@ -241,3 +241,24 @@ def loader(dataset='enron10', neg_sample=''):
     torch.save(data, filepath)
     print('INFO: Dataset is saved!')
     return data
+
+def load_multiple_datasets(datasets_package_file,neg_sample):
+    datasets_packages = []
+    datasets_package_path = '../data/input/data_packs/{}.txt'.format(datasets_package_file)
+
+    if os.path.exists(datasets_package_path):
+        print("File exists.")
+    else:
+        print("File does not exist.")
+
+    try:
+        with open(datasets_package_path, 'r') as file:
+            for line in file:
+                print("INFO: Dataset: {}".format(line))
+                datasets_packages.append(loader(dataset=line.strip(), neg_sample=neg_sample))
+    except Exception as e:
+        print("ERROR: error in processing data pack {}".format(datasets_package_path))
+        print(e)
+
+    print("BAO:Number of dataset{}".format(len(datasets_packages)))
+    return datasets_packages

@@ -18,9 +18,9 @@ class Runner(object):
         self.load_feature()
         self.model = load_model(args).to(args.device)
         self.model_path = '../saved_models/{}/{}_{}_seed_{}.pth'.format(args.dataset, args.dataset,
-                                                                   args.model, args.seed)
+                                                                        args.model, args.seed)
         print("INFO: models is going to be saved at {}".format(self.model_path))
-        
+
         self.loss = ReconLoss(args) if args.model not in ['DynVAE', 'VGRNN', 'HVGRNN'] else VGAEloss(args)
         print("INFO: Args: ", args)
         logger.info('INFO: total length: {}, test length: {}'.format(self.len, args.testlength))
@@ -53,11 +53,11 @@ class Runner(object):
 
     def run(self):
         optimizer = self.optimizer()  # @TODO: should I use Adam to be consistent with other baselines?!
-        t_total0 = time.time()#=======================fix this
+        t_total0 = time.time()  # =======================fix this
         test_results, min_loss = [0] * 5, 10
         self.model.train()
         for epoch in range(1, args.max_epoch + 1):
-        # for epoch in range(1, 2):
+            # for epoch in range(1, 2):
             t0 = time.time()
             epoch_losses = []
             self.model.init_hiddens()
@@ -92,9 +92,10 @@ class Runner(object):
 
             if epoch == 1 or epoch % args.log_interval == 0:
                 logger.info('==' * 27)
-                logger.info("INFO: Epoch:{}, Loss: {:.4f}, Time: {:.3f}, GPU: {:.1f}MiB".format(epoch, average_epoch_loss,
-                                                                                          time.time() - t0,
-                                                                                          gpu_mem_alloc))
+                logger.info(
+                    "INFO: Epoch:{}, Loss: {:.4f}, Time: {:.3f}, GPU: {:.1f}MiB".format(epoch, average_epoch_loss,
+                                                                                        time.time() - t0,
+                                                                                        gpu_mem_alloc))
                 logger.info(
                     "Epoch:{:}, Test AUC: {:.4f}, AP: {:.4f}, New AUC: {:.4f}, New AP: {:.4f}".format(test_results[0],
                                                                                                       test_results[1],
@@ -112,8 +113,6 @@ class Runner(object):
         torch.save(self.model.state_dict(), self.model_path)
         logger.info("INFO: The models is saved. Done.")
 
-
-
     def test(self, epoch, embeddings=None):
         auc_list, ap_list = [], []
         auc_new_list, ap_new_list = [], []
@@ -129,11 +128,14 @@ class Runner(object):
             ap_new_list.append(ap_new)
         if epoch % args.log_interval == 0:
             logger.info(
-                'Epoch:{} (test_method); Transductive: average AUC: {:.4f}; average AP: {:.4f}'.format(epoch, np.mean(auc_list), np.mean(ap_list)))
-            logger.info('Epoch:{} (test_method); Inductive: average AUC: {:.4f}; average AP: {:.4f}'.format(epoch, np.mean(auc_new_list),
-                                                                                   np.mean(ap_new_list)))
+                'Epoch:{} (test_method); Transductive: average AUC: {:.4f}; average AP: {:.4f}'.format(epoch, np.mean(
+                    auc_list), np.mean(ap_list)))
+            logger.info('Epoch:{} (test_method); Inductive: average AUC: {:.4f}; average AP: {:.4f}'.format(epoch,
+                                                                                                            np.mean(
+                                                                                                                auc_new_list),
+                                                                                                            np.mean(
+                                                                                                                ap_new_list)))
         return epoch, np.mean(auc_list), np.mean(ap_list), np.mean(auc_new_list), np.mean(ap_new_list)
-
 
 
 if __name__ == '__main__':
@@ -146,7 +148,7 @@ if __name__ == '__main__':
 
     # print("INFO: Dataset: {}".format(args.dataset))
     # data = loader(dataset=args.dataset, neg_sample=args.neg_sample)
-    data = load_multiple_datasets(args.dataset,args.neg_sample)[0]
+    data = load_multiple_datasets(args.dataset, args.neg_sample)[0]
     # args.num_nodes = data['num_nodes']
     # set_random(args.seed)
     # init_logger(prepare_dir(args.output_folder) + args.dataset + '_seed_' + str(args.seed) + '.txt')
