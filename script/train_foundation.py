@@ -33,7 +33,7 @@ class Runner(object):
         print("INFO: Args: ", args)
         logger.info('INFO: total length: {}, test length: {}'.format(self.len, args.testlength))
 
-    def load_feature(self):
+    def load_feature(self): #Nothing change here?
         if args.trainable_feat:
             self.x = None
             logger.info("INFO: using trainable feature, feature dim: {}".format(args.nfeat))
@@ -71,25 +71,30 @@ class Runner(object):
             self.model.init_hiddens()
             # train
             self.model.train()
+
+            #================== training on every snapshot================
+
             for t in self.train_shots:
-                edge_index, pos_index, neg_index, activate_nodes, edge_weight, _, _ = prepare(data, t)
-                optimizer.zero_grad()
-                z = self.model(edge_index, self.x)
-                if args.use_htc == 0:
-                    # epoch_loss = self.loss(z, edge_index)  # this was default!!! It doesn't make sense to me!!!
-                    epoch_loss = self.loss(z, pos_index, neg_index)
-                else:
-                    # epoch_loss = self.loss(z, edge_index) + self.models.htc(z)  # so as this one!
-                    epoch_loss = self.loss(z, pos_index, neg_index) + self.model.htc(z)
-                epoch_loss.backward()
-                optimizer.step()
-                epoch_losses.append(epoch_loss.item())
-                self.model.update_hiddens_all_with(z)
+                    edge_index, pos_index, neg_index, activate_nodes, edge_weight, _, _ = prepare(data, t)
+                    optimizer.zero_grad()
+                    z = self.model(edge_index, self.x)
+                    if args.use_htc == 0:
+                        # epoch_loss = self.loss(z, edge_index)  # this was default!!! It doesn't make sense to me!!!
+                        epoch_loss = self.loss(z, pos_index, neg_index)
+                    else:
+                        # epoch_loss = self.loss(z, edge_index) + self.models.htc(z)  # so as this one!
+                        epoch_loss = self.loss(z, pos_index, neg_index) + self.model.htc(z)
+                    epoch_loss.backward()
+                    optimizer.step()
+                    epoch_losses.append(epoch_loss.item())
+                    self.model.update_hiddens_all_with(z)
+
+           #================== Evaluation step ==================
             self.model.eval()
             average_epoch_loss = np.mean(epoch_losses)
             if average_epoch_loss < min_loss:
                 min_loss = average_epoch_loss
-                test_results = self.test(epoch, z)
+                test_results = self.test(epoch,0, z) # @TODO:Need to switch 0 to index of dataset training on
                 patience = 0
             else:
                 patience += 1
@@ -121,7 +126,7 @@ class Runner(object):
         torch.save(self.model.state_dict(), self.model_path)
         logger.info("INFO: The models is saved. Done.")
 
-    def test(self, epoch, embeddings=None):
+    def test(self, epoch, dataset_index, embeddings=None): #Changed: adding arg to keep track which dataset training
         auc_list, ap_list = [], []
         auc_new_list, ap_new_list = [], []
         embeddings = embeddings.detach()
