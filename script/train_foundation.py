@@ -136,10 +136,11 @@ class Runner(object):
     def test(self, epoch, dataset_index, embeddings=None): #Changed: adding arg to keep track which dataset training
         auc_list, ap_list = [], []
         auc_new_list, ap_new_list = [], []
+        curr_dataset = data[dataset_index]
         embeddings = embeddings.detach()
-        for t in self.test_shots:
-            edge_index, pos_edge, neg_edge = prepare(data, t)[:3]
-            new_pos_edge, new_neg_edge = prepare(data, t)[-2:]
+        for t in self.test_shots[dataset_index]:
+            edge_index, pos_edge, neg_edge = prepare(curr_dataset, t)[:3]
+            new_pos_edge, new_neg_edge = prepare(curr_dataset, t)[-2:]
             auc, ap = self.loss.predict(embeddings, pos_edge, neg_edge)
             auc_new, ap_new = self.loss.predict(embeddings, new_pos_edge, new_neg_edge)
             auc_list.append(auc)
