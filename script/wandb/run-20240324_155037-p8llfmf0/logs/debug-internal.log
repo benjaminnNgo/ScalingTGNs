@@ -1,0 +1,375 @@
+2024-03-24 15:50:37,690 INFO    StreamThr :12944 [internal.py:wandb_internal():86] W&B internal server running at pid: 12944, started at: 2024-03-24 15:50:37.689685
+2024-03-24 15:50:37,692 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status
+2024-03-24 15:50:37,695 INFO    WriterThread:12944 [datastore.py:open_for_write():87] open: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\run-p8llfmf0.wandb
+2024-03-24 15:50:37,696 DEBUG   SenderThread:12944 [sender.py:send():378] send: header
+2024-03-24 15:50:37,738 DEBUG   SenderThread:12944 [sender.py:send():378] send: run
+2024-03-24 15:50:38,397 INFO    SenderThread:12944 [dir_watcher.py:__init__():211] watching files in: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files
+2024-03-24 15:50:38,410 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: check_version
+2024-03-24 15:50:38,428 INFO    SenderThread:12944 [sender.py:_start_run_threads():1099] run started: p8llfmf0 with start time 1711313437.69168
+2024-03-24 15:50:38,429 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: check_version
+2024-03-24 15:50:39,146 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: run_start
+2024-03-24 15:50:39,177 DEBUG   HandlerThread:12944 [system_info.py:__init__():26] System info init
+2024-03-24 15:50:39,177 DEBUG   HandlerThread:12944 [system_info.py:__init__():41] System info init done
+2024-03-24 15:50:39,177 INFO    HandlerThread:12944 [system_monitor.py:start():194] Starting system monitor
+2024-03-24 15:50:39,178 INFO    SystemMonitor:12944 [system_monitor.py:_start():158] Starting system asset monitoring threads
+2024-03-24 15:50:39,178 INFO    HandlerThread:12944 [system_monitor.py:probe():214] Collecting system info
+2024-03-24 15:50:39,181 INFO    SystemMonitor:12944 [interfaces.py:start():190] Started cpu monitoring
+2024-03-24 15:50:39,181 INFO    SystemMonitor:12944 [interfaces.py:start():190] Started disk monitoring
+2024-03-24 15:50:39,182 INFO    SystemMonitor:12944 [interfaces.py:start():190] Started gpu monitoring
+2024-03-24 15:50:39,183 INFO    SystemMonitor:12944 [interfaces.py:start():190] Started memory monitoring
+2024-03-24 15:50:39,197 INFO    SystemMonitor:12944 [interfaces.py:start():190] Started network monitoring
+2024-03-24 15:50:39,198 DEBUG   HandlerThread:12944 [system_info.py:probe():150] Probing system
+2024-03-24 15:50:39,199 DEBUG   HandlerThread:12944 [system_info.py:_probe_git():135] Probing git
+2024-03-24 15:50:39,282 DEBUG   HandlerThread:12944 [system_info.py:_probe_git():143] Probing git done
+2024-03-24 15:50:39,282 DEBUG   HandlerThread:12944 [system_info.py:probe():198] Probing system done
+2024-03-24 15:50:39,282 DEBUG   HandlerThread:12944 [system_monitor.py:probe():223] {'os': 'Windows-10-10.0.22631-SP0', 'python': '3.11.5', 'heartbeatAt': '2024-03-24T20:50:39.198321', 'startedAt': '2024-03-24T20:50:37.508882', 'docker': None, 'cuda': None, 'args': ('--model=HTGN', '--seed=710', '--dataset=aion', '--wandb'), 'state': 'running', 'program': 'D:\\Research\\ScalingTGN\\UTG\\script\\main.py', 'codePathLocal': 'main.py', 'codePath': 'script\\main.py', 'git': {'remote': 'https://github.com/benjaminnNgo/ScalingTGNs.git', 'commit': 'd657880a42da578806966a3aa9780b919bc5277d'}, 'email': 'ngot1@myumanitoba.ca', 'root': 'D:/Research/ScalingTGN/UTG', 'host': 'DESKTOP-NBS40GC', 'username': 'ngotr', 'executable': 'D:\\anaconda\\python.exe', 'cpu_count': 4, 'cpu_count_logical': 4, 'cpu_freq': {'current': 3400.0, 'min': 0.0, 'max': 3600.0}, 'cpu_freq_per_core': [{'current': 3400.0, 'min': 0.0, 'max': 3600.0}], 'disk': {'/': {'total': 453.42773056030273, 'used': 64.34031295776367}}, 'gpu': 'NVIDIA GeForce GTX 1660', 'gpu_count': 1, 'gpu_devices': [{'name': 'NVIDIA GeForce GTX 1660', 'memory_total': 6442450944}], 'memory': {'total': 23.936920166015625}}
+2024-03-24 15:50:39,282 INFO    HandlerThread:12944 [system_monitor.py:probe():224] Finished collecting system info
+2024-03-24 15:50:39,282 INFO    HandlerThread:12944 [system_monitor.py:probe():227] Publishing system info
+2024-03-24 15:50:39,282 DEBUG   HandlerThread:12944 [system_info.py:_save_conda():207] Saving list of conda packages installed into the current environment
+2024-03-24 15:50:39,411 INFO    Thread-16 :12944 [dir_watcher.py:_on_file_created():271] file/dir created: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\conda-environment.yaml
+2024-03-24 15:50:56,163 DEBUG   HandlerThread:12944 [system_info.py:_save_conda():219] Saving conda packages done
+2024-03-24 15:50:56,164 INFO    HandlerThread:12944 [system_monitor.py:probe():229] Finished publishing system info
+2024-03-24 15:50:56,168 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:50:56,168 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: keepalive
+2024-03-24 15:50:56,168 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:50:56,168 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: keepalive
+2024-03-24 15:50:56,168 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:50:56,168 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: keepalive
+2024-03-24 15:50:56,169 DEBUG   SenderThread:12944 [sender.py:send():378] send: files
+2024-03-24 15:50:56,169 INFO    SenderThread:12944 [sender.py:_save_file():1365] saving file wandb-metadata.json with policy now
+2024-03-24 15:50:56,549 INFO    Thread-16 :12944 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\conda-environment.yaml
+2024-03-24 15:50:56,550 INFO    Thread-16 :12944 [dir_watcher.py:_on_file_created():271] file/dir created: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\wandb-metadata.json
+2024-03-24 15:50:56,563 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: python_packages
+2024-03-24 15:50:56,563 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: python_packages
+2024-03-24 15:50:56,564 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: stop_status
+2024-03-24 15:50:56,565 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: internal_messages
+2024-03-24 15:50:56,566 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: stop_status
+2024-03-24 15:50:56,730 DEBUG   SenderThread:12944 [sender.py:send():378] send: telemetry
+2024-03-24 15:50:57,062 INFO    wandb-upload_0:12944 [upload_job.py:push():131] Uploaded file C:\Users\ngotr\AppData\Local\Temp\tmp4afs61lawandb\90lwop72-wandb-metadata.json
+2024-03-24 15:50:57,550 INFO    Thread-16 :12944 [dir_watcher.py:_on_file_created():271] file/dir created: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\requirements.txt
+2024-03-24 15:50:57,551 INFO    Thread-16 :12944 [dir_watcher.py:_on_file_created():271] file/dir created: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\output.log
+2024-03-24 15:50:59,286 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:50:59,583 INFO    Thread-16 :12944 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\output.log
+2024-03-24 15:51:04,317 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:51:09,348 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:51:09,716 INFO    Thread-16 :12944 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\config.yaml
+2024-03-24 15:51:10,984 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: partial_history
+2024-03-24 15:51:10,987 DEBUG   SenderThread:12944 [sender.py:send():378] send: history
+2024-03-24 15:51:10,987 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: summary_record
+2024-03-24 15:51:10,989 INFO    SenderThread:12944 [sender.py:_save_file():1365] saving file wandb-summary.json with policy end
+2024-03-24 15:51:11,577 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: internal_messages
+2024-03-24 15:51:11,577 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: stop_status
+2024-03-24 15:51:11,578 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: stop_status
+2024-03-24 15:51:11,732 INFO    Thread-16 :12944 [dir_watcher.py:_on_file_created():271] file/dir created: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\wandb-summary.json
+2024-03-24 15:51:13,760 INFO    Thread-16 :12944 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\output.log
+2024-03-24 15:51:14,723 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:51:19,764 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:51:24,224 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: partial_history
+2024-03-24 15:51:24,224 DEBUG   SenderThread:12944 [sender.py:send():378] send: history
+2024-03-24 15:51:24,224 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: summary_record
+2024-03-24 15:51:24,226 INFO    SenderThread:12944 [sender.py:_save_file():1365] saving file wandb-summary.json with policy end
+2024-03-24 15:51:24,898 INFO    Thread-16 :12944 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\wandb-summary.json
+2024-03-24 15:51:25,242 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:51:26,580 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: internal_messages
+2024-03-24 15:51:26,580 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: stop_status
+2024-03-24 15:51:26,581 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: stop_status
+2024-03-24 15:51:30,732 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:51:35,774 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:51:37,746 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: partial_history
+2024-03-24 15:51:37,746 DEBUG   SenderThread:12944 [sender.py:send():378] send: history
+2024-03-24 15:51:37,747 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: summary_record
+2024-03-24 15:51:37,748 INFO    SenderThread:12944 [sender.py:_save_file():1365] saving file wandb-summary.json with policy end
+2024-03-24 15:51:38,177 INFO    Thread-16 :12944 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\wandb-summary.json
+2024-03-24 15:51:39,205 DEBUG   SystemMonitor:12944 [system_monitor.py:_start():172] Starting system metrics aggregation loop
+2024-03-24 15:51:39,206 DEBUG   SenderThread:12944 [sender.py:send():378] send: stats
+2024-03-24 15:51:41,330 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:51:41,587 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: internal_messages
+2024-03-24 15:51:41,601 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: stop_status
+2024-03-24 15:51:41,603 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: stop_status
+2024-03-24 15:51:46,791 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:51:51,603 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: partial_history
+2024-03-24 15:51:51,604 DEBUG   SenderThread:12944 [sender.py:send():378] send: history
+2024-03-24 15:51:51,604 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: summary_record
+2024-03-24 15:51:51,605 INFO    SenderThread:12944 [sender.py:_save_file():1365] saving file wandb-summary.json with policy end
+2024-03-24 15:51:52,461 INFO    Thread-16 :12944 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\wandb-summary.json
+2024-03-24 15:51:52,617 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:51:56,594 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: internal_messages
+2024-03-24 15:51:56,594 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: stop_status
+2024-03-24 15:51:56,595 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: stop_status
+2024-03-24 15:51:57,708 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:52:02,753 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:52:04,106 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: partial_history
+2024-03-24 15:52:04,107 DEBUG   SenderThread:12944 [sender.py:send():378] send: history
+2024-03-24 15:52:04,107 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: summary_record
+2024-03-24 15:52:04,108 INFO    SenderThread:12944 [sender.py:_save_file():1365] saving file wandb-summary.json with policy end
+2024-03-24 15:52:04,541 INFO    Thread-16 :12944 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\wandb-summary.json
+2024-03-24 15:52:08,129 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:52:09,220 DEBUG   SenderThread:12944 [sender.py:send():378] send: stats
+2024-03-24 15:52:11,603 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: internal_messages
+2024-03-24 15:52:11,603 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: stop_status
+2024-03-24 15:52:11,604 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: stop_status
+2024-03-24 15:52:13,733 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:52:16,788 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: partial_history
+2024-03-24 15:52:16,789 DEBUG   SenderThread:12944 [sender.py:send():378] send: history
+2024-03-24 15:52:16,790 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: summary_record
+2024-03-24 15:52:16,791 INFO    SenderThread:12944 [sender.py:_save_file():1365] saving file wandb-summary.json with policy end
+2024-03-24 15:52:17,645 INFO    Thread-16 :12944 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\wandb-summary.json
+2024-03-24 15:52:18,810 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:52:23,843 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:52:26,605 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: stop_status
+2024-03-24 15:52:26,605 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: stop_status
+2024-03-24 15:52:26,618 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: internal_messages
+2024-03-24 15:52:29,767 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:52:30,090 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: partial_history
+2024-03-24 15:52:30,091 DEBUG   SenderThread:12944 [sender.py:send():378] send: history
+2024-03-24 15:52:30,091 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: summary_record
+2024-03-24 15:52:30,092 INFO    SenderThread:12944 [sender.py:_save_file():1365] saving file wandb-summary.json with policy end
+2024-03-24 15:52:30,801 INFO    Thread-16 :12944 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\wandb-summary.json
+2024-03-24 15:52:35,140 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:52:39,232 DEBUG   SenderThread:12944 [sender.py:send():378] send: stats
+2024-03-24 15:52:40,240 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:52:41,603 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: stop_status
+2024-03-24 15:52:41,603 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: stop_status
+2024-03-24 15:52:41,634 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: internal_messages
+2024-03-24 15:52:42,461 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: partial_history
+2024-03-24 15:52:42,462 DEBUG   SenderThread:12944 [sender.py:send():378] send: history
+2024-03-24 15:52:42,463 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: summary_record
+2024-03-24 15:52:42,464 INFO    SenderThread:12944 [sender.py:_save_file():1365] saving file wandb-summary.json with policy end
+2024-03-24 15:52:42,893 INFO    Thread-16 :12944 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\wandb-summary.json
+2024-03-24 15:52:45,496 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:52:50,539 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:52:53,765 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: partial_history
+2024-03-24 15:52:53,766 DEBUG   SenderThread:12944 [sender.py:send():378] send: history
+2024-03-24 15:52:53,767 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: summary_record
+2024-03-24 15:52:53,768 INFO    SenderThread:12944 [sender.py:_save_file():1365] saving file wandb-summary.json with policy end
+2024-03-24 15:52:53,997 INFO    Thread-16 :12944 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\wandb-summary.json
+2024-03-24 15:52:56,026 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:52:56,621 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: stop_status
+2024-03-24 15:52:56,622 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: stop_status
+2024-03-24 15:52:56,644 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: internal_messages
+2024-03-24 15:53:02,208 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:53:07,523 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:53:09,142 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: partial_history
+2024-03-24 15:53:09,142 DEBUG   SenderThread:12944 [sender.py:send():378] send: history
+2024-03-24 15:53:09,143 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: summary_record
+2024-03-24 15:53:09,148 INFO    SenderThread:12944 [sender.py:_save_file():1365] saving file wandb-summary.json with policy end
+2024-03-24 15:53:09,245 DEBUG   SenderThread:12944 [sender.py:send():378] send: stats
+2024-03-24 15:53:09,634 INFO    Thread-16 :12944 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\wandb-summary.json
+2024-03-24 15:53:11,649 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: stop_status
+2024-03-24 15:53:11,649 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: stop_status
+2024-03-24 15:53:11,732 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: internal_messages
+2024-03-24 15:53:12,778 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:53:17,910 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:53:22,736 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: partial_history
+2024-03-24 15:53:22,736 DEBUG   SenderThread:12944 [sender.py:send():378] send: history
+2024-03-24 15:53:22,737 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: summary_record
+2024-03-24 15:53:22,737 INFO    SenderThread:12944 [sender.py:_save_file():1365] saving file wandb-summary.json with policy end
+2024-03-24 15:53:23,000 INFO    Thread-16 :12944 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\wandb-summary.json
+2024-03-24 15:53:23,742 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:53:26,662 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: stop_status
+2024-03-24 15:53:26,663 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: stop_status
+2024-03-24 15:53:26,739 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: internal_messages
+2024-03-24 15:53:28,848 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:53:33,897 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:53:34,003 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: partial_history
+2024-03-24 15:53:34,004 DEBUG   SenderThread:12944 [sender.py:send():378] send: history
+2024-03-24 15:53:34,004 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: summary_record
+2024-03-24 15:53:34,005 INFO    SenderThread:12944 [sender.py:_save_file():1365] saving file wandb-summary.json with policy end
+2024-03-24 15:53:34,100 INFO    Thread-16 :12944 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\wandb-summary.json
+2024-03-24 15:53:39,047 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:53:39,519 DEBUG   SenderThread:12944 [sender.py:send():378] send: stats
+2024-03-24 15:53:41,674 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: stop_status
+2024-03-24 15:53:41,675 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: stop_status
+2024-03-24 15:53:41,751 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: internal_messages
+2024-03-24 15:53:44,858 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:53:50,321 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:53:51,762 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: partial_history
+2024-03-24 15:53:51,762 DEBUG   SenderThread:12944 [sender.py:send():378] send: history
+2024-03-24 15:53:51,763 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: summary_record
+2024-03-24 15:53:51,763 INFO    SenderThread:12944 [sender.py:_save_file():1365] saving file wandb-summary.json with policy end
+2024-03-24 15:53:52,535 INFO    Thread-16 :12944 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\wandb-summary.json
+2024-03-24 15:53:55,812 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:53:56,670 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: stop_status
+2024-03-24 15:53:56,671 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: stop_status
+2024-03-24 15:53:56,764 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: internal_messages
+2024-03-24 15:54:00,830 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:54:05,260 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: partial_history
+2024-03-24 15:54:05,261 DEBUG   SenderThread:12944 [sender.py:send():378] send: history
+2024-03-24 15:54:05,262 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: summary_record
+2024-03-24 15:54:05,262 INFO    SenderThread:12944 [sender.py:_save_file():1365] saving file wandb-summary.json with policy end
+2024-03-24 15:54:05,807 INFO    Thread-16 :12944 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\wandb-summary.json
+2024-03-24 15:54:06,267 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:54:09,531 DEBUG   SenderThread:12944 [sender.py:send():378] send: stats
+2024-03-24 15:54:11,553 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:54:11,680 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: stop_status
+2024-03-24 15:54:11,681 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: stop_status
+2024-03-24 15:54:11,775 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: internal_messages
+2024-03-24 15:54:16,849 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:54:17,784 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: partial_history
+2024-03-24 15:54:17,784 DEBUG   SenderThread:12944 [sender.py:send():378] send: history
+2024-03-24 15:54:17,785 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: summary_record
+2024-03-24 15:54:17,787 INFO    SenderThread:12944 [sender.py:_save_file():1365] saving file wandb-summary.json with policy end
+2024-03-24 15:54:17,925 INFO    Thread-16 :12944 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\wandb-summary.json
+2024-03-24 15:54:22,839 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:54:26,693 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: stop_status
+2024-03-24 15:54:26,694 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: stop_status
+2024-03-24 15:54:26,788 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: internal_messages
+2024-03-24 15:54:27,884 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:54:31,459 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: partial_history
+2024-03-24 15:54:31,459 DEBUG   SenderThread:12944 [sender.py:send():378] send: history
+2024-03-24 15:54:31,460 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: summary_record
+2024-03-24 15:54:31,461 INFO    SenderThread:12944 [sender.py:_save_file():1365] saving file wandb-summary.json with policy end
+2024-03-24 15:54:32,083 INFO    Thread-16 :12944 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\wandb-summary.json
+2024-03-24 15:54:33,478 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:54:38,586 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:54:39,540 DEBUG   SenderThread:12944 [sender.py:send():378] send: stats
+2024-03-24 15:54:41,693 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: stop_status
+2024-03-24 15:54:41,694 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: stop_status
+2024-03-24 15:54:41,803 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: internal_messages
+2024-03-24 15:54:41,953 DEBUG   SenderThread:12944 [sender.py:send():378] send: exit
+2024-03-24 15:54:41,953 INFO    SenderThread:12944 [sender.py:send_exit():585] handling exit code: 255
+2024-03-24 15:54:41,954 INFO    SenderThread:12944 [sender.py:send_exit():587] handling runtime: 242
+2024-03-24 15:54:41,955 INFO    SenderThread:12944 [sender.py:_save_file():1365] saving file wandb-summary.json with policy end
+2024-03-24 15:54:41,955 INFO    SenderThread:12944 [sender.py:send_exit():593] send defer
+2024-03-24 15:54:41,955 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: defer
+2024-03-24 15:54:41,956 INFO    HandlerThread:12944 [handler.py:handle_request_defer():172] handle defer: 0
+2024-03-24 15:54:41,956 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: defer
+2024-03-24 15:54:41,956 INFO    SenderThread:12944 [sender.py:send_request_defer():609] handle sender defer: 0
+2024-03-24 15:54:41,956 INFO    SenderThread:12944 [sender.py:transition_state():613] send defer: 1
+2024-03-24 15:54:41,956 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: defer
+2024-03-24 15:54:41,956 INFO    HandlerThread:12944 [handler.py:handle_request_defer():172] handle defer: 1
+2024-03-24 15:54:41,956 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: defer
+2024-03-24 15:54:41,957 INFO    SenderThread:12944 [sender.py:send_request_defer():609] handle sender defer: 1
+2024-03-24 15:54:41,957 INFO    SenderThread:12944 [sender.py:transition_state():613] send defer: 2
+2024-03-24 15:54:41,957 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: defer
+2024-03-24 15:54:41,957 INFO    HandlerThread:12944 [handler.py:handle_request_defer():172] handle defer: 2
+2024-03-24 15:54:41,957 INFO    HandlerThread:12944 [system_monitor.py:finish():203] Stopping system monitor
+2024-03-24 15:54:41,963 DEBUG   SystemMonitor:12944 [system_monitor.py:_start():179] Finished system metrics aggregation loop
+2024-03-24 15:54:41,963 DEBUG   SystemMonitor:12944 [system_monitor.py:_start():183] Publishing last batch of metrics
+2024-03-24 15:54:41,965 INFO    HandlerThread:12944 [interfaces.py:finish():202] Joined cpu monitor
+2024-03-24 15:54:41,965 INFO    HandlerThread:12944 [interfaces.py:finish():202] Joined disk monitor
+2024-03-24 15:54:42,020 INFO    HandlerThread:12944 [interfaces.py:finish():202] Joined gpu monitor
+2024-03-24 15:54:42,020 INFO    HandlerThread:12944 [interfaces.py:finish():202] Joined memory monitor
+2024-03-24 15:54:42,020 INFO    HandlerThread:12944 [interfaces.py:finish():202] Joined network monitor
+2024-03-24 15:54:42,021 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: defer
+2024-03-24 15:54:42,021 INFO    SenderThread:12944 [sender.py:send_request_defer():609] handle sender defer: 2
+2024-03-24 15:54:42,021 INFO    SenderThread:12944 [sender.py:transition_state():613] send defer: 3
+2024-03-24 15:54:42,021 DEBUG   SenderThread:12944 [sender.py:send():378] send: stats
+2024-03-24 15:54:42,021 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: defer
+2024-03-24 15:54:42,021 INFO    HandlerThread:12944 [handler.py:handle_request_defer():172] handle defer: 3
+2024-03-24 15:54:42,022 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: defer
+2024-03-24 15:54:42,022 INFO    SenderThread:12944 [sender.py:send_request_defer():609] handle sender defer: 3
+2024-03-24 15:54:42,022 INFO    SenderThread:12944 [sender.py:transition_state():613] send defer: 4
+2024-03-24 15:54:42,022 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: defer
+2024-03-24 15:54:42,022 INFO    HandlerThread:12944 [handler.py:handle_request_defer():172] handle defer: 4
+2024-03-24 15:54:42,022 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: defer
+2024-03-24 15:54:42,022 INFO    SenderThread:12944 [sender.py:send_request_defer():609] handle sender defer: 4
+2024-03-24 15:54:42,022 INFO    SenderThread:12944 [sender.py:transition_state():613] send defer: 5
+2024-03-24 15:54:42,023 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: defer
+2024-03-24 15:54:42,023 INFO    HandlerThread:12944 [handler.py:handle_request_defer():172] handle defer: 5
+2024-03-24 15:54:42,023 DEBUG   SenderThread:12944 [sender.py:send():378] send: summary
+2024-03-24 15:54:42,023 INFO    SenderThread:12944 [sender.py:_save_file():1365] saving file wandb-summary.json with policy end
+2024-03-24 15:54:42,024 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: defer
+2024-03-24 15:54:42,024 INFO    SenderThread:12944 [sender.py:send_request_defer():609] handle sender defer: 5
+2024-03-24 15:54:42,024 INFO    SenderThread:12944 [sender.py:transition_state():613] send defer: 6
+2024-03-24 15:54:42,024 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: defer
+2024-03-24 15:54:42,024 INFO    HandlerThread:12944 [handler.py:handle_request_defer():172] handle defer: 6
+2024-03-24 15:54:42,024 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: defer
+2024-03-24 15:54:42,024 INFO    SenderThread:12944 [sender.py:send_request_defer():609] handle sender defer: 6
+2024-03-24 15:54:42,025 INFO    SenderThread:12944 [sender.py:transition_state():613] send defer: 7
+2024-03-24 15:54:42,025 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 15:54:42,025 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: defer
+2024-03-24 15:54:42,025 INFO    HandlerThread:12944 [handler.py:handle_request_defer():172] handle defer: 7
+2024-03-24 15:54:42,025 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: defer
+2024-03-24 15:54:42,025 INFO    SenderThread:12944 [sender.py:send_request_defer():609] handle sender defer: 7
+2024-03-24 15:54:42,164 INFO    Thread-16 :12944 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\wandb-summary.json
+2024-03-24 15:54:42,960 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: poll_exit
+2024-03-24 15:54:43,634 INFO    SenderThread:12944 [sender.py:transition_state():613] send defer: 8
+2024-03-24 15:54:43,634 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: poll_exit
+2024-03-24 15:54:43,634 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: defer
+2024-03-24 15:54:43,634 INFO    HandlerThread:12944 [handler.py:handle_request_defer():172] handle defer: 8
+2024-03-24 15:54:43,635 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: defer
+2024-03-24 15:54:43,635 INFO    SenderThread:12944 [sender.py:send_request_defer():609] handle sender defer: 8
+2024-03-24 15:54:43,635 INFO    SenderThread:12944 [job_builder.py:build():298] Attempting to build job artifact
+2024-03-24 15:54:43,635 INFO    SenderThread:12944 [job_builder.py:_get_source_type():428] is repo sourced job
+2024-03-24 15:54:43,701 INFO    SenderThread:12944 [job_builder.py:build():404] adding wandb-job metadata file
+2024-03-24 15:54:43,706 INFO    SenderThread:12944 [sender.py:transition_state():613] send defer: 9
+2024-03-24 15:54:43,706 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: defer
+2024-03-24 15:54:43,706 INFO    HandlerThread:12944 [handler.py:handle_request_defer():172] handle defer: 9
+2024-03-24 15:54:43,706 DEBUG   SenderThread:12944 [sender.py:send():378] send: artifact
+2024-03-24 15:54:43,970 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: poll_exit
+2024-03-24 15:54:44,083 INFO    SenderThread:12944 [sender.py:send_artifact():1443] sent artifact job-https___github.com_benjaminnNgo_ScalingTGNs.git_script_main.py - {'id': 'QXJ0aWZhY3Q6NzY5MTY0NTA5', 'state': 'COMMITTED', 'artifactSequence': {'id': 'QXJ0aWZhY3RDb2xsZWN0aW9uOjE1MjA3OTY1NQ==', 'latestArtifact': {'id': 'QXJ0aWZhY3Q6NzY5MTY0NTA5', 'versionIndex': 0}}}
+2024-03-24 15:54:44,083 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: defer
+2024-03-24 15:54:44,083 INFO    SenderThread:12944 [sender.py:send_request_defer():609] handle sender defer: 9
+2024-03-24 15:54:44,083 INFO    SenderThread:12944 [dir_watcher.py:finish():358] shutting down directory watcher
+2024-03-24 15:54:44,191 INFO    SenderThread:12944 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\output.log
+2024-03-24 15:54:44,191 INFO    SenderThread:12944 [dir_watcher.py:finish():388] scan: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files
+2024-03-24 15:54:44,191 INFO    SenderThread:12944 [dir_watcher.py:finish():402] scan save: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\conda-environment.yaml conda-environment.yaml
+2024-03-24 15:54:44,192 INFO    SenderThread:12944 [dir_watcher.py:finish():402] scan save: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\config.yaml config.yaml
+2024-03-24 15:54:44,193 INFO    SenderThread:12944 [dir_watcher.py:finish():402] scan save: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\output.log output.log
+2024-03-24 15:54:44,194 INFO    SenderThread:12944 [dir_watcher.py:finish():402] scan save: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\requirements.txt requirements.txt
+2024-03-24 15:54:44,196 INFO    SenderThread:12944 [dir_watcher.py:finish():402] scan save: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\wandb-metadata.json wandb-metadata.json
+2024-03-24 15:54:44,199 INFO    SenderThread:12944 [dir_watcher.py:finish():402] scan save: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\wandb-summary.json wandb-summary.json
+2024-03-24 15:54:44,203 INFO    SenderThread:12944 [sender.py:transition_state():613] send defer: 10
+2024-03-24 15:54:44,203 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: poll_exit
+2024-03-24 15:54:44,204 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: defer
+2024-03-24 15:54:44,206 INFO    HandlerThread:12944 [handler.py:handle_request_defer():172] handle defer: 10
+2024-03-24 15:54:44,207 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: defer
+2024-03-24 15:54:44,207 INFO    SenderThread:12944 [sender.py:send_request_defer():609] handle sender defer: 10
+2024-03-24 15:54:44,207 INFO    SenderThread:12944 [file_pusher.py:finish():172] shutting down file pusher
+2024-03-24 15:54:44,511 INFO    wandb-upload_0:12944 [upload_job.py:push():131] Uploaded file D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\conda-environment.yaml
+2024-03-24 15:54:44,991 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: poll_exit
+2024-03-24 15:54:44,991 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: poll_exit
+2024-03-24 15:54:45,150 INFO    wandb-upload_1:12944 [upload_job.py:push():131] Uploaded file D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\config.yaml
+2024-03-24 15:54:45,924 INFO    wandb-upload_2:12944 [upload_job.py:push():131] Uploaded file D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\output.log
+2024-03-24 15:54:45,957 INFO    wandb-upload_4:12944 [upload_job.py:push():131] Uploaded file D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\wandb-summary.json
+2024-03-24 15:54:45,964 INFO    wandb-upload_3:12944 [upload_job.py:push():131] Uploaded file D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\files\requirements.txt
+2024-03-24 15:54:46,024 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: poll_exit
+2024-03-24 15:54:46,025 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: poll_exit
+2024-03-24 15:54:46,182 INFO    Thread-15 (_thread_body):12944 [sender.py:transition_state():613] send defer: 11
+2024-03-24 15:54:46,183 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: defer
+2024-03-24 15:54:46,183 INFO    HandlerThread:12944 [handler.py:handle_request_defer():172] handle defer: 11
+2024-03-24 15:54:46,183 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: defer
+2024-03-24 15:54:46,183 INFO    SenderThread:12944 [sender.py:send_request_defer():609] handle sender defer: 11
+2024-03-24 15:54:46,183 INFO    SenderThread:12944 [file_pusher.py:join():178] waiting for file pusher
+2024-03-24 15:54:46,184 INFO    SenderThread:12944 [sender.py:transition_state():613] send defer: 12
+2024-03-24 15:54:46,184 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: defer
+2024-03-24 15:54:46,184 INFO    HandlerThread:12944 [handler.py:handle_request_defer():172] handle defer: 12
+2024-03-24 15:54:46,184 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: defer
+2024-03-24 15:54:46,184 INFO    SenderThread:12944 [sender.py:send_request_defer():609] handle sender defer: 12
+2024-03-24 15:54:46,184 INFO    SenderThread:12944 [file_stream.py:finish():595] file stream finish called
+2024-03-24 15:54:46,249 ERROR   FileStreamThread:12944 [file_stream.py:_handle_response():504] dropped chunk 404 Client Error: Not Found for url: https://api.wandb.ai/files/ngotrangiabao2003/scalingTGNs/p8llfmf0/file_stream
+NoneType: None
+2024-03-24 15:54:46,361 INFO    SenderThread:12944 [file_stream.py:finish():599] file stream finish is done
+2024-03-24 15:54:46,362 INFO    SenderThread:12944 [sender.py:transition_state():613] send defer: 13
+2024-03-24 15:54:46,362 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: defer
+2024-03-24 15:54:46,362 INFO    HandlerThread:12944 [handler.py:handle_request_defer():172] handle defer: 13
+2024-03-24 15:54:46,362 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: defer
+2024-03-24 15:54:46,362 INFO    SenderThread:12944 [sender.py:send_request_defer():609] handle sender defer: 13
+2024-03-24 15:54:46,362 INFO    SenderThread:12944 [sender.py:transition_state():613] send defer: 14
+2024-03-24 15:54:46,362 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: defer
+2024-03-24 15:54:46,362 INFO    HandlerThread:12944 [handler.py:handle_request_defer():172] handle defer: 14
+2024-03-24 15:54:46,363 DEBUG   SenderThread:12944 [sender.py:send():378] send: final
+2024-03-24 15:54:46,363 DEBUG   SenderThread:12944 [sender.py:send():378] send: footer
+2024-03-24 15:54:46,363 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: defer
+2024-03-24 15:54:46,363 INFO    SenderThread:12944 [sender.py:send_request_defer():609] handle sender defer: 14
+2024-03-24 15:54:46,364 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: poll_exit
+2024-03-24 15:54:46,365 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: poll_exit
+2024-03-24 15:54:46,366 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: poll_exit
+2024-03-24 15:54:46,366 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: server_info
+2024-03-24 15:54:46,366 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: get_summary
+2024-03-24 15:54:46,367 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: sampled_history
+2024-03-24 15:54:46,367 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: internal_messages
+2024-03-24 15:54:46,367 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: poll_exit
+2024-03-24 15:54:46,368 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: server_info
+2024-03-24 15:54:46,370 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: job_info
+2024-03-24 15:54:46,431 DEBUG   SenderThread:12944 [sender.py:send_request():405] send_request: job_info
+2024-03-24 15:54:46,432 INFO    MainThread:12944 [wandb_run.py:_footer_history_summary_info():3851] rendering history
+2024-03-24 15:54:46,432 INFO    MainThread:12944 [wandb_run.py:_footer_history_summary_info():3883] rendering summary
+2024-03-24 15:54:46,433 INFO    MainThread:12944 [wandb_run.py:_footer_sync_info():3810] logging synced files
+2024-03-24 15:54:46,434 DEBUG   HandlerThread:12944 [handler.py:handle_request():146] handle_request: shutdown
+2024-03-24 15:54:46,434 INFO    HandlerThread:12944 [handler.py:finish():869] shutting down handler
+2024-03-24 15:54:47,379 INFO    WriterThread:12944 [datastore.py:close():296] close: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_155037-p8llfmf0\run-p8llfmf0.wandb
+2024-03-24 15:54:47,442 INFO    SenderThread:12944 [sender.py:finish():1521] shutting down sender
+2024-03-24 15:54:47,442 INFO    SenderThread:12944 [file_pusher.py:finish():172] shutting down file pusher
+2024-03-24 15:54:47,442 INFO    SenderThread:12944 [file_pusher.py:join():178] waiting for file pusher

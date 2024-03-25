@@ -1,0 +1,4 @@
+[2024-03-23 15:50:02,861 INFO] INFO: using one-hot feature
+[2024-03-23 15:50:03,034 INFO] using models HTGN 
+[2024-03-23 15:50:03,048 INFO] using hyper decoder
+[2024-03-23 15:50:03,048 INFO] INFO: total length: [190, 190], test length: 3

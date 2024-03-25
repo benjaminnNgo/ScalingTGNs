@@ -171,7 +171,7 @@ def load_continuous_time_dataset(dataset, neg_sample):
 def load_TGC_dataset(dataset):
     print("INFO: Loading a Graph from `Temporal Graph Classification (TGC)` Category: {}".format(dataset))
     data = {}
-    edgelist_rawfile = '../data/input/raw/{}/{}_edgelist.txt'.format(dataset, dataset)
+    edgelist_rawfile = '../data/input/raw/edgelists/{}_edgelist.txt'.format( dataset)
     edgelist_df = pd.read_csv(edgelist_rawfile)
     uniq_ts_list = np.unique(edgelist_df['snapshot'])
     print("INFO: Number of unique snapshots: {}".format(len(uniq_ts_list)))
@@ -232,12 +232,19 @@ def loader(dataset='enron10', neg_sample=''):
     elif dataset in ['canVote', 'LegisEdgelist', 'wikipedia', 'UNtrade']:
         print("INFO: Loading a continuous-time dynamic graph dataset: {}".format(dataset))
         data = load_continuous_time_dataset(dataset, neg_sample)
-    elif dataset in ['adex', 'aeternity', 'aion', 'aragon', 'bancor', 'centra', 'cindicator', 
-                     'coindash', 'dgd', 'iconomi',  'mathoverflow', 'RedditB', 'CollegeMsg']:
+    # elif dataset in ['adex', 'aeternity', 'aion', 'aragon', 'bancor', 'centra', 'cindicator',
+    #                  'coindash', 'dgd', 'iconomi',  'mathoverflow', 'RedditB', 'CollegeMsg']:
+    #
+    elif dataset in ['adex', 'aeternity', 'aion', 'aragon', 'bancor', 'centra', 'cindicator',
+                         'coindash', 'dgd', 'iconomi', 'mathoverflow', 'RedditB', 'CollegeMsg']:
         print("INFO: Loading a dynamic graph datasets for TG-Classification: {}".format(dataset))
         data = load_TGC_dataset(dataset)
     else:
-        raise ValueError("ERROR: Undefined dataset!")
+        try:
+            data = load_TGC_dataset(dataset)
+        except Exception as e:
+            raise ValueError("ERROR: Undefined dataset!")
+
     torch.save(data, filepath)
     print('INFO: Dataset is saved!')
     return data

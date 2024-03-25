@@ -4,6 +4,7 @@ import time
 import torch
 import numpy as np
 from math import isnan
+import wandb
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
@@ -11,6 +12,20 @@ sys.path.append(BASE_DIR)
 
 class Runner(object):
     def __init__(self):
+        if args.wandb:
+            wandb.init(
+                # set the wandb project where this run will be logged
+                project="scalingTGNs",
+                #Set name of the run:
+                name="{}_{}".format(args.dataset, args.model),
+                # track hyperparameters and run metadata
+                config={
+                    "learning_rate": args.lr,
+                    "architecture": args.model,
+                    "dataset": args.dataset,
+
+                }
+            )
         self.len = data['time_length']
         self.start_train = 0
         self.train_shots = list(range(0, self.len - args.testlength))
@@ -27,7 +42,7 @@ class Runner(object):
 
     def load_feature(self):
         if args.trainable_feat:
-
+            self.x = None
             logger.info("INFO: using trainable feature, feature dim: {}".format(args.nfeat))
         else:
             if args.pre_defined_feature is not None:
@@ -56,8 +71,7 @@ class Runner(object):
         t_total0 = time.time()#=======================fix this
         test_results, min_loss = [0] * 5, 10
         self.model.train()
-        for epoch in range(1, args.max_epoch + 1):
-            print("DEBUG-Bao:{}".format(self.x))
+        for epoch in range(1, 21):
         # for epoch in range(1, 2):
             t0 = time.time()
             epoch_losses = []
@@ -102,9 +116,19 @@ class Runner(object):
                                                                                                       test_results[2],
                                                                                                       test_results[3],
                                                                                                       test_results[4]))
+
+
             if isnan(epoch_loss):
                 print('nan loss')
                 break
+            if (args.wandb):
+                wandb.log({"train_loss": average_epoch_loss,
+                           "test_AUC": test_results[1],
+                           "AP": test_results[2],
+                           "New AUC": test_results[3],
+                           "New AP": test_results[4]
+
+                           })
         logger.info('>> Total time : %6.2f' % (time.time() - t_total0))
         logger.info(">> Parameters: lr:%.4f |Dim:%d |Window:%d |" % (args.lr, args.nhid, args.nb_window))
 

@@ -11,6 +11,7 @@ parser.add_argument('--nfeat', type=int, default=128, help='dim of input feature
 parser.add_argument('--nhid', type=int, default=16, help='dim of hidden embedding')
 parser.add_argument('--nout', type=int, default=16, help='dim of output embedding')
 parser.add_argument('--neg_sample', type=str, default='rnd', help='negative sampling strategy')
+parser.add_argument("--wandb", action="store_true", default=False, help="now using wandb")
 
 # 2.experiments
 parser.add_argument('--max_epoch', type=int, default=500, help='number of epochs to train.')
@@ -49,6 +50,7 @@ parser.add_argument('--egcn_type', type=str, default='EGCNH', help='Type of EGCN
 parser.add_argument('--curvature', type=float, default=1.0, help='curvature value')
 parser.add_argument('--fixed_curvature', type=int, default=1, help='fixed (1) curvature or not (0)')
 parser.add_argument('--aggregation', type=str, default='deg', help='aggregation method: [deg, att]')
+parser.add_argument('--results_file', type=str, default='results.csv', help='Name of file to store evaluation of all models')
 
 args = parser.parse_args()
 

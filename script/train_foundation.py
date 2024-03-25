@@ -64,10 +64,11 @@ class Runner(object):
         t_total0 = time.time()  # =======================fix this
         test_results, min_loss = [0] * 5, 10
         self.model.train()
-        for epoch in range(1, args.max_epoch + 1):
+        for epoch in range(1, 40):
             epoch_losses = []
             # for epoch in range(1, 2):
             for dataset_idx in range(self.num_datasets):
+                print("=======DEBUG: train on {}".format(dataset_idx))
                 # @TODO: need to find the way to handle epoch lost
                 t0 = time.time()
                 dataset_losses = [] #Changed to dataset lost?

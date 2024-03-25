@@ -18,7 +18,10 @@ from math import isnan
 from sklearn.metrics import roc_auc_score, average_precision_score
 from pickle import dump, load
 import matplotlib.pyplot as plt
-
+import wandb
+import warnings
+# Filter out a specific warning
+warnings.filterwarnings("ignore")
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
@@ -71,15 +74,15 @@ def extra_dataset_attributes_loading(args, readout_scheme='mean'):
     Load and process additional dataset attributes for TG-Classification
     This includes graph labels and node features for the nodes of each snapshot
     """
-    partial_path = f'../data/input/raw/{args.dataset}/'
+    partial_path = f'../data/input/raw/'
    
     # load graph lables
-    label_filename = f'{partial_path}/{args.dataset}_labels.csv'
+    label_filename = f'{partial_path}/labels/{args.dataset}_labels.csv'
     label_df = pd.read_csv(label_filename, header=None, names=['label'])
     TG_labels = torch.from_numpy(np.array(label_df['label'].tolist())).to(args.device)
 
     # load and process graph-pooled (node-level) features 
-    edgelist_filename = f'{partial_path}/{args.dataset}_edgelist.txt'
+    edgelist_filename = f'{partial_path}/edgelists/{args.dataset}_edgelist.txt'
     edgelist_df = pd.read_csv(edgelist_filename)
     uniq_ts_list = np.unique(edgelist_df['snapshot'])
     TG_feats = []
@@ -112,10 +115,33 @@ def extra_dataset_attributes_loading(args, readout_scheme='mean'):
     TG_feats = scalar.fit_transform(TG_feats)
 
     return TG_labels, TG_feats
-  
+
+def save_results(dataset,test_auc,test_ap):
+    result_path = f"../data/output/{args.results_file}"
+    if not os.path.exists(result_path):
+        result_df = pd.DataFrame(columns = ["dataset","test_auc","test_ap"])
+    else:
+        result_df = pd.read_csv(result_path)
+
+    result_df = result_df.append({'dataset': dataset,'test_auc': test_auc,'test_ap':test_ap}, ignore_index=True)
+    result_df.to_csv(result_path,index=False)
 
 class Runner(object):
     def __init__(self):
+        if args.wandb:
+            wandb.init(
+                # set the wandb project where this run will be logged
+                project="testing",
+                # Set name of the run:
+                name="{}_{}".format(args.dataset, args.model),
+                # track hyperparameters and run metadata
+                config={
+                    "learning_rate": args.lr,
+                    "architecture": args.model,
+                    "dataset": args.dataset,
+
+                }
+            )
         self.readout_scheme = 'mean'
         self.tgc_lr = 1e-4
 
@@ -210,7 +236,7 @@ class Runner(object):
         t_total_start = time.time()
         min_loss = 10
         train_avg_epoch_loss_dict = {}
-        for epoch in range(1, args.max_epoch + 1):
+        for epoch in range(1, 2):
             t_epoch_start = time.time()
             epoch_losses = []
             for t_train_idx, t_train in enumerate(self.train_shots):
@@ -260,6 +286,12 @@ class Runner(object):
             if isnan(t_loss):
                     print('ATTENTION: nan loss')
                     break
+            if (args.wandb):
+                wandb.log({"train_loss": avg_epoch_loss,
+                           "test_AUC": test_auc,
+                           "test AP": test_ap
+
+                           })
             
         logger.info('>> Total time : %6.2f' % (time.time() - t_total_start))
         logger.info(">> Parameters: lr:%.4f |Dim:%d |Window:%d |" % (args.lr, args.nhid, args.nb_window))
@@ -281,7 +313,7 @@ class Runner(object):
         plt.ylabel('Loss')
         plt.xticks(np.arange(0, epoch, 50))
         plt.legend(loc='best')
-        plt.show()
+        # plt.show()
         plt.savefig(f'{partial_results_path}/{args.model}_{args.dataset}_{args.seed}_train_loss.png')
         # -----------------------------------
         # -----------------------------------
@@ -289,6 +321,8 @@ class Runner(object):
         # Final Test
         test_epoch, test_auc, test_ap = self.tgclassification_test(epoch, self.readout_scheme)
         logger.info("Final Test: Epoch:{} , AUC: {:.4f}, AP: {:.4f}".format(test_epoch, test_auc, test_ap))
+        save_results(args.dataset,test_auc,test_ap)
+
 
 
 if __name__ == '__main__':

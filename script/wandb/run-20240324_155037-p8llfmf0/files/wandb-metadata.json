@@ -1,0 +1,58 @@
+{
+    "os": "Windows-10-10.0.22631-SP0",
+    "python": "3.11.5",
+    "heartbeatAt": "2024-03-24T20:50:39.198321",
+    "startedAt": "2024-03-24T20:50:37.508882",
+    "docker": null,
+    "cuda": null,
+    "args": [
+        "--model=HTGN",
+        "--seed=710",
+        "--dataset=aion",
+        "--wandb"
+    ],
+    "state": "running",
+    "program": "D:\\Research\\ScalingTGN\\UTG\\script\\main.py",
+    "codePathLocal": "main.py",
+    "codePath": "script\\main.py",
+    "git": {
+        "remote": "https://github.com/benjaminnNgo/ScalingTGNs.git",
+        "commit": "d657880a42da578806966a3aa9780b919bc5277d"
+    },
+    "email": "ngot1@myumanitoba.ca",
+    "root": "D:/Research/ScalingTGN/UTG",
+    "host": "DESKTOP-NBS40GC",
+    "username": "ngotr",
+    "executable": "D:\\anaconda\\python.exe",
+    "cpu_count": 4,
+    "cpu_count_logical": 4,
+    "cpu_freq": {
+        "current": 3400.0,
+        "min": 0.0,
+        "max": 3600.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 3400.0,
+            "min": 0.0,
+            "max": 3600.0
+        }
+    ],
+    "disk": {
+        "/": {
+            "total": 453.42773056030273,
+            "used": 64.34031295776367
+        }
+    },
+    "gpu": "NVIDIA GeForce GTX 1660",
+    "gpu_count": 1,
+    "gpu_devices": [
+        {
+            "name": "NVIDIA GeForce GTX 1660",
+            "memory_total": 6442450944
+        }
+    ],
+    "memory": {
+        "total": 23.936920166015625
+    }
+}
