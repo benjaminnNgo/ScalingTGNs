@@ -11,6 +11,7 @@ parser.add_argument('--nfeat', type=int, default=128, help='dim of input feature
 parser.add_argument('--nhid', type=int, default=16, help='dim of hidden embedding')
 parser.add_argument('--nout', type=int, default=16, help='dim of output embedding')
 parser.add_argument('--neg_sample', type=str, default='rnd', help='negative sampling strategy')
+parser.add_argument("--wandb", action="store_true", default=False, help="now using wandb")
 
 # 2.experiments
 parser.add_argument('--max_epoch', type=int, default=500, help='number of epochs to train.')
@@ -60,7 +61,7 @@ else:
     args.device = torch.device("cpu")
     print('INFO: using cpu to train the models')
 
-print(args.model)
+# print('{} model is used.'.format(args.model))
 args.output_folder = '../data/output/log/{}/{}/'.format(args.dataset, args.model)
 args.result_txt = '../data/output/results/{}_{}_result.txt'.format(args.dataset, args.model)
 

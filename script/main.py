@@ -146,6 +146,7 @@ if __name__ == '__main__':
     print("INFO: Dataset: {}".format(args.dataset))
     data = loader(dataset=args.dataset, neg_sample=args.neg_sample)
     args.num_nodes = data['num_nodes']
+    print(args.num_nodes)
     set_random(args.seed)
     init_logger(prepare_dir(args.output_folder) + args.dataset + '_seed_' + str(args.seed) + '.txt')
     runner = Runner()
