@@ -140,8 +140,9 @@ if __name__ == '__main__':
     from script.utils.util import set_random, logger, init_logger, disease_path
     from script.models.load_model import load_model
     from script.loss import ReconLoss, VGAEloss
-    from script.utils.data_util import loader, prepare_dir
+    from script.utils.data_util import loader, prepare_dir, process_data_gaps
     from script.inits import prepare
+    # process_data_gaps("/network/scratch/r/razieh.shirzadkhani/fm_data")
 
     print("INFO: Dataset: {}".format(args.dataset))
     data = loader(dataset=args.dataset, neg_sample=args.neg_sample)

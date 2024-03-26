@@ -38,7 +38,7 @@ class Runner(object):
 
 
         self.model = load_model(args).to(args.device)
-        self.model_path = '../saved_models/{}/{}_{}_seed_{}.pth'.format(args.dataset, args.dataset,
+        self.model_path = '../saved_models/fm/{}_{}_seed_{}.pth'.format(args.dataset, args.dataset,
                                                                         args.model, args.seed)
         print("INFO: models is going to be saved at {}".format(self.model_path))
 

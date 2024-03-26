@@ -53,4 +53,4 @@ env.bak/
 venv.bak/
 
 
-run_scripts/
+/wandb

@@ -262,3 +262,26 @@ def load_multiple_datasets(datasets_package_file,neg_sample):
 
     print("BAO:Number of dataset{}".format(len(datasets_packages)))
     return datasets_packages
+
+
+def process_data_gaps(directory):
+    columns = ["blockNumber", "timestamp", "tokenAddress", "from", "to", "value", "fileBlock"]
+    file1 = open('dataset_features.txt', 'w')
+    file1.writelines(["filename, start, end, duration, max_gap"])
+    for filename in os.listdir(directory):
+        filepath = directory + "/" + filename        
+        if filename.endswith('.csv'):
+            data = pd.read_csv(filepath, usecols=columns, index_col=False)
+            timestamps = pd.to_datetime(data["timestamp"], unit="s").dt.date
+            start = timestamps[0]
+            end = timestamps.iloc[-1]
+            time_difference = (end - start).days
+            unique_timestamps = timestamps.unique()
+            tot_len = len(unique_timestamps)
+            gaps = max(set([(unique_timestamps[i+1] - unique_timestamps[i]).days for i in range(tot_len-1)]))
+            file1.writelines([filename, ",", str(start), ",", str(end), ",",str(time_difference),",", str(gaps) ,"\n"])            
+    file1.close()
+
+
+if __name__ == '__main__':
+    process_data_gaps("/network/scratch/r/razieh.shirzadkhani/fm_data")

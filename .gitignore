@@ -53,4 +53,5 @@ env.bak/
 venv.bak/
 
 
-run_scripts/
+/run_scripts
+/data
