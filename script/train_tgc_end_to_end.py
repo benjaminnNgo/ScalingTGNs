@@ -102,8 +102,10 @@ def extra_dataset_attributes_loading(args, readout_scheme='mean'):
             TG_this_ts_feat = np.array([np.max(indegree_list), np.max(weighted_indegree_list),
                                         np.max(outdegree_list), np.max(weighted_outdegree_list)])
         elif readout_scheme == 'mean':
-            TG_this_ts_feat = np.array([np.mean(indegree_list), np.mean(weighted_indegree_list),
-                                        np.mean(outdegree_list), np.mean(weighted_outdegree_list)])
+            TG_this_ts_feat = np.array([np.mean(indegree_list[:, 1].astype(float)),
+                                        np.mean(weighted_indegree_list[:, 1].astype(float)),
+                                        np.mean(outdegree_list[:, 1].astype(float)),
+                                        np.mean(weighted_outdegree_list[:, 1].astype(float))])
         elif readout_scheme == 'sum':
             TG_this_ts_feat = np.array([np.sum(indegree_list), np.sum(weighted_indegree_list),
                                         np.sum(outdegree_list), np.sum(weighted_outdegree_list)])
@@ -127,7 +129,7 @@ def save_results(dataset, test_auc, test_ap):
     else:
         result_df = pd.read_csv(result_path)
 
-    result_df = result_df.append({'dataset': dataset, 'test_auc': test_auc, 'test_ap': test_ap}, ignore_index=True)
+    result_df = result_df._append({'dataset': dataset, 'test_auc': test_auc, 'test_ap': test_ap}, ignore_index=True)
     result_df.to_csv(result_path, index=False)
 
 
@@ -243,7 +245,7 @@ class Runner(object):
         t_total_start = time.time()
         min_loss = 10
         train_avg_epoch_loss_dict = {}
-        for epoch in range(1, 2):
+        for epoch in range(1, args.max_epoch + 1):
             t_epoch_start = time.time()
             epoch_losses = []
             for t_train_idx, t_train in enumerate(self.train_shots):
@@ -307,6 +309,9 @@ class Runner(object):
         # save the training loss values
         partial_results_path = f'../data/output/log/{args.dataset}/{args.model}/'
         loss_log_filename = f'{partial_results_path}/{args.model}_{args.dataset}_{args.seed}_train_loss.pkl'
+        if os.path.exists(partial_results_path)==False:
+            os.makedirs(partial_results_path)
+
         with open(loss_log_filename, 'wb') as file:
             dump(train_avg_epoch_loss_dict, file)
 
@@ -342,7 +347,8 @@ if __name__ == '__main__':
     args.model = "HTGN"
     args.seed = 710
     args.dataset = "AMB"
-    args.max_epoch = 200
+    args.max_epoch=200
+    args.testlength=10
 
     print("INFO: >>> Temporal Graph Classification <<<")
     print("INFO: Args: ", args)

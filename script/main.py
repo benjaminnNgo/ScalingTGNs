@@ -71,7 +71,7 @@ class Runner(object):
         t_total0 = time.time()#=======================fix this
         test_results, min_loss = [0] * 5, 10
         self.model.train()
-        for epoch in range(1, 21):
+        for epoch in range(1, args.max_epoch + 1):
         # for epoch in range(1, 2):
             t0 = time.time()
             epoch_losses = []
@@ -167,11 +167,14 @@ if __name__ == '__main__':
     from script.models.load_model import load_model
     from script.loss import ReconLoss, VGAEloss
     from script.utils.data_util import loader, prepare_dir, load_multiple_datasets
+    from script.utils.data_util import loader, prepare_dir, process_data_gaps
     from script.inits import prepare
+    # process_data_gaps("/network/scratch/r/razieh.shirzadkhani/fm_data")
 
     print("INFO: Dataset: {}".format(args.dataset))
     data = loader(dataset=args.dataset, neg_sample=args.neg_sample)
     args.num_nodes = data['num_nodes']
+    print(args.num_nodes)
     set_random(args.seed)
     init_logger(prepare_dir(args.output_folder) + args.dataset + '_seed_' + str(args.seed) + '.txt')
     runner = Runner()
