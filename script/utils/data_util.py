@@ -10,7 +10,12 @@ from torch_geometric.data import Data
 import pickle
 from script.utils.make_edges_orign import mask_edges_det, mask_edges_prd, mask_edges_prd_new_by_marlin
 from script.utils.make_edges_new import get_edges, get_prediction_edges, get_prediction_edges_modified, get_new_prediction_edges, get_new_prediction_edges_modified
+import shutil
+import datetime as dt
 
+root_path = "../data/all_network/"
+# timeseries_file_path = "../data/all_network/TimeSeries/"
+timeseries_file_path = "/network/scratch/r/razieh.shirzadkhani/fm_data/selected/"
 
 def mkdirs(path):
     if not os.path.isdir(path):
@@ -171,15 +176,15 @@ def load_continuous_time_dataset(dataset, neg_sample):
 def load_TGC_dataset(dataset):
     print("INFO: Loading a Graph from `Temporal Graph Classification (TGC)` Category: {}".format(dataset))
     data = {}
-    edgelist_rawfile = '../data/input/raw/{}/{}_edgelist.txt'.format(dataset, dataset)
+    edgelist_rawfile = '../data/Baseline/{}'.format(dataset, dataset)
     edgelist_df = pd.read_csv(edgelist_rawfile)
     uniq_ts_list = np.unique(edgelist_df['snapshot'])
     print("INFO: Number of unique snapshots: {}".format(len(uniq_ts_list)))
     adj_time_list = []
     for ts in uniq_ts_list:
         # NOTE: this code does not use any node or edge features
-        ts_edges = edgelist_df.loc[edgelist_df['snapshot'] == ts, ['source', 'destination']]
-        ts_G = nx.from_pandas_edgelist(ts_edges, 'source', 'destination')
+        ts_edges = edgelist_df.loc[edgelist_df['snapshot'] == ts, ['from', 'to']]
+        ts_G = nx.from_pandas_edgelist(ts_edges, 'from', 'to')
         ts_A = nx.to_scipy_sparse_array(ts_G)
         adj_time_list.append(ts_A)
 
@@ -188,7 +193,9 @@ def load_TGC_dataset(dataset):
     edge_proc_start = time.time()
     data = {}
     edges, biedges = mask_edges_det(adj_time_list)  # list
+    print("INFO: mask edges done!")
     pedges, nedges = mask_edges_prd(adj_time_list)  # list
+    print("INFO: mask edges 2 done!")
     new_pedges, new_nedges = mask_edges_prd_new_by_marlin(adj_time_list)  # list
     print('INFO: Processing finished! Elapsed time (sec.): {:.4}'.format(time.time() - edge_proc_start))
     assert len(edges) == len(biedges) == len(pedges) == len(nedges) == len(new_nedges) == len(new_pedges)
@@ -237,45 +244,61 @@ def loader(dataset='enron10', neg_sample=''):
         print("INFO: Loading a dynamic graph datasets for TG-Classification: {}".format(dataset))
         data = load_TGC_dataset(dataset)
     else:
-        raise ValueError("ERROR: Undefined dataset!")
+        data = load_TGC_dataset(dataset)
+        # raise ValueError("ERROR: Undefined dataset!")
     torch.save(data, filepath)
     print('INFO: Dataset is saved!')
     return data
 
+
 def load_multiple_datasets(datasets_package_file,neg_sample):
     datasets_packages = []
-    datasets_package_path = '../data/input/{}.txt'.format(datasets_package_file)
+    datasets_package_path = '../data/Baseline/'
     print(datasets_package_path)
     if os.path.exists(datasets_package_path):
         print("File exists.")
     else:
         print("File does not exist.")
 
-    try:
-        with open(datasets_package_path, 'r') as file:
-            for line in file:
-                print("INFO: Dataset: {}".format(line))
-                datasets_packages.append(loader(dataset=line.strip(), neg_sample=neg_sample))
-    except Exception as e:
-        print("ERROR: error in processing data pack {}".format(datasets_package_path))
-        print(e)
+    for dataset in datasets_package_file:
+        dataset_path = datasets_package_path + dataset
+    # for dataset in os.listdir(datasets_package_path):
+        name, ext = os.path.splitext(dataset)
+        print(ext)
+        if ext == '.csv':
+            datasets_packages.append(loader(dataset, neg_sample=neg_sample))
+
+    
+    # try:
+    #     with open(datasets_package_path, 'r') as file:
+    #         for line in file:
+    #             print("INFO: Dataset: {}".format(line))
+    #             datasets_packages.append(loader(dataset=line.strip(), neg_sample=neg_sample))
+    # except Exception as e:
+    #     print("ERROR: error in processing data pack {}".format(datasets_package_path))
+    #     print(e)
 
     print("BAO:Number of dataset{}".format(len(datasets_packages)))
     return datasets_packages
 
 
+
 def process_data_gaps(directory):
+
     columns = ["blockNumber", "timestamp", "tokenAddress", "from", "to", "value", "fileBlock"]
     file1 = open('dataset_features.txt', 'w')
     file1.writelines(["filename, start, end, duration, max_gap"])
+
     for filename in os.listdir(directory):
-        filepath = directory + "/" + filename        
+        filepath = directory + "/" + filename  
+
         if filename.endswith('.csv'):
             data = pd.read_csv(filepath, usecols=columns, index_col=False)
             timestamps = pd.to_datetime(data["timestamp"], unit="s").dt.date
             start = timestamps[0]
             end = timestamps.iloc[-1]
             time_difference = (end - start).days
+
             unique_timestamps = timestamps.unique()
             tot_len = len(unique_timestamps)
             gaps = max(set([(unique_timestamps[i+1] - unique_timestamps[i]).days for i in range(tot_len-1)]))
@@ -283,5 +306,5 @@ def process_data_gaps(directory):
     file1.close()
 
 
-if __name__ == '__main__':
-    process_data_gaps("/network/scratch/r/razieh.shirzadkhani/fm_data")
+# if __name__ == '__main__':
+#     process_data_gaps("/network/scratch/r/razieh.shirzadkhani/fm_data")

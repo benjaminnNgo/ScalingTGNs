@@ -114,8 +114,8 @@ class Runner(object):
         self.model = load_model(args).to(args.device)
         self.model_path = '../saved_models/{}/{}_{}_seed_{}.pth'.format(args.dataset, args.dataset,
                                                                    args.model, args.seed)
-        logger.info("The models is going to be loaded from {}".format(self.model_path))
-        self.model.load_state_dict(torch.load(self.model_path))
+        # logger.info("The models is going to be loaded from {}".format(self.model_path))
+        # self.model.load_state_dict(torch.load(self.model_path))
 
         # load the graph labels
         self.t_graph_labels, self.t_graph_feat = extra_dataset_attributes_loading(args)

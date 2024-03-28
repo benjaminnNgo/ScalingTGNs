@@ -19,6 +19,7 @@ from sklearn.metrics import roc_auc_score, average_precision_score
 from pickle import dump, load
 import matplotlib.pyplot as plt
 import wandb
+wandb.login(key="29968c684c2e412ed650ce0b5b52db584d572b86")
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
