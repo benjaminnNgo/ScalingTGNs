@@ -56,9 +56,6 @@ parser.add_argument('--curvature', type=float, default=1.0, help='curvature valu
 parser.add_argument('--fixed_curvature', type=int, default=1, help='fixed (1) curvature or not (0)')
 parser.add_argument('--aggregation', type=str, default='deg', help='aggregation method: [deg, att]')
 
-
-
-
 args = parser.parse_args()
 
 # set the running device

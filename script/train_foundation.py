@@ -4,6 +4,7 @@ import time
 import torch
 import numpy as np
 from math import isnan
+import wandb
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
@@ -11,13 +12,25 @@ sys.path.append(BASE_DIR)
 
 class Runner(object):
     def __init__(self):
+
+        if args.wandb:
+            wandb.init(
+                # set the wandb project where this run will be logged
+                project="ScalingTGNs",
+                
+                # track hyperparameters and run metadata
+                config={
+                "learning_rate": args.lr,
+                "architecture": args.model,
+                "dataset": args.dataset,
+                }
+            )
+
+
         self.num_datasets = len(data)
-        # self.len = data['time_length']
         self.len = [data[i]['time_length'] for i in range(self.num_datasets)] #Changed
         self.start_train = 0
-        # self.train_shots = list(range(0, self.len - args.testlength))
         self.train_shots = [list(range(0, self.len[i] - args.testlength)) for i in range(self.num_datasets)] #Changed
-        # self.test_shots = list(range(self.len - args.testlength, self.len))
         self.test_shots = [list(range(self.len[i] - args.testlength, self.len[i])) for i in range(self.num_datasets)] #Changed
 
         args.num_nodes = max(args.num_nodes)  # set to the maximum number of node among datasets?
@@ -25,12 +38,12 @@ class Runner(object):
 
 
         self.model = load_model(args).to(args.device)
-        self.model_path = '../saved_models/{}/{}_{}_seed_{}.pth'.format(args.dataset, args.dataset,
+        self.model_path = '../saved_models/fm/{}_{}_seed_{}.pth'.format(args.dataset, args.dataset,
                                                                         args.model, args.seed)
         print("INFO: models is going to be saved at {}".format(self.model_path))
 
         self.loss = ReconLoss(args) if args.model not in ['DynVAE', 'VGRNN', 'HVGRNN'] else VGAEloss(args)
-        print("INFO: Args: ", args)
+        # print("INFO: Args: ", args)
         logger.info('INFO: total length: {}, test length: {}'.format(self.len, args.testlength))
 
     def load_feature(self): #Nothing change here?
@@ -64,35 +77,33 @@ class Runner(object):
         t_total0 = time.time()  # =======================fix this
         test_results, min_loss = [0] * 5, 10
         self.model.train()
-        for epoch in range(1, 40):
+        for epoch in range(1, args.max_epoch + 1):
+            t0 = time.time()
             epoch_losses = []
-            # for epoch in range(1, 2):
-            for dataset_idx in range(self.num_datasets):
-                print("=======DEBUG: train on {}".format(dataset_idx))
-                # @TODO: need to find the way to handle epoch lost
-                t0 = time.time()
+
+            for dataset_idx in range(self.num_datasets): 
+                
                 dataset_losses = [] #Changed to dataset lost?
-                self.model.init_hiddens()
-                # train
+                self.model.init_hiddens() # Resetting node embeddings for each network
                 self.model.train()
 
                 #================== training on every snapshot================
                 # for t in self.train_shots:
                 for t in self.train_shots[dataset_idx]:     #Changed
-                        # edge_index, pos_index, neg_index, activate_nodes, edge_weight, _, _ = prepare(data, t)
-                        edge_index, pos_index, neg_index, activate_nodes, edge_weight, _, _ = prepare(data[dataset_idx], t) #Changed
-                        optimizer.zero_grad()
-                        z = self.model(edge_index, self.x)
-                        if args.use_htc == 0:
-                            # epoch_loss = self.loss(z, edge_index)  # this was default!!! It doesn't make sense to me!!!
-                            dataset_loss = self.loss(z, pos_index, neg_index)
-                        else:
-                            # epoch_loss = self.loss(z, edge_index) + self.models.htc(z)  # so as this one!
-                            dataset_loss = self.loss(z, pos_index, neg_index) + self.model.htc(z)
-                        dataset_loss.backward()
-                        optimizer.step()
-                        dataset_losses.append(dataset_loss.item())
-                        self.model.update_hiddens_all_with(z)
+                    # edge_index, pos_index, neg_index, activate_nodes, edge_weight, _, _ = prepare(data, t)
+                    edge_index, pos_index, neg_index, activate_nodes, edge_weight, _, _ = prepare(data[dataset_idx], t) #Changed
+                    optimizer.zero_grad()
+                    z = self.model(edge_index, self.x)
+                    if args.use_htc == 0:
+                        # epoch_loss = self.loss(z, edge_index)  # this was default!!! It doesn't make sense to me!!!
+                        dataset_loss = self.loss(z, pos_index, neg_index)
+                    else:
+                        # epoch_loss = self.loss(z, edge_index) + self.models.htc(z)  # so as this one!
+                        dataset_loss = self.loss(z, pos_index, neg_index) + self.model.htc(z)
+                    dataset_loss.backward()
+                    optimizer.step()
+                    dataset_losses.append(dataset_loss.item())
+                    self.model.update_hiddens_all_with(z)
 
 
                #================== Evaluation step ==================
@@ -100,23 +111,25 @@ class Runner(object):
 
                 average_dataset_loss = np.mean(dataset_losses)
                 epoch_losses.append(average_dataset_loss)
-                if average_dataset_loss < min_loss:
-                    min_loss = average_dataset_loss
-                    # test_results = self.test(epoch, z)
-                    test_results = self.test(epoch,dataset_idx, z) # Changed
-                    patience = 0
-                else:
-                    patience += 1
-                    if epoch > args.min_epoch and patience > args.patience:
-                        print('INFO: Early Stopping...')
-                        break
-                gpu_mem_alloc = torch.cuda.max_memory_allocated() / 1000000 if torch.cuda.is_available() else 0
-
-                if isnan(dataset_loss):
-                    print('nan loss')
-                    break
-
             average_epoch_loss =  np.mean(epoch_losses)
+            # if average_dataset_loss < min_loss: #Should we compare mean_epoch_loss
+            if average_epoch_loss < min_loss:
+                min_loss = average_epoch_loss
+                # test_results = self.test(epoch, z)
+                test_results = self.test(epoch,dataset_idx, z) # Changed
+                patience = 0 # What is patience
+            else:
+                patience += 1
+                if epoch > args.min_epoch and patience > args.patience:
+                    print('INFO: Early Stopping...')
+                    break
+            gpu_mem_alloc = torch.cuda.max_memory_allocated() / 1000000 if torch.cuda.is_available() else 0
+
+            if isnan(dataset_loss):
+                print('nan loss')
+                break
+
+            # average_epoch_loss =  np.mean(epoch_losses)
             # ================== End of an epoch================
             if epoch == 1 or epoch % args.log_interval == 0:
                     logger.info('==' * 27)
@@ -130,7 +143,15 @@ class Runner(object):
                                                                                                           test_results[2],
                                                                                                           test_results[3],
                                                                                                           test_results[4]))
-
+            if (args.wandb):
+                wandb.log({"train_loss": average_epoch_loss,
+                        "Test AUC" : test_results[1],
+                        "AP" : test_results[2],
+                        "New AuC" : test_results[3],
+                        "New AP" : test_results[4],
+                        # "train time": train_end_time - train_start_time,
+                        # "val time": val_end_time - val_start_time,
+                        })
 
 
 
@@ -181,6 +202,7 @@ if __name__ == '__main__':
     # data = loader(dataset=args.dataset, neg_sample=args.neg_sample)
     data = load_multiple_datasets(args.dataset, args.neg_sample)
     args.num_nodes = [data[i]['num_nodes'] for i in range(len(data))]
+    print(args.num_nodes)
     set_random(args.seed)
     init_logger(prepare_dir(args.output_folder) + args.dataset + '_seed_' + str(args.seed) + '.txt')
     runner = Runner()

@@ -1,0 +1,163 @@
+[2024-03-25 09:17:08,668 INFO] INFO: using one-hot feature
+[2024-03-25 09:17:08,826 INFO] using models HTGN 
+[2024-03-25 09:17:08,838 INFO] using hyper decoder
+[2024-03-25 09:17:08,839 INFO] INFO: total length: [190, 190], test length: 3
+[2024-03-25 09:17:26,815 INFO] ======================================================
+[2024-03-25 09:17:26,816 INFO] INFO: Epoch:1, Loss: 1.3575, Time: 8.618, GPU: 198.9MiB
+[2024-03-25 09:17:26,816 INFO] Epoch:1, Test AUC: 0.6135, AP: 0.6125, New AUC: 0.6047, New AP: 0.5913
+[2024-03-25 11:43:56,865 INFO] INFO: using one-hot feature
+[2024-03-25 11:43:57,110 INFO] using models HTGN 
+[2024-03-25 11:43:57,126 INFO] using hyper decoder
+[2024-03-25 11:43:57,126 INFO] INFO: total length: [190, 190], test length: 3
+[2024-03-25 11:44:17,897 INFO] ======================================================
+[2024-03-25 11:44:17,897 INFO] INFO: Epoch:1, Loss: 1.3580, Time: 20.392, GPU: 198.9MiB
+[2024-03-25 11:44:17,897 INFO] Epoch:1, Test AUC: 0.6157, AP: 0.6126, New AUC: 0.6078, New AP: 0.5943
+[2024-03-25 11:48:53,878 INFO] Epoch:20 (test_method); Transductive: average AUC: 0.5634; average AP: 0.6287
+[2024-03-25 11:48:53,880 INFO] Epoch:20 (test_method); Inductive: average AUC: 0.5541; average AP: 0.6119
+[2024-03-25 11:48:53,881 INFO] ======================================================
+[2024-03-25 11:48:53,881 INFO] INFO: Epoch:20, Loss: 0.7228, Time: 13.942, GPU: 198.9MiB
+[2024-03-25 11:48:53,881 INFO] Epoch:20, Test AUC: 0.5634, AP: 0.6287, New AUC: 0.5541, New AP: 0.6119
+[2024-03-25 11:53:45,238 INFO] ======================================================
+[2024-03-25 11:53:45,254 INFO] INFO: Epoch:40, Loss: 0.6897, Time: 13.402, GPU: 198.9MiB
+[2024-03-25 11:53:45,254 INFO] Epoch:39, Test AUC: 0.5728, AP: 0.6450, New AUC: 0.5569, New AP: 0.6220
+[2024-03-25 11:58:22,414 INFO] ======================================================
+[2024-03-25 11:58:22,416 INFO] INFO: Epoch:60, Loss: 0.6861, Time: 13.192, GPU: 198.9MiB
+[2024-03-25 11:58:22,416 INFO] Epoch:57, Test AUC: 0.5877, AP: 0.6493, New AUC: 0.5764, New AP: 0.6345
+[2024-03-25 12:03:01,594 INFO] ======================================================
+[2024-03-25 12:03:01,596 INFO] INFO: Epoch:80, Loss: 0.6755, Time: 13.251, GPU: 198.9MiB
+[2024-03-25 12:03:01,596 INFO] Epoch:78, Test AUC: 0.5553, AP: 0.6423, New AUC: 0.5365, New AP: 0.6202
+[2024-03-25 12:07:28,538 INFO] ======================================================
+[2024-03-25 12:07:28,540 INFO] INFO: Epoch:100, Loss: 0.6728, Time: 13.216, GPU: 198.9MiB
+[2024-03-25 12:07:28,540 INFO] Epoch:98, Test AUC: 0.5553, AP: 0.6484, New AUC: 0.5399, New AP: 0.6282
+[2024-03-25 12:11:55,327 INFO] ======================================================
+[2024-03-25 12:11:55,344 INFO] INFO: Epoch:120, Loss: 0.6709, Time: 13.218, GPU: 198.9MiB
+[2024-03-25 12:11:55,344 INFO] Epoch:116, Test AUC: 0.5434, AP: 0.6410, New AUC: 0.5224, New AP: 0.6159
+[2024-03-25 12:16:20,435 INFO] Epoch:140 (test_method); Transductive: average AUC: 0.5881; average AP: 0.6652
+[2024-03-25 12:16:20,438 INFO] Epoch:140 (test_method); Inductive: average AUC: 0.5672; average AP: 0.6415
+[2024-03-25 12:16:20,438 INFO] ======================================================
+[2024-03-25 12:16:20,438 INFO] INFO: Epoch:140, Loss: 0.6675, Time: 13.247, GPU: 198.9MiB
+[2024-03-25 12:16:20,439 INFO] Epoch:140, Test AUC: 0.5881, AP: 0.6652, New AUC: 0.5672, New AP: 0.6415
+[2024-03-25 12:20:52,682 INFO] Epoch:160 (test_method); Transductive: average AUC: 0.6060; average AP: 0.6750
+[2024-03-25 12:20:52,685 INFO] Epoch:160 (test_method); Inductive: average AUC: 0.5894; average AP: 0.6552
+[2024-03-25 12:20:52,686 INFO] ======================================================
+[2024-03-25 12:20:52,687 INFO] INFO: Epoch:160, Loss: 0.6637, Time: 13.338, GPU: 198.9MiB
+[2024-03-25 12:20:52,687 INFO] Epoch:160, Test AUC: 0.6060, AP: 0.6750, New AUC: 0.5894, New AP: 0.6552
+[2024-03-25 12:25:29,877 INFO] ======================================================
+[2024-03-25 12:25:29,880 INFO] INFO: Epoch:180, Loss: 0.6592, Time: 13.225, GPU: 198.9MiB
+[2024-03-25 12:25:29,880 INFO] Epoch:175, Test AUC: 0.5960, AP: 0.6703, New AUC: 0.5823, New AP: 0.6492
+[2024-03-25 12:28:31,864 INFO] INFO: using one-hot feature
+[2024-03-25 12:28:32,079 INFO] using models HTGN 
+[2024-03-25 12:28:32,097 INFO] using hyper decoder
+[2024-03-25 12:28:32,097 INFO] INFO: total length: [190, 190], test length: 3
+[2024-03-25 12:28:50,370 INFO] ======================================================
+[2024-03-25 12:28:50,370 INFO] INFO: Epoch:1, Loss: 1.3575, Time: 17.844, GPU: 198.9MiB
+[2024-03-25 12:28:50,370 INFO] Epoch:1, Test AUC: 0.6152, AP: 0.6116, New AUC: 0.6088, New AP: 0.5948
+[2024-03-25 12:30:01,716 INFO] ======================================================
+[2024-03-25 12:30:01,718 INFO] INFO: Epoch:200, Loss: 0.6599, Time: 13.219, GPU: 198.9MiB
+[2024-03-25 12:30:01,718 INFO] Epoch:182, Test AUC: 0.5785, AP: 0.6642, New AUC: 0.5653, New AP: 0.6442
+[2024-03-25 12:33:53,113 INFO] Epoch:20 (test_method); Transductive: average AUC: 0.5898; average AP: 0.6542
+[2024-03-25 12:33:53,114 INFO] Epoch:20 (test_method); Inductive: average AUC: 0.5788; average AP: 0.6339
+[2024-03-25 12:33:53,115 INFO] ======================================================
+[2024-03-25 12:33:53,115 INFO] INFO: Epoch:20, Loss: 0.6996, Time: 15.516, GPU: 198.9MiB
+[2024-03-25 12:33:53,115 INFO] Epoch:20, Test AUC: 0.5898, AP: 0.6542, New AUC: 0.5788, New AP: 0.6339
+[2024-03-25 12:33:53,115 INFO] >> Total time : 320.59
+[2024-03-25 12:33:53,116 INFO] >> Parameters: lr:0.0100 |Dim:16 |Window:5 |
+[2024-03-25 12:33:53,116 INFO] INFO: Saving the models...
+[2024-03-25 12:34:32,633 INFO] ======================================================
+[2024-03-25 12:34:32,636 INFO] INFO: Epoch:220, Loss: 0.6561, Time: 13.239, GPU: 198.9MiB
+[2024-03-25 12:34:32,636 INFO] Epoch:217, Test AUC: 0.5970, AP: 0.6738, New AUC: 0.5805, New AP: 0.6517
+[2024-03-25 12:34:36,225 INFO] INFO: using one-hot feature
+[2024-03-25 12:34:36,389 INFO] using models HTGN 
+[2024-03-25 12:34:36,406 INFO] using hyper decoder
+[2024-03-25 12:34:36,406 INFO] INFO: total length: [190, 190], test length: 3
+[2024-03-25 12:34:51,846 INFO] ======================================================
+[2024-03-25 12:34:51,847 INFO] INFO: Epoch:1, Loss: 1.3872, Time: 15.080, GPU: 198.9MiB
+[2024-03-25 12:34:51,847 INFO] Epoch:1, Test AUC: 0.6286, AP: 0.6129, New AUC: 0.6246, New AP: 0.6017
+[2024-03-25 12:35:53,826 INFO] >> Total time :  77.06
+[2024-03-25 12:35:53,826 INFO] >> Parameters: lr:0.0100 |Dim:16 |Window:5 |
+[2024-03-25 12:35:53,826 INFO] INFO: Saving the models...
+[2024-03-25 12:35:54,259 INFO] INFO: The models is saved. Done.
+[2024-03-25 12:39:02,690 INFO] ======================================================
+[2024-03-25 12:39:02,692 INFO] INFO: Epoch:240, Loss: 0.6577, Time: 13.281, GPU: 198.9MiB
+[2024-03-25 12:39:02,692 INFO] Epoch:234, Test AUC: 0.6050, AP: 0.6782, New AUC: 0.5938, New AP: 0.6603
+[2024-03-25 12:43:36,037 INFO] Epoch:260 (test_method); Transductive: average AUC: 0.5802; average AP: 0.6624
+[2024-03-25 12:43:36,038 INFO] Epoch:260 (test_method); Inductive: average AUC: 0.5664; average AP: 0.6421
+[2024-03-25 12:43:36,038 INFO] ======================================================
+[2024-03-25 12:43:36,038 INFO] INFO: Epoch:260, Loss: 0.6518, Time: 15.350, GPU: 198.9MiB
+[2024-03-25 12:43:36,038 INFO] Epoch:260, Test AUC: 0.5802, AP: 0.6624, New AUC: 0.5664, New AP: 0.6421
+[2024-03-25 12:44:01,060 INFO] INFO: using one-hot feature
+[2024-03-25 12:44:01,267 INFO] using models HTGN 
+[2024-03-25 12:44:01,283 INFO] using hyper decoder
+[2024-03-25 12:44:01,283 INFO] INFO: total length: [190, 190], test length: 3
+[2024-03-25 12:44:17,625 INFO] ======================================================
+[2024-03-25 12:44:17,626 INFO] INFO: Epoch:1, Loss: 1.3580, Time: 15.981, GPU: 198.9MiB
+[2024-03-25 12:44:17,626 INFO] Epoch:1, Test AUC: 0.6121, AP: 0.6081, New AUC: 0.6035, New AP: 0.5906
+[2024-03-25 12:45:22,777 INFO] >> Total time :  81.13
+[2024-03-25 12:45:22,778 INFO] >> Parameters: lr:0.0100 |Dim:16 |Window:5 |
+[2024-03-25 12:45:22,778 INFO] INFO: Saving the models...
+[2024-03-25 12:45:23,270 INFO] INFO: The models is saved. Done.
+[2024-03-25 12:48:12,533 INFO] INFO: using one-hot feature
+[2024-03-25 12:48:12,694 INFO] using models HTGN 
+[2024-03-25 12:48:12,709 INFO] using hyper decoder
+[2024-03-25 12:48:12,709 INFO] INFO: total length: [190, 190], test length: 3
+[2024-03-25 12:48:14,690 INFO] ======================================================
+[2024-03-25 12:48:14,692 INFO] INFO: Epoch:280, Loss: 0.6468, Time: 13.526, GPU: 198.9MiB
+[2024-03-25 12:48:14,692 INFO] Epoch:278, Test AUC: 0.6319, AP: 0.6953, New AUC: 0.6198, New AP: 0.6766
+[2024-03-25 12:48:26,882 INFO] ======================================================
+[2024-03-25 12:48:26,884 INFO] INFO: Epoch:1, Loss: 1.3568, Time: 13.861, GPU: 198.9MiB
+[2024-03-25 12:48:26,884 INFO] Epoch:1, Test AUC: 0.6129, AP: 0.6068, New AUC: 0.6074, New AP: 0.5924
+[2024-03-25 12:49:20,111 INFO] >> Total time :  67.09
+[2024-03-25 12:49:20,112 INFO] >> Parameters: lr:0.0100 |Dim:16 |Window:5 |
+[2024-03-25 12:49:20,112 INFO] INFO: Saving the models...
+[2024-03-25 12:49:20,619 INFO] INFO: The models is saved. Done.
+[2024-03-25 12:52:48,212 INFO] ======================================================
+[2024-03-25 12:52:48,214 INFO] INFO: Epoch:300, Loss: 0.6423, Time: 13.193, GPU: 198.9MiB
+[2024-03-25 12:52:48,214 INFO] Epoch:284, Test AUC: 0.6296, AP: 0.6931, New AUC: 0.6170, New AP: 0.6743
+[2024-03-25 12:57:13,968 INFO] ======================================================
+[2024-03-25 12:57:13,969 INFO] INFO: Epoch:320, Loss: 0.6501, Time: 13.139, GPU: 198.9MiB
+[2024-03-25 12:57:13,969 INFO] Epoch:316, Test AUC: 0.6183, AP: 0.6857, New AUC: 0.6013, New AP: 0.6645
+[2024-03-25 13:01:38,589 INFO] ======================================================
+[2024-03-25 13:01:38,589 INFO] INFO: Epoch:340, Loss: 0.6410, Time: 13.084, GPU: 198.9MiB
+[2024-03-25 13:01:38,589 INFO] Epoch:316, Test AUC: 0.6183, AP: 0.6857, New AUC: 0.6013, New AP: 0.6645
+[2024-03-25 13:06:07,491 INFO] ======================================================
+[2024-03-25 13:06:07,494 INFO] INFO: Epoch:360, Loss: 0.6426, Time: 13.188, GPU: 198.9MiB
+[2024-03-25 13:06:07,494 INFO] Epoch:349, Test AUC: 0.6161, AP: 0.6851, New AUC: 0.6044, New AP: 0.6677
+[2024-03-25 13:10:38,209 INFO] ======================================================
+[2024-03-25 13:10:38,210 INFO] INFO: Epoch:380, Loss: 0.6380, Time: 13.064, GPU: 198.9MiB
+[2024-03-25 13:10:38,210 INFO] Epoch:376, Test AUC: 0.6204, AP: 0.6893, New AUC: 0.6090, New AP: 0.6703
+[2024-03-25 13:15:06,373 INFO] ======================================================
+[2024-03-25 13:15:06,374 INFO] INFO: Epoch:400, Loss: 0.6359, Time: 14.536, GPU: 198.9MiB
+[2024-03-25 13:15:06,374 INFO] Epoch:398, Test AUC: 0.6133, AP: 0.6874, New AUC: 0.6006, New AP: 0.6698
+[2024-03-25 13:19:33,638 INFO] ======================================================
+[2024-03-25 13:19:33,639 INFO] INFO: Epoch:420, Loss: 0.6335, Time: 13.192, GPU: 198.9MiB
+[2024-03-25 13:19:33,639 INFO] Epoch:415, Test AUC: 0.6329, AP: 0.6974, New AUC: 0.6215, New AP: 0.6809
+[2024-03-25 13:24:01,847 INFO] ======================================================
+[2024-03-25 13:24:01,849 INFO] INFO: Epoch:440, Loss: 0.6303, Time: 13.176, GPU: 198.9MiB
+[2024-03-25 13:24:01,849 INFO] Epoch:436, Test AUC: 0.6210, AP: 0.6897, New AUC: 0.6092, New AP: 0.6731
+[2024-03-25 13:26:28,998 INFO] INFO: using one-hot feature
+[2024-03-25 13:26:29,203 INFO] using models HTGN 
+[2024-03-25 13:26:29,217 INFO] using hyper decoder
+[2024-03-25 13:26:29,218 INFO] INFO: total length: [190, 190], test length: 3
+[2024-03-25 13:28:24,981 INFO] ======================================================
+[2024-03-25 13:28:24,985 INFO] INFO: Epoch:460, Loss: 0.6287, Time: 13.178, GPU: 198.9MiB
+[2024-03-25 13:28:24,985 INFO] Epoch:436, Test AUC: 0.6210, AP: 0.6897, New AUC: 0.6092, New AP: 0.6731
+[2024-03-25 13:32:48,055 INFO] ======================================================
+[2024-03-25 13:32:48,055 INFO] INFO: Epoch:480, Loss: 0.6310, Time: 13.178, GPU: 198.9MiB
+[2024-03-25 13:32:48,055 INFO] Epoch:436, Test AUC: 0.6210, AP: 0.6897, New AUC: 0.6092, New AP: 0.6731
+[2024-03-25 13:37:23,890 INFO] ======================================================
+[2024-03-25 13:37:23,891 INFO] INFO: Epoch:500, Loss: 0.6283, Time: 13.186, GPU: 198.9MiB
+[2024-03-25 13:37:23,891 INFO] Epoch:496, Test AUC: 0.6373, AP: 0.7005, New AUC: 0.6251, New AP: 0.6831
+[2024-03-25 13:37:23,891 INFO] >> Total time : 6806.39
+[2024-03-25 13:37:23,892 INFO] >> Parameters: lr:0.0100 |Dim:16 |Window:5 |
+[2024-03-25 13:37:23,892 INFO] INFO: Saving the models...
+[2024-03-25 14:20:31,120 INFO] INFO: using one-hot feature
+[2024-03-25 14:20:31,279 INFO] using models HTGN 
+[2024-03-25 14:20:31,293 INFO] using hyper decoder
+[2024-03-25 14:20:31,293 INFO] INFO: total length: [190, 190], test length: 3
+[2024-03-25 14:20:45,358 INFO] ======================================================
+[2024-03-25 14:20:45,359 INFO] INFO: Epoch:1, Loss: 1.3575, Time: 13.740, GPU: 198.9MiB
+[2024-03-25 14:20:45,359 INFO] Epoch:1, Test AUC: 0.6123, AP: 0.6057, New AUC: 0.6046, New AP: 0.5906
+[2024-03-25 14:21:44,060 INFO] >> Total time :  72.44
+[2024-03-25 14:21:44,061 INFO] >> Parameters: lr:0.0100 |Dim:16 |Window:5 |
+[2024-03-25 14:21:44,061 INFO] INFO: Saving the models...
+[2024-03-25 14:21:44,540 INFO] INFO: The models is saved. Done.
