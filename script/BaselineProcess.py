@@ -3,8 +3,9 @@ import shutil
 import datetime as dt
 import pandas as pd
 
-root_path = "../data/input/temp"
-timeseries_file_path = "../data/input/temp/"
+root_path = "../data/input/tokens/raw/"
+timeseries_file_path = "../data/input/tokens/raw/"
+
 
 def creatBaselineDatasets(file, normalization=False):
     print("Processing {}".format(file))
@@ -13,13 +14,33 @@ def creatBaselineDatasets(file, normalization=False):
     lableWindowSize = 7  # Day
     minValidDuration = 20  # Day
     indx = 0
+    batch_size = 20
+    batch_lables = []
 
-    selectedNetwork = pd.read_csv((timeseries_file_path + file), sep=' ', names=["from", "to", "date", "value"])
-    selectedNetwork['date'] = pd.to_datetime(selectedNetwork['date'], unit='s').dt.date
+    if os.path.exists("../data/input/tokens/reformatted/Labels/" + file):
+        os.remove("../data/input/tokens/reformatted/Labels/" + file)
+
+    csv_edgelist_file_path = "../data/input/tokens/reformatted/EdgeLists/" + file.split("_")[0] + "_edgelist.txt"
+    if os.path.exists(csv_edgelist_file_path):
+        appended_edgelist_df = pd.read_csv(csv_edgelist_file_path)
+    else:
+        appended_edgelist_df = pd.DataFrame()
+
+    selectedNetwork = pd.read_csv((timeseries_file_path + file), sep=',')
+    selectedNetwork['date'] = pd.to_datetime(selectedNetwork['timestamp'], unit='s').dt.date
     selectedNetwork['value'] = selectedNetwork['value'].astype(float)
     selectedNetwork = selectedNetwork.sort_values(by='date')
     window_start_date = selectedNetwork['date'].min()
     data_last_date = selectedNetwork['date'].max()
+
+    # drop unused data
+    selectedNetwork = selectedNetwork.drop('tokenAddress', axis=1)
+    selectedNetwork = selectedNetwork.drop('timestamp', axis=1)
+    selectedNetwork = selectedNetwork.drop('blockNumber', axis=1)
+    selectedNetwork = selectedNetwork.drop('fileBlock', axis=1)
+
+    # rename columns
+    selectedNetwork.rename(columns={'from': 'source', 'to': 'destination', 'value': 'weight'}, inplace=True)
 
     print(f"{file} -- {window_start_date} -- {data_last_date}")
 
@@ -31,22 +52,25 @@ def creatBaselineDatasets(file, normalization=False):
         return
 
     # normalize the edge weights for the graph network {0-9}
-    max_transfer = float(selectedNetwork['value'].max())
-    min_transfer = float(selectedNetwork['value'].min())
+    max_transfer = float(selectedNetwork['weight'].max())
+    min_transfer = float(selectedNetwork['weight'].min())
     if max_transfer == min_transfer:
         max_transfer = min_transfer + 1
 
     # value normalization
-    if normalization == False:
-        selectedNetwork['value'] = selectedNetwork['value'].apply(
+    if normalization:
+        selectedNetwork['weight'] = selectedNetwork['weight'].apply(
             lambda x: 1 + (9 * ((float(x) - min_transfer) / (max_transfer - min_transfer))))
 
     # Graph Generation Process and Labeling
 
-    while (data_last_date - window_start_date).days > (windowSize + gap + lableWindowSize):
-        print("\nRemaining Process  {} ".format(
+    base_progress = (data_last_date - window_start_date).days / (windowSize + gap + lableWindowSize)
 
-            (data_last_date - window_start_date).days / (windowSize + gap + lableWindowSize)))
+    while (data_last_date - window_start_date).days > (windowSize + gap + lableWindowSize):
+        print("\nCompleted Process  {} % ".format(
+
+            (1 - ((data_last_date - window_start_date).days / (
+                        windowSize + gap + lableWindowSize)) / base_progress) * 100))
         indx += 1
 
         # select window data
@@ -69,27 +93,28 @@ def creatBaselineDatasets(file, normalization=False):
             selectedNetworkInGraphDataWindow)) > 0 else 0
 
         # Storing the new snapshot data after processing
-        selectedNetworkInGraphDataWindow = selectedNetworkInGraphDataWindow.assign(Snapshot=indx)
-        csv_file_path = "../data/input/raw/edgelists/" + file
-        if os.path.exists(csv_file_path):
-            existing_df = pd.read_csv(csv_file_path)
-        else:
-            existing_df = pd.DataFrame()
+        selectedNetworkInGraphDataWindow = selectedNetworkInGraphDataWindow.assign(snapshot=indx)
 
-        appended_df = existing_df.append(selectedNetworkInGraphDataWindow, ignore_index=True)
-        appended_df.to_csv(csv_file_path, index=False)
+        appended_edgelist_df = appended_edgelist_df._append(selectedNetworkInGraphDataWindow, ignore_index=True)
+
         # ------------------------------------------------
         # Storing each snapshot label data
-        label_csv_file_path = "../data/input/raw/labels/"  + file
-        if os.path.exists(label_csv_file_path):
-            existing_label_df = pd.read_csv(label_csv_file_path)
-        else:
-            existing_label_df = pd.DataFrame()
+        label_file_path = "../data/input/tokens/reformatted/Labels/" + file.split("_")[0] + "_labels.csv"
+        batch_lables.append(label)
+        # Open a file in append mode and write a line to it
+        if (indx % batch_size == 0):
+            appended_edgelist_df.to_csv(csv_edgelist_file_path, index=False)
 
-        appended_label_df = existing_label_df.append(label, ignore_index=True)
-        appended_label_df.to_csv(label_csv_file_path, index=False)
+            with open(label_file_path, 'a') as file_label:
+                for l in batch_lables:
+                    file_label.write(str(l) + "\n")
+                file_label.close()
+
+            batch_lables = []
+            print("Caching step done for batch {}".format(indx / 20))
         # --------------------------------------------------
+        print("Snapshot {} Done ".format(indx))
 
         window_start_date = window_start_date + dt.timedelta(days=1)
 
-    print(f"f{file} Process completed!")
+    print(f"f{file} Process completed! 100%")

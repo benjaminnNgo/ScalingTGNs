@@ -166,3 +166,7 @@ if args.dataset in ['mathoverflow']:
 if args.dataset in ['RedditB']:
     args.testlength = 80  # Total number of snapshots = 399
     args.trainable_feat = 1
+
+if args.dataset in ['AMB']:
+    args.testlength = 10  # Total number of snapshots = 399
+    args.trainable_feat = 1

@@ -235,8 +235,7 @@ def loader(dataset='enron10', neg_sample=''):
     # elif dataset in ['adex', 'aeternity', 'aion', 'aragon', 'bancor', 'centra', 'cindicator',
     #                  'coindash', 'dgd', 'iconomi',  'mathoverflow', 'RedditB', 'CollegeMsg']:
     #
-    elif dataset in ['adex', 'aeternity', 'aion', 'aragon', 'bancor', 'centra', 'cindicator',
-                         'coindash', 'dgd', 'iconomi', 'mathoverflow', 'RedditB', 'CollegeMsg']:
+    elif dataset in ['adex', 'aeternity', 'aion', "AMB"]:
         print("INFO: Loading a dynamic graph datasets for TG-Classification: {}".format(dataset))
         data = load_TGC_dataset(dataset)
     else:
