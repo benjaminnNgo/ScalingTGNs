@@ -138,7 +138,7 @@ class Runner(object):
         if args.wandb:
             wandb.init(
                 # set the wandb project where this run will be logged
-                project="testing",
+                project="scalingTGNs",
                 # Set name of the run:
                 name="{}_{}".format(args.dataset, args.model),
                 # track hyperparameters and run metadata
@@ -161,8 +161,8 @@ class Runner(object):
                                                                                        args.testlength))
 
         self.model = load_model(args).to(args.device)
-        # self.model_path = '../saved_models/{}/{}_{}_seed_{}.pth'.format(args.dataset, args.dataset,
-        #                                                            args.models, args.seed)
+        self.model_path = '../saved_models/{}_{}_seed_{}.pth'.format(args.dataset,
+                                                                   args.model, args.seed)
         # logger.info("The models is going to be loaded from {}".format(self.model_path))
         # self.models.load_state_dict(torch.load(self.model_path))
 
@@ -245,7 +245,8 @@ class Runner(object):
         t_total_start = time.time()
         min_loss = 10
         train_avg_epoch_loss_dict = {}
-        for epoch in range(1, args.max_epoch + 1):
+        for epoch in range(1, 10):
+            self.model.init_hiddens() #Just added
             t_epoch_start = time.time()
             epoch_losses = []
             for t_train_idx, t_train in enumerate(self.train_shots):
@@ -305,6 +306,10 @@ class Runner(object):
         logger.info('>> Total time : %6.2f' % (time.time() - t_total_start))
         logger.info(">> Parameters: lr:%.4f |Dim:%d |Window:%d |" % (args.lr, args.nhid, args.nb_window))
 
+        logger.info("INFO: Saving the models...")
+        torch.save(self.model.state_dict(), self.model_path)
+        logger.info("INFO: The models is saved. Done.")
+
         # ------------ DEBUGGING ------------
         # save the training loss values
         partial_results_path = f'../data/output/log/{args.dataset}/{args.model}/'
@@ -316,17 +321,17 @@ class Runner(object):
             dump(train_avg_epoch_loss_dict, file)
 
         # plotting the training losses
-        train_avg_epoch_loss_dict = load(open(loss_log_filename, 'rb'))
-        train_values = train_avg_epoch_loss_dict.values()
-        epoch_range = range(0, epoch)
-        plt.plot(epoch_range, train_values, label='Training Loss')
-        plt.title('Training Loss')
-        plt.xlabel('Epochs')
-        plt.ylabel('Loss')
-        plt.xticks(np.arange(0, epoch, 50))
-        plt.legend(loc='best')
+        # train_avg_epoch_loss_dict = load(open(loss_log_filename, 'rb'))
+        # train_values = train_avg_epoch_loss_dict.values()
+        # epoch_range = range(0, epoch)
+        # plt.plot(epoch_range, train_values, label='Training Loss')
+        # plt.title('Training Loss')
+        # plt.xlabel('Epochs')
+        # plt.ylabel('Loss')
+        # plt.xticks(np.arange(0, epoch, 50))
+        # plt.legend(loc='best')
         # plt.show()
-        plt.savefig(f'{partial_results_path}/{args.model}_{args.dataset}_{args.seed}_train_loss.png')
+        # plt.savefig(f'{partial_results_path}/{args.model}_{args.dataset}_{args.seed}_train_loss.png')
         # -----------------------------------
         # -----------------------------------
 
@@ -344,11 +349,6 @@ if __name__ == '__main__':
     from script.utils.data_util import loader, prepare_dir
     from script.inits import prepare
 
-    args.model = "HTGN"
-    args.seed = 710
-    args.dataset = "AMB"
-    args.max_epoch=200
-    args.testlength=10
 
     print("INFO: >>> Temporal Graph Classification <<<")
     print("INFO: Args: ", args)

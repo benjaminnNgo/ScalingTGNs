@@ -206,3 +206,29 @@
 [2024-03-24 20:29:08,747 INFO] >> Total time :   9.82
 [2024-03-24 20:29:08,747 INFO] >> Parameters: lr:0.0100 |Dim:16 |Window:5 |
 [2024-03-24 20:29:09,920 INFO] Final Test: Epoch:1 , AUC: 0.6499, AP: 0.7487
+[2024-03-28 14:30:10,871 INFO] INFO: Using trainable feature, feature dim: 128
+[2024-03-28 14:30:10,871 INFO] INFO: total length: 190, train length: 152, test length: 38
+[2024-03-28 14:30:11,022 INFO] using models HTGN 
+[2024-03-28 14:30:15,902 INFO] Start training the temporal graph classification models.
+[2024-03-28 14:30:25,652 INFO] ============================================================
+[2024-03-28 14:30:25,653 INFO] Epoch:1, Loss: 0.6991, Time: 9.750, GPU: 54.7MiB
+[2024-03-28 14:30:25,653 INFO] Test: Epoch:1, AUC: 0.6078, AP: 0.6229
+[2024-03-28 14:31:03,591 INFO] ============================================================
+[2024-03-28 14:31:03,591 INFO] Epoch:5, Loss: 0.6963, Time: 8.778, GPU: 54.7MiB
+[2024-03-28 14:31:03,592 INFO] Test: Epoch:5, AUC: 0.8095, AP: 0.7993
+[2024-03-28 14:31:38,658 INFO] >> Total time :  82.75
+[2024-03-28 14:31:38,659 INFO] >> Parameters: lr:0.0100 |Dim:16 |Window:5 |
+[2024-03-28 14:31:39,517 INFO] Final Test: Epoch:9 , AUC: 0.8263, AP: 0.8573
+[2024-03-28 14:33:42,566 INFO] INFO: Using trainable feature, feature dim: 128
+[2024-03-28 14:33:42,566 INFO] INFO: total length: 190, train length: 152, test length: 38
+[2024-03-28 14:33:42,709 INFO] using models HTGN 
+[2024-03-28 14:33:48,064 INFO] Start training the temporal graph classification models.
+[2024-03-28 14:33:59,303 INFO] ============================================================
+[2024-03-28 14:33:59,304 INFO] Epoch:1, Loss: 0.6991, Time: 11.238, GPU: 54.7MiB
+[2024-03-28 14:33:59,304 INFO] Test: Epoch:1, AUC: 0.6078, AP: 0.6229
+[2024-03-28 14:34:40,244 INFO] ============================================================
+[2024-03-28 14:34:40,245 INFO] Epoch:5, Loss: 0.6963, Time: 10.055, GPU: 54.7MiB
+[2024-03-28 14:34:40,245 INFO] Test: Epoch:5, AUC: 0.8095, AP: 0.7993
+[2024-03-28 14:35:21,434 INFO] >> Total time :  93.37
+[2024-03-28 14:35:21,434 INFO] >> Parameters: lr:0.0100 |Dim:16 |Window:5 |
+[2024-03-28 14:35:23,215 INFO] Final Test: Epoch:9 , AUC: 0.8263, AP: 0.8573

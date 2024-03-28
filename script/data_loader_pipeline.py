@@ -1,3 +1,11 @@
+import os
+from script.utils.data_util import loader, prepare_dir
 from BaselineProcess import creatBaselineDatasets
 
-creatBaselineDatasets("AMB_0x4dc3643dbc642b72c158e7f3d2ff232df61cb6ce.csv")
+
+tokens_dir = "../data/input/tokens" #Change the path to where you save all raw token networks( download from gg drive)
+
+for filename in os.listdir(tokens_dir):
+    dataset = filename.split(".")[0]
+    creatBaselineDatasets(filename)
+    loader(dataset=dataset, neg_sample="rnd")
