@@ -18,7 +18,7 @@ from math import isnan
 from sklearn.metrics import roc_auc_score, average_precision_score
 from pickle import dump, load
 import matplotlib.pyplot as plt
-
+import wandb
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
@@ -71,33 +71,36 @@ def extra_dataset_attributes_loading(args, readout_scheme='mean'):
     Load and process additional dataset attributes for TG-Classification
     This includes graph labels and node features for the nodes of each snapshot
     """
-    partial_path = f'../data/input/raw/{args.dataset}/'
+    partial_path = f'../data/Baseline'
    
     # load graph lables
-    label_filename = f'{partial_path}/{args.dataset}_labels.csv'
+    label_filename = f'{partial_path}/Labels/{args.dataset}'
     label_df = pd.read_csv(label_filename, header=None, names=['label'])
     TG_labels = torch.from_numpy(np.array(label_df['label'].tolist())).to(args.device)
 
     # load and process graph-pooled (node-level) features 
-    edgelist_filename = f'{partial_path}/{args.dataset}_edgelist.txt'
+    edgelist_filename = f'{partial_path}/{args.dataset}'
     edgelist_df = pd.read_csv(edgelist_filename)
     uniq_ts_list = np.unique(edgelist_df['snapshot'])
     TG_feats = []
     for ts in uniq_ts_list:
-       ts_edges = edgelist_df.loc[edgelist_df['snapshot'] == ts, ['source', 'destination', 'weight']]
-       ts_G = nx.from_pandas_edgelist(ts_edges, source='source', target='destination', edge_attr='weight', create_using=nx.MultiDiGraph)
+       ts_edges = edgelist_df.loc[edgelist_df['snapshot'] == ts, ['from', 'to', 'value']]
+       ts_G = nx.from_pandas_edgelist(ts_edges, source='from', target='to', edge_attr='value', create_using=nx.MultiDiGraph)
+
        node_list = list(ts_G.nodes)
        indegree_list = np.array(ts_G.in_degree(node_list))
-       weighted_indegree_list = np.array(ts_G.in_degree(node_list, weight='weight'))
+       weighted_indegree_list = np.array(ts_G.in_degree(node_list, weight='value'))
        outdegree_list = np.array(ts_G.out_degree(node_list))
-       weighted_outdegree_list = np.array(ts_G.out_degree(node_list, weight='weight'))
+       weighted_outdegree_list = np.array(ts_G.out_degree(node_list, weight='value'))
 
        if readout_scheme == 'max':
         TG_this_ts_feat = np.array([np.max(indegree_list), np.max(weighted_indegree_list), 
                                     np.max(outdegree_list), np.max(weighted_outdegree_list)])
        elif readout_scheme == 'mean':
-        TG_this_ts_feat = np.array([np.mean(indegree_list), np.mean(weighted_indegree_list), 
-                                    np.mean(outdegree_list), np.mean(weighted_outdegree_list)])
+        TG_this_ts_feat = np.array([np.mean(indegree_list[: , 1].astype(float)), 
+                                    np.mean(weighted_indegree_list[: , 1].astype(float)), 
+                                    np.mean(outdegree_list[: , 1].astype(float)), 
+                                    np.mean(weighted_outdegree_list[: , 1].astype(float))])
        elif readout_scheme == 'sum':
         TG_this_ts_feat = np.array([np.sum(indegree_list), np.sum(weighted_indegree_list), 
                                     np.sum(outdegree_list), np.sum(weighted_outdegree_list)])
@@ -116,6 +119,18 @@ def extra_dataset_attributes_loading(args, readout_scheme='mean'):
 
 class Runner(object):
     def __init__(self):
+        if args.wandb:
+            wandb.init(
+                # set the wandb project where this run will be logged
+                project="ScalingTGNs",
+                
+                # track hyperparameters and run metadata
+                config={
+                "learning_rate": args.lr,
+                "architecture": args.model,
+                "dataset": args.dataset,
+                }
+            )
         self.readout_scheme = 'mean'
         self.tgc_lr = 1e-4
 
@@ -260,7 +275,12 @@ class Runner(object):
             if isnan(t_loss):
                     print('ATTENTION: nan loss')
                     break
-            
+            if (args.wandb):
+                    wandb.log({"Train Loss": avg_epoch_loss,
+                               "Test Loss" : test_epoch,
+                               "Test AUC" : test_auc,
+                               "Test AP" : test_ap,
+                        })
         logger.info('>> Total time : %6.2f' % (time.time() - t_total_start))
         logger.info(">> Parameters: lr:%.4f |Dim:%d |Window:%d |" % (args.lr, args.nhid, args.nb_window))
 
