@@ -4,6 +4,7 @@ import time
 import torch
 import numpy as np
 from math import isnan
+import wandb
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
@@ -11,6 +12,20 @@ sys.path.append(BASE_DIR)
 
 class Runner(object):
     def __init__(self):
+        if args.wandb:
+            wandb.init(
+                # set the wandb project where this run will be logged
+                project="scalingTGNs",
+                #Set name of the run:
+                name="{}_{}".format(args.dataset, args.model),
+                # track hyperparameters and run metadata
+                config={
+                    "learning_rate": args.lr,
+                    "architecture": args.model,
+                    "dataset": args.dataset,
+
+                }
+            )
         self.len = data['time_length']
         self.start_train = 0
         self.train_shots = list(range(0, self.len - args.testlength))
@@ -101,9 +116,19 @@ class Runner(object):
                                                                                                       test_results[2],
                                                                                                       test_results[3],
                                                                                                       test_results[4]))
+
+
             if isnan(epoch_loss):
                 print('nan loss')
                 break
+            if (args.wandb):
+                wandb.log({"train_loss": average_epoch_loss,
+                           "test_AUC": test_results[1],
+                           "AP": test_results[2],
+                           "New AUC": test_results[3],
+                           "New AP": test_results[4]
+
+                           })
         logger.info('>> Total time : %6.2f' % (time.time() - t_total0))
         logger.info(">> Parameters: lr:%.4f |Dim:%d |Window:%d |" % (args.lr, args.nhid, args.nb_window))
 
@@ -135,11 +160,13 @@ class Runner(object):
         return epoch, np.mean(auc_list), np.mean(ap_list), np.mean(auc_new_list), np.mean(ap_new_list)
 
 
+
 if __name__ == '__main__':
     from script.config import args
     from script.utils.util import set_random, logger, init_logger, disease_path
     from script.models.load_model import load_model
     from script.loss import ReconLoss, VGAEloss
+    from script.utils.data_util import loader, prepare_dir, load_multiple_datasets
     from script.utils.data_util import loader, prepare_dir, process_data_gaps
     from script.inits import prepare
     # process_data_gaps("/network/scratch/r/razieh.shirzadkhani/fm_data")

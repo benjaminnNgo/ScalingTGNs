@@ -1,0 +1,11 @@
+
+[2024-03-24 17:40:12,881 INFO] INFO: using trainable feature, feature dim: 128
+INFO: models is going to be saved at ../saved_models/aion/aion_HTGN_seed_710.pth
+INFO: Args:  Namespace(dataset='aion', data_pt_path='', num_nodes=4305, nfeat=128, nhid=16, nout=16, neg_sample='rnd', wandb=True, max_epoch=500, testlength=38, device=device(type='cuda'), device_id='0', seed=710, repeat=1, patience=50, lr=0.01, weight_decay=5e-07, output_folder='../data/output/log/aion/HTGN/', use_htc=1, use_hta=1, debug_content='', sampling_times=1, log_interval=20, pre_defined_feature=None, save_embeddings=0, debug_mode=0, min_epoch=100, model='HTGN', manifold='PoincareBall', use_gru=True, use_hyperdecoder=True, EPS=1e-15, nb_window=5, bias=True, trainable_feat=1, dropout=0.0, heads=1, egcn_type='EGCNH', curvature=1.0, fixed_curvature=1, aggregation='deg', result_txt='../data/output/results/aion_HTGN_result.txt')
+[2024-03-24 17:40:16,833 INFO] using models HTGN
+[2024-03-24 17:40:16,880 INFO] using hyper decoder
+[2024-03-24 17:40:16,881 INFO] INFO: total length: 190, test length: 38
+D:\Research\ScalingTGN\UTG\script\hgcn\manifolds\poincare.py:108: UserWarning: where received a uint8 condition tensor. This behavior is deprecated and will be removed in a future version of PyTorch. Use a boolean condition instead. (Triggered internally at ..\aten\src\ATen\native\TensorCompare.cpp:519.)
+  res = torch.where(cond, res_0, res_c)
+[2024-03-24 17:40:35,783 INFO] ======================================================
+[2024-03-24 17:40:35,784 INFO] INFO: Epoch:1, Loss: 1.1976, Time: 18.304, GPU: 57.7MiB

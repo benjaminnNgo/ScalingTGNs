@@ -1,0 +1,28 @@
+[2024-03-24 15:50:56,566 INFO] INFO: using trainable feature, feature dim: 128
+[2024-03-24 15:50:56,715 INFO] using models HTGN
+[2024-03-24 15:50:56,717 INFO] using hyper decoder
+[2024-03-24 15:50:56,718 INFO] INFO: total length: 190, test length: 38
+D:\Research\ScalingTGN\UTG\script\hgcn\manifolds\poincare.py:108: UserWarning: where received a uint8 condition tensor. This behavior is deprecated and will be removed in a future version of PyTorch. Use a boolean condition instead. (Triggered internally at ..\aten\src\ATen\native\TensorCompare.cpp:519.)
+  res = torch.where(cond, res_0, res_c)
+INFO: models is going to be saved at ../saved_models/aion/aion_HTGN_seed_710.pth
+INFO: Args:  Namespace(dataset='aion', data_pt_path='', num_nodes=4305, nfeat=128, nhid=16, nout=16, neg_sample='rnd', wandb=True, max_epoch=500, testlength=38, device=device(type='cuda'), device_id='0', seed=710, repeat=1, patience=50, lr=0.01, weight_decay=5e-07, output_folder='../data/output/log/aion/HTGN/', use_htc=1, use_hta=1, debug_content='', sampling_times=1, log_interval=20, pre_defined_feature=None, save_embeddings=0, debug_mode=0, min_epoch=100, model='HTGN', manifold='PoincareBall', use_gru=True, use_hyperdecoder=True, EPS=1e-15, nb_window=5, bias=True, trainable_feat=1, dropout=0.0, heads=1, egcn_type='EGCNH', curvature=1.0, fixed_curvature=1, aggregation='deg', result_txt='../data/output/results/aion_HTGN_result.txt')
+[2024-03-24 15:51:10,982 INFO] ======================================================
+[2024-03-24 15:51:10,982 INFO] INFO: Epoch:1, Loss: 1.1987, Time: 13.949, GPU: 57.7MiB
+[2024-03-24 15:51:10,984 INFO] Epoch:1, Test AUC: 0.6221, AP: 0.6389, New AUC: 0.6125, New AP: 0.6267
+Traceback (most recent call last):
+  File "D:\Research\ScalingTGN\UTG\script\main.py", line 177, in <module>
+    runner = Runner()
+    ^^^^^^^^^^^^
+  File "D:\Research\ScalingTGN\UTG\script\main.py", line 89, in run
+    # epoch_loss = self.loss(z, edge_index) + self.models.htc(z)  # so as this one!
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda\Lib\site-packages\torch\nn\modules\module.py", line 1511, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\anaconda\Lib\site-packages\torch\nn\modules\module.py", line 1520, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Research\ScalingTGN\UTG\script\loss.py", line 54, in forward
+    decoder(z, pos_edge_index) + EPS).mean()
+                                      ^^^^^^
+KeyboardInterrupt

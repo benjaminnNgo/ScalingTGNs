@@ -12,6 +12,7 @@ parser.add_argument('--nhid', type=int, default=16, help='dim of hidden embeddin
 parser.add_argument('--nout', type=int, default=16, help='dim of output embedding')
 parser.add_argument('--neg_sample', type=str, default='rnd', help='negative sampling strategy')
 parser.add_argument("--wandb", action="store_true", default=False, help="now using wandb")
+parser.add_argument('--results_file', type=str, default='results.csv', help='Name of file to store evaluation of all models')
 
 # 2.experiments
 parser.add_argument('--max_epoch', type=int, default=500, help='number of epochs to train.')
@@ -33,6 +34,10 @@ parser.add_argument('--pre_defined_feature', default=None, help='pre-defined nod
 parser.add_argument('--save_embeddings', type=int, default=0, help='save or not, default:0')
 parser.add_argument('--debug_mode', type=int, default=0, help='debug_mode, 0: normal running; 1: debugging mode')
 parser.add_argument('--min_epoch', type=int, default=100, help='min epoch')
+
+#For testing model only
+parser.add_argument('--test_dataset', type=str, default=None, help='define dataset for testing')
+parser.add_argument('--test_snapshot', type=str, default=5, help='define test snapshot for testing')
 
 # 3.models
 parser.add_argument('--model', type=str, default='HTGN', help='models name')
@@ -61,7 +66,7 @@ else:
     args.device = torch.device("cpu")
     print('INFO: using cpu to train the models')
 
-# print('{} model is used.'.format(args.model))
+print(args.model)
 args.output_folder = '../data/output/log/{}/{}/'.format(args.dataset, args.model)
 args.result_txt = '../data/output/results/{}_{}_result.txt'.format(args.dataset, args.model)
 
@@ -160,4 +165,8 @@ if args.dataset in ['mathoverflow']:
 
 if args.dataset in ['RedditB']:
     args.testlength = 80  # Total number of snapshots = 399
+    args.trainable_feat = 1
+
+if args.dataset in ['AMB']:
+    args.testlength = 10  # Total number of snapshots = 399
     args.trainable_feat = 1

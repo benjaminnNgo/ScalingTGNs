@@ -239,13 +239,18 @@ def loader(dataset='enron10', neg_sample=''):
     elif dataset in ['canVote', 'LegisEdgelist', 'wikipedia', 'UNtrade']:
         print("INFO: Loading a continuous-time dynamic graph dataset: {}".format(dataset))
         data = load_continuous_time_dataset(dataset, neg_sample)
-    elif dataset in ['adex', 'aeternity', 'aion', 'aragon', 'bancor', 'centra', 'cindicator', 
-                     'coindash', 'dgd', 'iconomi',  'mathoverflow', 'RedditB', 'CollegeMsg']:
+    # elif dataset in ['adex', 'aeternity', 'aion', 'aragon', 'bancor', 'centra', 'cindicator',
+    #                  'coindash', 'dgd', 'iconomi',  'mathoverflow', 'RedditB', 'CollegeMsg']:
+    #
+    elif dataset in ['adex', 'aeternity', 'aion', "AMB"]:
         print("INFO: Loading a dynamic graph datasets for TG-Classification: {}".format(dataset))
         data = load_TGC_dataset(dataset)
     else:
-        data = load_TGC_dataset(dataset)
-        # raise ValueError("ERROR: Undefined dataset!")
+        try:
+            data = load_TGC_dataset(dataset)
+        except Exception as e:
+            raise ValueError("ERROR: Undefined dataset!")
+
     torch.save(data, filepath)
     print('INFO: Dataset is saved!')
     return data
@@ -290,8 +295,7 @@ def process_data_gaps(directory):
     file1.writelines(["filename, start, end, duration, max_gap"])
 
     for filename in os.listdir(directory):
-        filepath = directory + "/" + filename  
-
+        filepath = directory + "/" + filename
         if filename.endswith('.csv'):
             data = pd.read_csv(filepath, usecols=columns, index_col=False)
             timestamps = pd.to_datetime(data["timestamp"], unit="s").dt.date
@@ -302,7 +306,7 @@ def process_data_gaps(directory):
             unique_timestamps = timestamps.unique()
             tot_len = len(unique_timestamps)
             gaps = max(set([(unique_timestamps[i+1] - unique_timestamps[i]).days for i in range(tot_len-1)]))
-            file1.writelines([filename, ",", str(start), ",", str(end), ",",str(time_difference),",", str(gaps) ,"\n"])            
+            file1.writelines([filename, ",", str(start), ",", str(end), ",",str(time_difference),",", str(gaps) ,"\n"])
     file1.close()
 
 
