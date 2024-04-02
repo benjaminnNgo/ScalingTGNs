@@ -245,7 +245,7 @@ class Runner(object):
         t_total_start = time.time()
         min_loss = 10
         train_avg_epoch_loss_dict = {}
-        for epoch in range(1, 10):
+        for epoch in range(1, args.max_epoch + 1):
             self.model.init_hiddens() #Just added
             t_epoch_start = time.time()
             epoch_losses = []
@@ -280,6 +280,7 @@ class Runner(object):
                 patience = 0
             else:
                 patience += 1
+                test_epoch, test_auc, test_ap = self.tgclassification_test(epoch, self.readout_scheme) #Added to make it test for every epoch
                 if epoch > args.min_epoch and patience > args.patience:  # NOTE: args.min_epoch prevents it from stopping early in most cases
                     print('INFO: Early Stopping...')
                     break

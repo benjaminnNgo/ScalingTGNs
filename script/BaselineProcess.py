@@ -112,9 +112,9 @@ def creatBaselineDatasets(file, normalization=False):
                 file_label.close()
 
             batch_lables = []
-            print("Caching step done for batch {}".format(indx / 20))
+            # print("Caching step done for batch {}".format(indx / 20))
         # --------------------------------------------------
-        print("Snapshot {} Done ".format(indx))
+        # print("Snapshot {} Done ".format(indx))
 
         window_start_date = window_start_date + dt.timedelta(days=1)
 

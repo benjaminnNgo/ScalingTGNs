@@ -1,0 +1,3 @@
+the first : default
+The second: lower lr to 0.001
+The third test set 10
