@@ -176,15 +176,15 @@ def load_continuous_time_dataset(dataset, neg_sample):
 def load_TGC_dataset(dataset):
     print("INFO: Loading a Graph from `Temporal Graph Classification (TGC)` Category: {}".format(dataset))
     data = {}
-    edgelist_rawfile = '../data/Baseline/{}'.format(dataset, dataset)
+    edgelist_rawfile = '../data/input/raw/edgelists/{}_edgelist.txt'.format( dataset)
     edgelist_df = pd.read_csv(edgelist_rawfile)
     uniq_ts_list = np.unique(edgelist_df['snapshot'])
     print("INFO: Number of unique snapshots: {}".format(len(uniq_ts_list)))
     adj_time_list = []
     for ts in uniq_ts_list:
         # NOTE: this code does not use any node or edge features
-        ts_edges = edgelist_df.loc[edgelist_df['snapshot'] == ts, ['from', 'to']]
-        ts_G = nx.from_pandas_edgelist(ts_edges, 'from', 'to')
+        ts_edges = edgelist_df.loc[edgelist_df['snapshot'] == ts, ['source', 'destination']]
+        ts_G = nx.from_pandas_edgelist(ts_edges, 'source', 'destination')
         ts_A = nx.to_scipy_sparse_array(ts_G)
         adj_time_list.append(ts_A)
 
@@ -256,22 +256,23 @@ def loader(dataset='enron10', neg_sample=''):
     return data
 
 
-def load_multiple_datasets(datasets_package_file,neg_sample):
+def load_multiple_datasets(datasets_package_path=""):
     datasets_packages = []
-    datasets_package_path = '../data/Baseline/'
+    dataset_names = []
+    datasets_package_path = '../data/input/raw/edgelists/' + datasets_package_path
     print(datasets_package_path)
     if os.path.exists(datasets_package_path):
-        print("File exists.")
+        print("Folder exists.")
     else:
-        print("File does not exist.")
+        print("Folder does not exist.")
 
-    for dataset in datasets_package_file:
-        dataset_path = datasets_package_path + dataset
-    # for dataset in os.listdir(datasets_package_path):
-        name, ext = os.path.splitext(dataset)
-        print(ext)
-        if ext == '.csv':
-            datasets_packages.append(loader(dataset, neg_sample=neg_sample))
+    for dataset in os.listdir(datasets_package_path):
+        print(dataset)
+        data_name, ext = os.path.splitext(dataset)
+        if ext == '.txt':
+            raw_data_name = data_name.split("_")
+            datasets_packages.append(loader(raw_data_name[0]))
+            dataset_names.append(raw_data_name[0])
 
     
     # try:
@@ -283,8 +284,8 @@ def load_multiple_datasets(datasets_package_file,neg_sample):
     #     print("ERROR: error in processing data pack {}".format(datasets_package_path))
     #     print(e)
 
-    print("BAO:Number of dataset{}".format(len(datasets_packages)))
-    return datasets_packages
+    print("Number of dataset{}".format(len(datasets_packages)))
+    return dataset_names, datasets_packages
 
 
 

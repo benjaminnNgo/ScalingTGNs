@@ -10,6 +10,7 @@ import os
 import sys
 import time
 import torch
+import copy
 import numpy as np
 import pandas as pd
 import networkx as nx
@@ -72,29 +73,32 @@ def extra_dataset_attributes_loading(args, readout_scheme='mean'):
     Load and process additional dataset attributes for TG-Classification
     This includes graph labels and node features for the nodes of each snapshot
     """
-    partial_path = f'../data/Baseline'
+    partial_path = f'../data/input/raw/'
     TG_labels_data = []
     TG_feats_data = []
+    logger.info("INFO: Extracting extra dataset attributes")
     for dataset in args.dataset:
-    # load graph lables
-        label_filename = f'{partial_path}/Labels/{dataset}'
+        print("Loading features for {}".format(dataset))
+        # load graph lables
+        label_filename = f'{partial_path}/labels/{dataset}_labels.csv'
         label_df = pd.read_csv(label_filename, header=None, names=['label'])
         TG_labels = torch.from_numpy(np.array(label_df['label'].tolist())).to(args.device)
         TG_labels_data.append(TG_labels)
         
         # load and process graph-pooled (node-level) features 
-        edgelist_filename = f'{partial_path}/{dataset}'
+        edgelist_filename = f'{partial_path}/edgelists/{dataset}_edgelist.txt'
         edgelist_df = pd.read_csv(edgelist_filename)
         uniq_ts_list = np.unique(edgelist_df['snapshot'])
         TG_feats = []
         for ts in uniq_ts_list:
-            ts_edges = edgelist_df.loc[edgelist_df['snapshot'] == ts, ['from', 'to', 'value']]
-            ts_G = nx.from_pandas_edgelist(ts_edges, source='from', target='to', edge_attr='value', create_using=nx.MultiDiGraph)
+            ts_edges = edgelist_df.loc[edgelist_df['snapshot'] == ts, ['source', 'destination', 'weight']]
+            ts_G = nx.from_pandas_edgelist(ts_edges, source='source', target='destination', edge_attr='weight',
+                                        create_using=nx.MultiDiGraph)
             node_list = list(ts_G.nodes)
             indegree_list = np.array(ts_G.in_degree(node_list))
-            weighted_indegree_list = np.array(ts_G.in_degree(node_list, weight='value'))
+            weighted_indegree_list = np.array(ts_G.in_degree(node_list, weight='weight'))
             outdegree_list = np.array(ts_G.out_degree(node_list))
-            weighted_outdegree_list = np.array(ts_G.out_degree(node_list, weight='value'))
+            weighted_outdegree_list = np.array(ts_G.out_degree(node_list, weight='weight'))
 
             if readout_scheme == 'max':
                 TG_this_ts_feat = np.array([np.max(indegree_list), np.max(weighted_indegree_list), 
@@ -117,7 +121,7 @@ def extra_dataset_attributes_loading(args, readout_scheme='mean'):
         scalar = MinMaxScaler()
         TG_feats = scalar.fit_transform(TG_feats)
         TG_feats_data.append(TG_feats)
-
+    logger.info("INFO: Extracting extra dataset attributes done!")
     return TG_labels_data, TG_feats_data
   
 
@@ -146,7 +150,7 @@ class Runner(object):
         self.train_shots = [list(range(0, self.len[i] - args.testlength)) for i in range(self.num_datasets)] #Changed
         self.test_shots = [list(range(self.len[i] - args.testlength, self.len[i])) for i in range(self.num_datasets)] #Changed
         args.num_nodes = max(args.num_nodes)
-        
+        self.criterion = torch.nn.BCELoss()
         # self.train_shots = list(range(self.start_train, self.len - args.testlength))
         # self.test_shots = list(range(self.len - args.testlength, self.len))
         self.load_feature()
@@ -182,13 +186,13 @@ class Runner(object):
             args.nfeat = self.x.size(1)
 
 
-    def tgclassification_test(self, epoch, readout_scheme):
+    def tgclassification_test(self, epoch, dataset_idx, readout_scheme):
         """
         Final inference on the test set
         """
         tg_labels, tg_preds = [], []
 
-        for t_test_idx, t in enumerate(self.test_shots):
+        for t_test_idx, t in enumerate(self.test_shots[dataset_idx]):
            self.model.eval()
            self.tgc_decoder.eval()
            with torch.no_grad():
@@ -207,7 +211,8 @@ class Runner(object):
               tg_preds.append(self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid().cpu().numpy())
 
         auc, ap = roc_auc_score(tg_labels, tg_preds), average_precision_score(tg_labels, tg_preds)
-        return epoch, auc, ap
+        loss = self.criterion(tg_preds, tg_labels) # Added calculation of test loss
+        return epoch, loss, auc, ap
         
 
     def run(self):
@@ -219,7 +224,7 @@ class Runner(object):
             set(self.tgc_decoder.parameters()) | set(self.model.parameters()),
             lr=self.tgc_lr
         )
-        criterion = torch.nn.BCELoss()
+        # criterion = torch.nn.BCELoss() # Moved to init function
 
         # load the TG-models
         self.model.init_hiddens()
@@ -234,15 +239,22 @@ class Runner(object):
         
         t_total_start = time.time()
         min_loss = 10
-        dataset_loss = []
-        for dataset_idx in range(self.num_datasets): 
-            self.model.init_hiddens()
-            self.model.train()
-            train_avg_epoch_loss_dict = {}
-            
-            for epoch in range(1, args.max_epoch + 1):
+        min_test_loss = 10
+        train_avg_epoch_loss_dict = {} # Stores the average of epoch loss over all datasets
+        epoch_losses_per_dataset = {} # Stores each dataset loss at each epoch: {"data_1" : [e_1, e_2, ..], ...}
+        
+        for epoch in range(1, args.max_epoch + 1):
+            epoch_losses = [] # Used for saving average losses of datasets in each epoch
+            test_loss, test_auc, test_ap = [], [], []
+            for dataset_idx in range(self.num_datasets):
+                # initialize a list to save the dataset losses for each epoch
+                if epoch == 1:
+                    epoch_losses_per_dataset[dataset_idx] = []
+
+                self.model.train()
+                self.model.init_hiddens()
                 t_epoch_start = time.time()
-                epoch_losses = []
+                dataset_losses = []
                 for t_train_idx, t_train in enumerate(self.train_shots[dataset_idx]):
                     optimizer.zero_grad()
 
@@ -258,58 +270,82 @@ class Runner(object):
                     tg_label = self.t_graph_labels[t_train_idx].float().view(1, )
                     tg_pred = self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid()
 
-                    t_loss = criterion(tg_pred, tg_label)
-                    t_loss.backward()
+                    train_loss = self.criterion(tg_pred, tg_label)
+                    train_loss.backward()
                     optimizer.step()
-                    epoch_losses.append(t_loss.item())
+                    dataset_losses.append(train_loss.item())
                     # update the models
                     self.model.update_hiddens_all_with(embeddings)
 
                 # --------------------Evaluation------------------------
                 self.model.eval()
-                avg_epoch_loss = np.mean(epoch_losses)
-                train_avg_epoch_loss_dict[epoch] = avg_epoch_loss
 
+                # Foundational model evaluation:
+                avg_dataset_loss = np.mean(dataset_losses)
+                epoch_losses_per_dataset[dataset_idx].append(avg_dataset_loss)
+                epoch_losses.append(avg_dataset_loss)
+                # Older version:
+                # avg_epoch_loss = np.mean(epoch_losses)
+                # train_avg_epoch_loss_dict[epoch] = avg_epoch_loss
+
+                # Calculating performance for all datasets
                 # patience = 0  I don't think it should be zero here
-                if avg_epoch_loss < min_loss:
-                        min_loss = avg_epoch_loss
-                        test_epoch, test_auc, test_ap = self.tgclassification_test(epoch, self.readout_scheme)
-                        patience = 0
+                if avg_dataset_loss < min_loss:
+                    min_loss = avg_dataset_loss
+                    _, test_loss_i, test_auc_i, test_ap_i= self.tgclassification_test(epoch, dataset_idx, self.readout_scheme)
+                    test_loss.append(test_loss_i)
+                    test_auc.append(test_auc_i)
+                    test_ap.append(test_ap_i)
+                    patience = 0
                 else:
-                        patience += 1
-                        if epoch > args.min_epoch and patience > args.patience:  # NOTE: args.min_epoch prevents it from stopping early in most cases
-                            print('INFO: Early Stopping...')
-                            break
-                gpu_mem_alloc = torch.cuda.max_memory_allocated() / 1000000 if torch.cuda.is_available() else 0
-
-                if epoch == 1 or epoch % args.log_interval == 0:
-                        logger.info('==' * 30)
-                        logger.info("Epoch:{}, Loss: {:.4f}, Time: {:.3f}, GPU: {:.1f}MiB".format(epoch, avg_epoch_loss,
-                                                                                                time.time() - t_epoch_start,
-                                                                                                gpu_mem_alloc))
-                        logger.info(
-                            "Test: Epoch:{}, AUC: {:.4f}, AP: {:.4f}".format(test_epoch, test_auc, test_ap))
-                
-                if isnan(t_loss):
-                        print('ATTENTION: nan loss')
+                    patience += 1
+                    if epoch > args.min_epoch and patience > args.patience:  # NOTE: args.min_epoch prevents it from stopping early in most cases
+                        print('INFO: Early Stopping...')
                         break
                 
-                if (args.wandb):
-                    wandb.log({"Train Loss": avg_epoch_loss,
-                               "Test Loss" : test_epoch,
-                               "Test AUC" : test_auc,
-                               "Test AP" : test_ap,
-                        })
-            dataset_loss.append(avg_epoch_loss)
+                if isnan(train_loss):
+                    print('ATTENTION: nan loss')
+                    break
+            
+            avg_epoch_loss = np.mean(epoch_losses)
+            train_avg_epoch_loss_dict[epoch] = avg_epoch_loss
+            gpu_mem_alloc = torch.cuda.max_memory_allocated() / 1000000 if torch.cuda.is_available() else 0
+
+            if epoch == 1 or epoch % args.log_interval == 0:
+                    logger.info('==' * 30)
+                    logger.info("Epoch:{}, Loss: {:.4f}, Time: {:.3f}, GPU: {:.1f}MiB".format(epoch, 
+                                                                                              avg_epoch_loss,
+                                                                                              time.time() - t_epoch_start,
+                                                                                              gpu_mem_alloc))
+                    logger.info(
+                        "Test: Epoch:{}, AUC: {:.4f}, AP: {:.4f}".format(epoch, 
+                                                                         np.mean(test_loss), 
+                                                                         np.mean(test_auc), 
+                                                                         np.mean(test_ap)))
+
+            if (args.wandb):
+                wandb.log({"Train Loss": avg_epoch_loss,
+                            "Test Loss" : np.mean(test_loss),
+                            "Test AUC" : np.mean(test_auc),
+                            "Test AP" : np.mean(test_ap),
+                    })
+                
+            
             # logger.info('>> Total time : %6.2f' % (time.time() - t_total0))
             # logger.info(">> Parameters: lr:%.4f |Dim:%d |Window:%d |" % (args.lr, args.nhid, args.nb_window))
 
-            # saving the trained models
-            logger.info("INFO: Saving the models...")
-            curr_stage_model_path = (self.model_path + '{}_{}_seed_{}.pth'.format(dataset_idx,
-                                                                   args.models, args.seed))
-            torch.save(self.model.state_dict(), curr_stage_model_path)
-            logger.info("INFO: The models is saved. Done.")
+            # check if this model has the best performance so far:
+            if np.mean(test_loss) < min_test_loss:
+                min_test_loss = np.mean(test_loss)
+                best_model = copy.deepcopy(self.model) ################ I am not sure how I should make acopy of the model
+
+
+        # saving the best trained models
+        logger.info("INFO: Saving the models...")
+        curr_stage_model_path = (self.model_path + '{}_{}_seed_{}.pth'.format(dataset_idx,
+                                                                args.models, args.seed))
+        torch.save(best_model.state_dict(), curr_stage_model_path)
+        logger.info("INFO: The models is saved. Done.")
 
 
         logger.info('>> Total time : %6.2f' % (time.time() - t_total_start))
@@ -350,14 +386,19 @@ if __name__ == '__main__':
     from script.utils.data_util import loader, prepare_dir, load_multiple_datasets
     from script.inits import prepare
 
+    args.model = "HTGN"
+    args.seed = 710
+    args.max_epoch=10
+    args.testlength=10
+
     print("INFO: >>> Temporal Graph Classification <<<")
     print("INFO: Args: ", args)
     print("======================================")
     print("INFO: Dataset: {}".format(args.dataset))
     print("INFO: Model: {}".format(args.model))
-    args.dataset = ["unnamed_token_21655_0xbcca60bb61934080951369a648fb03df4f96263c.csv",
-                 "unnamed_token_21662_0x429881672b9ae42b8eba0e26cd9c73711b891ca5.csv"]
-    data = load_multiple_datasets(args.dataset, args.neg_sample)
+    # args.dataset = ["unnamedtoken216550xbcca60bb61934080951369a648fb03df4f96263c",
+    #              "unnamedtoken216620x429881672b9ae42b8eba0e26cd9c73711b891ca5"]
+    args.dataset, data = load_multiple_datasets()
     args.num_nodes = [data[i]['num_nodes'] for i in range(len(data))]
     # data = loader(dataset=args.dataset, neg_sample=args.neg_sample)
     # args.num_nodes = data['num_nodes']
