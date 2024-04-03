@@ -20,7 +20,7 @@ from sklearn.metrics import roc_auc_score, average_precision_score
 from pickle import dump, load
 import matplotlib.pyplot as plt
 import wandb
-# wandb.login("29968c684c2e412ed650ce0b5b52db584d572b86")
+wandb.login(key="29968c684c2e412ed650ce0b5b52db584d572b86")
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
@@ -121,6 +121,7 @@ def extra_dataset_attributes_loading(args, readout_scheme='mean'):
         scalar = MinMaxScaler()
         TG_feats = scalar.fit_transform(TG_feats)
         TG_feats_data.append(TG_feats)
+    
     logger.info("INFO: Extracting extra dataset attributes done!")
     return TG_labels_data, TG_feats_data
   
@@ -149,6 +150,7 @@ class Runner(object):
         self.start_train = 0
         self.train_shots = [list(range(0, self.len[i] - args.testlength)) for i in range(self.num_datasets)] #Changed
         self.test_shots = [list(range(self.len[i] - args.testlength, self.len[i])) for i in range(self.num_datasets)] #Changed
+        
         args.num_nodes = max(args.num_nodes)
         self.criterion = torch.nn.BCELoss()
         # self.train_shots = list(range(self.start_train, self.len - args.testlength))
@@ -186,33 +188,39 @@ class Runner(object):
             args.nfeat = self.x.size(1)
 
 
-    def tgclassification_test(self, epoch, dataset_idx, readout_scheme):
+    def tgclassification_test(self, epoch, readout_scheme):
         """
         Final inference on the test set
         """
-        tg_labels, tg_preds = [], []
+        
+        auc, ap, loss = [], [], []
+        for dataset_idx in range(self.num_datasets):
+            print(dataset_idx)
+            tg_labels, tg_preds, data_test_loss = [], [], []
+            for t_test_idx, t in enumerate(self.test_shots[dataset_idx]):
+                self.model.eval()
+                self.tgc_decoder.eval()
+                with torch.no_grad():
+                    edge_index, pos_edge, neg_edge = prepare(data[dataset_idx], t)[:3]
+                    # new_pos_edge, new_neg_edge = prepare(data[dataset_idx], t)[-2:]
 
-        for t_test_idx, t in enumerate(self.test_shots[dataset_idx]):
-           self.model.eval()
-           self.tgc_decoder.eval()
-           with torch.no_grad():
-              edge_index, pos_edge, neg_edge = prepare(data, t)[:3]
-              new_pos_edge, new_neg_edge = prepare(data, t)[-2:]
+                    embeddings = self.model(edge_index, self.x)
 
-              embeddings = self.model(edge_index, self.x)
-
-              # graph readout
-              tg_readout = readout_function(embeddings, readout_scheme)
-              tg_embedding = torch.cat((tg_readout, 
-                                        torch.from_numpy(self.t_graph_feat[t_test_idx + len(self.train_shots)]).to(args.device)))
-          
-              # graph classification
-              tg_labels.append(self.t_graph_labels[t_test_idx + len(self.train_shots)].cpu().numpy())
-              tg_preds.append(self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid().cpu().numpy())
-
-        auc, ap = roc_auc_score(tg_labels, tg_preds), average_precision_score(tg_labels, tg_preds)
-        loss = self.criterion(tg_preds, tg_labels) # Added calculation of test loss
-        return epoch, loss, auc, ap
+                    # graph readout
+                    tg_readout = readout_function(embeddings, readout_scheme)
+                    tg_embedding = torch.cat((tg_readout, 
+                                                torch.from_numpy((self.t_graph_feat[dataset_idx])[t_test_idx + 
+                                                                                                  len(self.train_shots)]).to(args.device)))
+                
+                    # graph classification
+                    tg_labels.append((self.t_graph_labels[dataset_idx])[t_test_idx + len(self.train_shots)].cpu().numpy())
+                    tg_preds.append(self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid().cpu().numpy())
+                    
+                    # data_test_loss.append(self.criterion(tg_preds[t_test_idx], tg_labels[t_test_idx]))
+            auc.append(roc_auc_score(tg_labels, tg_preds)), 
+            ap.append(average_precision_score(tg_labels, tg_preds))
+            # loss.append(np.mean(data_test_loss))
+        return epoch, auc, ap
         
 
     def run(self):
@@ -239,13 +247,13 @@ class Runner(object):
         
         t_total_start = time.time()
         min_loss = 10
-        min_test_loss = 10
+        min_test_auc = 0
         train_avg_epoch_loss_dict = {} # Stores the average of epoch loss over all datasets
         epoch_losses_per_dataset = {} # Stores each dataset loss at each epoch: {"data_1" : [e_1, e_2, ..], ...}
-        
+        test_auc, test_ap = [], []
         for epoch in range(1, args.max_epoch + 1):
             epoch_losses = [] # Used for saving average losses of datasets in each epoch
-            test_loss, test_auc, test_ap = [], [], []
+
             for dataset_idx in range(self.num_datasets):
                 # initialize a list to save the dataset losses for each epoch
                 if epoch == 1:
@@ -263,11 +271,10 @@ class Runner(object):
                     
                     # graph readout
                     tg_readout = readout_function(embeddings, self.readout_scheme)
-                    tg_embedding = torch.cat((tg_readout, 
-                                              torch.from_numpy(self.t_graph_feat[t_train_idx + len(self.train_shots[dataset_idx])]).to(args.device)))
+                    tg_embedding = torch.cat((tg_readout, torch.from_numpy((self.t_graph_feat[dataset_idx])[t_train_idx]).to(args.device)))
                     
                     # graph classification
-                    tg_label = self.t_graph_labels[t_train_idx].float().view(1, )
+                    tg_label = (self.t_graph_labels[dataset_idx])[t_train_idx].float().view(1, )
                     tg_pred = self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid()
 
                     train_loss = self.criterion(tg_pred, tg_label)
@@ -278,39 +285,38 @@ class Runner(object):
                     self.model.update_hiddens_all_with(embeddings)
 
                 # --------------------Evaluation------------------------
-                self.model.eval()
-
                 # Foundational model evaluation:
                 avg_dataset_loss = np.mean(dataset_losses)
                 epoch_losses_per_dataset[dataset_idx].append(avg_dataset_loss)
                 epoch_losses.append(avg_dataset_loss)
-                # Older version:
-                # avg_epoch_loss = np.mean(epoch_losses)
-                # train_avg_epoch_loss_dict[epoch] = avg_epoch_loss
 
-                # Calculating performance for all datasets
-                # patience = 0  I don't think it should be zero here
-                if avg_dataset_loss < min_loss:
-                    min_loss = avg_dataset_loss
-                    _, test_loss_i, test_auc_i, test_ap_i= self.tgclassification_test(epoch, dataset_idx, self.readout_scheme)
-                    test_loss.append(test_loss_i)
-                    test_auc.append(test_auc_i)
-                    test_ap.append(test_ap_i)
-                    patience = 0
-                else:
-                    patience += 1
-                    if epoch > args.min_epoch and patience > args.patience:  # NOTE: args.min_epoch prevents it from stopping early in most cases
-                        print('INFO: Early Stopping...')
-                        break
-                
                 if isnan(train_loss):
                     print('ATTENTION: nan loss')
                     break
+
+            # Calculating performance for all datasets
+            # patience = 0  I don't think it should be zero here
             
+            self.model.eval()
             avg_epoch_loss = np.mean(epoch_losses)
             train_avg_epoch_loss_dict[epoch] = avg_epoch_loss
-            gpu_mem_alloc = torch.cuda.max_memory_allocated() / 1000000 if torch.cuda.is_available() else 0
 
+            if avg_epoch_loss < min_loss:
+                min_loss = avg_epoch_loss
+                _,  test_auc_i, test_ap_i= self.tgclassification_test(epoch, self.readout_scheme)
+                # test_loss.append(test_loss_i)
+                test_auc.append(test_auc_i)
+                test_ap.append(test_ap_i)
+                patience = 0
+            else:
+                patience += 1
+                if epoch > args.min_epoch and patience > args.patience:  # NOTE: args.min_epoch prevents it from stopping early in most cases
+                    print('INFO: Early Stopping...')
+                    break
+
+            gpu_mem_alloc = torch.cuda.max_memory_allocated() / 1000000 if torch.cuda.is_available() else 0
+            # print(avg_epoch_loss)
+            
             if epoch == 1 or epoch % args.log_interval == 0:
                     logger.info('==' * 30)
                     logger.info("Epoch:{}, Loss: {:.4f}, Time: {:.3f}, GPU: {:.1f}MiB".format(epoch, 
@@ -319,15 +325,15 @@ class Runner(object):
                                                                                               gpu_mem_alloc))
                     logger.info(
                         "Test: Epoch:{}, AUC: {:.4f}, AP: {:.4f}".format(epoch, 
-                                                                         np.mean(test_loss), 
-                                                                         np.mean(test_auc), 
-                                                                         np.mean(test_ap)))
+                                                                        #  np.mean(test_loss[-1]), 
+                                                                         np.mean(test_auc[-1]), 
+                                                                         np.mean(test_ap[-1])))
 
             if (args.wandb):
                 wandb.log({"Train Loss": avg_epoch_loss,
-                            "Test Loss" : np.mean(test_loss),
-                            "Test AUC" : np.mean(test_auc),
-                            "Test AP" : np.mean(test_ap),
+                            # "Test Loss" : np.mean(test_loss[-1]),
+                            "Test AUC" : np.mean(test_auc[-1]),
+                            "Test AP" : np.mean(test_ap[-1]),
                     })
                 
             
@@ -335,8 +341,10 @@ class Runner(object):
             # logger.info(">> Parameters: lr:%.4f |Dim:%d |Window:%d |" % (args.lr, args.nhid, args.nb_window))
 
             # check if this model has the best performance so far:
-            if np.mean(test_loss) < min_test_loss:
-                min_test_loss = np.mean(test_loss)
+            print("Epoch {} len test_auc {} len test_ap {}".format(epoch, len(test_auc), len(test_ap)))
+            if len(test_auc) == epoch and np.mean(test_auc[epoch-1]) > min_test_auc:
+                print("Best model for epoch {}".format(epoch))
+                min_test_auc = np.mean(test_auc[epoch-1])
                 best_model = copy.deepcopy(self.model) ################ I am not sure how I should make acopy of the model
 
 
@@ -388,8 +396,10 @@ if __name__ == '__main__':
 
     args.model = "HTGN"
     args.seed = 710
-    args.max_epoch=10
-    args.testlength=10
+    args.max_epoch=200
+    args.testlength=30
+    args.lr = 0.001
+    args.log_interval=5
 
     print("INFO: >>> Temporal Graph Classification <<<")
     print("INFO: Args: ", args)
@@ -404,7 +414,7 @@ if __name__ == '__main__':
     # args.num_nodes = data['num_nodes']
     print("INFO: Number of nodes:", args.num_nodes)
     set_random(args.seed)
-    init_logger(prepare_dir(args.output_folder) + args.model + '_' + "Test1" + '_seed_' + str(args.seed) + '_log.txt')
+    init_logger(prepare_dir(args.output_folder) + args.model + '_' + "Test2" + '_seed_' + str(args.seed) + '_log.txt')
     runner = Runner()
     runner.run()
 
