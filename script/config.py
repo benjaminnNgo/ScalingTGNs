@@ -34,6 +34,7 @@ parser.add_argument('--pre_defined_feature', default=None, help='pre-defined nod
 parser.add_argument('--save_embeddings', type=int, default=0, help='save or not, default:0')
 parser.add_argument('--debug_mode', type=int, default=0, help='debug_mode, 0: normal running; 1: debugging mode')
 parser.add_argument('--min_epoch', type=int, default=100, help='min epoch')
+parser.add_argument('--test_ratio', type=int, default=0.15, help='ratio for testing, default:0.15')
 
 #For testing model only
 parser.add_argument('--test_dataset', type=str, default=None, help='define dataset for testing')

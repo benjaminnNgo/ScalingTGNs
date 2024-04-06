@@ -5,7 +5,7 @@ Assumption:
 
 July 14, 2023
 """
-
+import math
 import os
 import sys
 import time
@@ -122,15 +122,26 @@ def extra_dataset_attributes_loading(args, readout_scheme='mean'):
     return TG_labels, TG_feats
 
 
-def save_results(dataset, test_auc, test_ap):
+def save_results(dataset, test_auc, test_ap,lr,train_snapshot,test_snapshot):
     result_path = f"../data/output/{args.results_file}"
     if not os.path.exists(result_path):
-        result_df = pd.DataFrame(columns=["dataset", "test_auc", "test_ap"])
+        result_df = pd.DataFrame(columns=["dataset", "test_auc", "test_ap","lr","train_snapshot","test_snapshot"])
     else:
         result_df = pd.read_csv(result_path)
 
-    result_df = result_df._append({'dataset': dataset, 'test_auc': test_auc, 'test_ap': test_ap}, ignore_index=True)
+    result_df = result_df._append({'dataset': dataset, 'test_auc': test_auc, 'test_ap': test_ap,"lr":lr,"train_snapshot":train_snapshot,"test_snapshot":test_snapshot}, ignore_index=True)
     result_df.to_csv(result_path, index=False)
+
+def save_epoch_results(epoch,test_auc, test_ap,loss):
+    result_path = "../data/output/epoch_result/{}_{}_{}_epochResult".format(args.dataset,args.model,args.seed)
+    if not os.path.exists(result_path):
+        result_df = pd.DataFrame(columns=["epoch", "test_auc", "test_ap","loss"])
+    else:
+        result_df = pd.read_csv(result_path)
+
+    result_df = result_df._append({'epoch': epoch, 'test_auc': test_auc, 'test_ap': test_ap,"loss":loss}, ignore_index=True)
+    result_df.to_csv(result_path, index=False)
+
 
 
 class Runner(object):
@@ -138,7 +149,7 @@ class Runner(object):
         if args.wandb:
             wandb.init(
                 # set the wandb project where this run will be logged
-                project="scalingTGNs",
+                project="scalingTGNs_i2",
                 # Set name of the run:
                 name="{}_{}".format(args.dataset, args.model),
                 # track hyperparameters and run metadata
@@ -151,8 +162,8 @@ class Runner(object):
             )
         self.readout_scheme = 'mean'
         self.tgc_lr = 1e-4
-
         self.len = data['time_length']
+        args.testlength = math.floor(self.len * args.test_ratio) #Re-calculate number of test snapshots
         self.start_train = 0
         self.train_shots = list(range(self.start_train, self.len - args.testlength))
         self.test_shots = list(range(self.len - args.testlength, self.len))
@@ -245,7 +256,9 @@ class Runner(object):
         t_total_start = time.time()
         min_loss = 10
         train_avg_epoch_loss_dict = {}
-        for epoch in range(1, args.max_epoch + 1):
+        # for epoch in range(1, args.max_epoch + 1):
+        for epoch in range(1, 10):
+
             self.model.init_hiddens() #Just added
             t_epoch_start = time.time()
             epoch_losses = []
@@ -303,6 +316,7 @@ class Runner(object):
                            "test AP": test_ap
 
                            })
+            save_epoch_results(epoch,test_auc,test_ap,avg_epoch_loss)
 
         logger.info('>> Total time : %6.2f' % (time.time() - t_total_start))
         logger.info(">> Parameters: lr:%.4f |Dim:%d |Window:%d |" % (args.lr, args.nhid, args.nb_window))
@@ -339,7 +353,7 @@ class Runner(object):
         # Final Test
         test_epoch, test_auc, test_ap = self.tgclassification_test(epoch, self.readout_scheme)
         logger.info("Final Test: Epoch:{} , AUC: {:.4f}, AP: {:.4f}".format(test_epoch, test_auc, test_ap))
-        save_results(args.dataset, test_auc, test_ap)
+        save_results(args.dataset, test_auc, test_ap,self.tgc_lr,len(self.train_shots),len(self.test_shots))
 
 
 if __name__ == '__main__':
