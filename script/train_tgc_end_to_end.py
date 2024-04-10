@@ -159,7 +159,7 @@ class Runner(object):
         if args.wandb:
             wandb.init(
                 # set the wandb project where this run will be logged
-                project="scalingTGNs_i2",
+                project="testing",
                 # Set name of the run:
                 name="{}_{}".format(args.dataset, args.model),
                 # track hyperparameters and run metadata
@@ -175,10 +175,15 @@ class Runner(object):
         self.len = data['time_length']
         args.testlength = math.floor(self.len * args.test_ratio) #Re-calculate number of test snapshots
         self.start_train = 0
-        self.train_shots = list(range(self.start_train, self.len - args.testlength))
+        args.evalLength = math.floor(self.len * args.eval_ratio)
+
+
+        self.train_shots = list(range(self.start_train, self.len - args.testlength - args.evalLength))
+        self.eval_shots = list(range( self.len - args.testlength - args.evalLength, self.len - args.testlength))
         self.test_shots = list(range(self.len - args.testlength, self.len))
+
         self.load_feature()
-        logger.info('INFO: total length: {}, train length: {}, test length: {}'.format(self.len, len(self.train_shots),
+        logger.info('INFO: total length: {}, train length: {},eval length:{}, test length: {}'.format(self.len, len(self.train_shots),args.evalLength,
                                                                                        args.testlength))
 
         self.model = load_model(args).to(args.device)
@@ -212,6 +217,35 @@ class Runner(object):
                 logger.info('INFO: using one-hot feature')
             args.nfeat = self.x.size(1)
 
+    def tgclassification_eval(self, epoch, readout_scheme):
+        """
+        Final inference on the test set
+        """
+        tg_labels, tg_preds = [], []
+
+        for t_eval_idx, t in enumerate(self.eval_shots):
+            self.model.eval()
+            self.tgc_decoder.eval()
+            with torch.no_grad():
+                edge_index, pos_edge, neg_edge = prepare(data, t)[:3]
+                new_pos_edge, new_neg_edge = prepare(data, t)[-2:]
+
+                embeddings = self.model(edge_index, self.x)
+
+                # graph readout
+                tg_readout = readout_function(embeddings, readout_scheme)
+                tg_embedding = torch.cat((tg_readout,
+                                          torch.from_numpy(self.t_graph_feat[t_eval_idx + len(self.train_shots)]).to(
+                                              args.device)))
+
+                # graph classification
+                tg_labels.append(self.t_graph_labels[t_eval_idx + len(self.train_shots)].cpu().numpy())
+                tg_preds.append(
+                    self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid().cpu().numpy())
+
+        auc, ap = roc_auc_score(tg_labels, tg_preds), average_precision_score(tg_labels, tg_preds)
+        return epoch, auc, ap
+
     def tgclassification_test(self, epoch, readout_scheme):
         """
         Final inference on the test set
@@ -230,17 +264,16 @@ class Runner(object):
                 # graph readout
                 tg_readout = readout_function(embeddings, readout_scheme)
                 tg_embedding = torch.cat((tg_readout,
-                                          torch.from_numpy(self.t_graph_feat[t_test_idx + len(self.train_shots)]).to(
+                                          torch.from_numpy(self.t_graph_feat[t_test_idx + len(self.train_shots) + len(self.eval_shots)]).to(
                                               args.device)))
 
                 # graph classification
-                tg_labels.append(self.t_graph_labels[t_test_idx + len(self.train_shots)].cpu().numpy())
+                tg_labels.append(self.t_graph_labels[t_test_idx + len(self.train_shots) + len(self.eval_shots)].cpu().numpy())
                 tg_preds.append(
                     self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid().cpu().numpy())
 
         auc, ap = roc_auc_score(tg_labels, tg_preds), average_precision_score(tg_labels, tg_preds)
         return epoch, auc, ap
-
     def run(self):
         """
         Run the temporal graph classification task
@@ -266,8 +299,13 @@ class Runner(object):
         t_total_start = time.time()
         min_loss = 10
         train_avg_epoch_loss_dict = {}
+
+        best_model = self.model.state_dict()
+        patience = 0
+        pre_eval_auc = -1 #Set previous evaluation result to very small number
+
         for epoch in range(1, args.max_epoch + 1):
-        # for epoch in range(1, 10):
+        # for epoch in range(1, 5):
             self.model.train()
             self.model.init_hiddens() #Just added
             self.tgc_decoder.train()
@@ -302,17 +340,17 @@ class Runner(object):
             avg_epoch_loss = np.mean(epoch_losses)
             train_avg_epoch_loss_dict[epoch] = avg_epoch_loss
             train_auc, train_ap = roc_auc_score(tg_labels, tg_preds), average_precision_score(tg_labels, tg_preds)
-            patience = 0
-            if avg_epoch_loss < min_loss:
-                min_loss = avg_epoch_loss
-                test_epoch, test_auc, test_ap = self.tgclassification_test(epoch, self.readout_scheme)
+            eval_epoch, eval_auc, eval_ap = self.tgclassification_eval(epoch, self.readout_scheme)
+            if pre_eval_auc < eval_auc: #Use AUC as metric to define early stoping
                 patience = 0
+                best_model = self.model.state_dict() #Saved the best model for testing
             else:
                 patience += 1
-                test_epoch, test_auc, test_ap = self.tgclassification_test(epoch, self.readout_scheme) #Added to make it test for every epoch
                 if epoch > args.min_epoch and patience > args.patience:  # NOTE: args.min_epoch prevents it from stopping early in most cases
                     print('INFO: Early Stopping...')
                     break
+
+            pre_eval_auc = eval_auc
             gpu_mem_alloc = torch.cuda.max_memory_allocated() / 1000000 if torch.cuda.is_available() else 0
 
             if epoch == 1 or epoch % args.log_interval == 0:
@@ -321,7 +359,7 @@ class Runner(object):
                                                                                           time.time() - t_epoch_start,
                                                                                           gpu_mem_alloc))
                 logger.info(
-                    "Test: Epoch:{}, AUC: {:.4f}, AP: {:.4f}".format(test_epoch, test_auc, test_ap))
+                    "Test: Epoch:{}, AUC: {:.4f}, AP: {:.4f}".format(eval_epoch, eval_auc, eval_ap))
 
                 logger.info(
                     "Train: Epoch:{}, AUC: {:.4f}, AP: {:.4f}".format(epoch, train_auc, train_ap))
@@ -331,14 +369,12 @@ class Runner(object):
                 break
             if (args.wandb):
                 wandb.log({"train_loss": avg_epoch_loss,
-                           "test_AUC": test_auc,
-                           "test AP": test_ap,
+                           "eval AUC": eval_auc,
+                           "eval AP": eval_ap,
                            "train AUC":train_auc,
                            "train AP": train_ap
-
-
                            })
-            save_epoch_results(epoch,test_auc,test_ap,avg_epoch_loss)
+            save_epoch_results(epoch,eval_auc,eval_ap,avg_epoch_loss)
             save_epoch_traing(epoch,train_auc,train_ap)
 
         logger.info('>> Total time : %6.2f' % (time.time() - t_total_start))
@@ -358,25 +394,11 @@ class Runner(object):
         with open(loss_log_filename, 'wb') as file:
             dump(train_avg_epoch_loss_dict, file)
 
-        # plotting the training losses
-        # train_avg_epoch_loss_dict = load(open(loss_log_filename, 'rb'))
-        # train_values = train_avg_epoch_loss_dict.values()
-        # epoch_range = range(0, epoch)
-        # plt.plot(epoch_range, train_values, label='Training Loss')
-        # plt.title('Training Loss')
-        # plt.xlabel('Epochs')
-        # plt.ylabel('Loss')
-        # plt.xticks(np.arange(0, epoch, 50))
-        # plt.legend(loc='best')
-        # plt.show()
-        # plt.savefig(f'{partial_results_path}/{args.model}_{args.dataset}_{args.seed}_train_loss.png')
-        # -----------------------------------
-        # -----------------------------------
-
         # Final Test
-        test_epoch, test_auc, test_ap = self.tgclassification_test(epoch, self.readout_scheme)
-        logger.info("Final Test: Epoch:{} , AUC: {:.4f}, AP: {:.4f}".format(test_epoch, test_auc, test_ap))
-        save_results(args.dataset, test_auc, test_ap,self.tgc_lr,len(self.train_shots),len(self.test_shots))
+        self.model.load_state_dict(best_model) #Load the best model for testing
+        eval_epoch, eval_auc, eval_ap = self.tgclassification_test(epoch, self.readout_scheme)
+        logger.info("Final Test: Epoch:{} , AUC: {:.4f}, AP: {:.4f}".format(eval_epoch, eval_auc, eval_ap))
+        save_results(args.dataset, eval_auc, eval_ap,self.tgc_lr,len(self.train_shots),len(self.test_shots))
 
 
 if __name__ == '__main__':
