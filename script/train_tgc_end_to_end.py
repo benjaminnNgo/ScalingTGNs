@@ -142,6 +142,16 @@ def save_epoch_results(epoch,test_auc, test_ap,loss):
     result_df = result_df._append({'epoch': epoch, 'test_auc': test_auc, 'test_ap': test_ap,"loss":loss}, ignore_index=True)
     result_df.to_csv(result_path, index=False)
 
+def save_epoch_traing(epoch,test_auc, test_ap):
+    result_path = "../data/output/training_test/{}_{}_{}_epochResult".format(args.dataset,args.model,args.seed)
+    if not os.path.exists(result_path):
+        result_df = pd.DataFrame(columns=["epoch", "test_auc", "test_ap"])
+    else:
+        result_df = pd.read_csv(result_path)
+
+    result_df = result_df._append({'epoch': epoch, 'test_auc': test_auc, 'test_ap': test_ap}, ignore_index=True)
+    result_df.to_csv(result_path, index=False)
+
 
 
 class Runner(object):
@@ -161,7 +171,7 @@ class Runner(object):
                 }
             )
         self.readout_scheme = 'mean'
-        self.tgc_lr = 1e-4
+        self.tgc_lr = args.lr
         self.len = data['time_length']
         args.testlength = math.floor(self.len * args.test_ratio) #Re-calculate number of test snapshots
         self.start_train = 0
@@ -256,16 +266,20 @@ class Runner(object):
         t_total_start = time.time()
         min_loss = 10
         train_avg_epoch_loss_dict = {}
-        # for epoch in range(1, args.max_epoch + 1):
-        for epoch in range(1, 10):
-
+        for epoch in range(1, args.max_epoch + 1):
+        # for epoch in range(1, 10):
+            self.model.train()
             self.model.init_hiddens() #Just added
+            self.tgc_decoder.train()
             t_epoch_start = time.time()
             epoch_losses = []
+            tg_labels = []
+            tg_preds =  []
             for t_train_idx, t_train in enumerate(self.train_shots):
                 optimizer.zero_grad()
 
                 edge_index, pos_index, neg_index, activate_nodes, edge_weight, _, _ = prepare(data, t_train)
+
                 embeddings = self.model(edge_index, self.x)
 
                 # graph readout
@@ -276,6 +290,8 @@ class Runner(object):
                 tg_label = self.t_graph_labels[t_train_idx].float().view(1, )
                 tg_pred = self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid()
 
+                tg_labels.append(tg_label.cpu().numpy())
+                tg_preds.append(tg_pred.cpu().detach().numpy())
                 t_loss = criterion(tg_pred, tg_label)
                 t_loss.backward()
                 optimizer.step()
@@ -285,7 +301,7 @@ class Runner(object):
 
             avg_epoch_loss = np.mean(epoch_losses)
             train_avg_epoch_loss_dict[epoch] = avg_epoch_loss
-
+            train_auc, train_ap = roc_auc_score(tg_labels, tg_preds), average_precision_score(tg_labels, tg_preds)
             patience = 0
             if avg_epoch_loss < min_loss:
                 min_loss = avg_epoch_loss
@@ -307,16 +323,23 @@ class Runner(object):
                 logger.info(
                     "Test: Epoch:{}, AUC: {:.4f}, AP: {:.4f}".format(test_epoch, test_auc, test_ap))
 
+                logger.info(
+                    "Train: Epoch:{}, AUC: {:.4f}, AP: {:.4f}".format(epoch, train_auc, train_ap))
+
             if isnan(t_loss):
                 print('ATTENTION: nan loss')
                 break
             if (args.wandb):
                 wandb.log({"train_loss": avg_epoch_loss,
                            "test_AUC": test_auc,
-                           "test AP": test_ap
+                           "test AP": test_ap,
+                           "train AUC":train_auc,
+                           "train AP": train_ap
+
 
                            })
             save_epoch_results(epoch,test_auc,test_ap,avg_epoch_loss)
+            save_epoch_traing(epoch,train_auc,train_ap)
 
         logger.info('>> Total time : %6.2f' % (time.time() - t_total_start))
         logger.info(">> Parameters: lr:%.4f |Dim:%d |Window:%d |" % (args.lr, args.nhid, args.nb_window))
