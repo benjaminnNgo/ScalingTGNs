@@ -17,6 +17,7 @@ parser.add_argument('--results_file', type=str, default='results.csv', help='Nam
 # 2.experiments
 parser.add_argument('--max_epoch', type=int, default=500, help='number of epochs to train.')
 parser.add_argument('--testlength', type=int, default=3, help='length for test, default:3')
+parser.add_argument('--evalLength', type=int, default=3, help='length for eval, default:3')
 parser.add_argument('--device', type=str, default='cpu', help='training device')
 parser.add_argument('--device_id', type=str, default='0', help='device id for gpu')
 parser.add_argument('--seed', type=int, default=1024, help='random seed')
@@ -34,6 +35,8 @@ parser.add_argument('--pre_defined_feature', default=None, help='pre-defined nod
 parser.add_argument('--save_embeddings', type=int, default=0, help='save or not, default:0')
 parser.add_argument('--debug_mode', type=int, default=0, help='debug_mode, 0: normal running; 1: debugging mode')
 parser.add_argument('--min_epoch', type=int, default=100, help='min epoch')
+parser.add_argument('--test_ratio', type=int, default=0.15, help='ratio for testing, default:0.15')
+parser.add_argument('--eval_ratio', type=int, default=0.15, help='ratio for evaluation, default:0.15')
 
 #For testing model only
 parser.add_argument('--test_dataset', type=str, default=None, help='define dataset for testing')
