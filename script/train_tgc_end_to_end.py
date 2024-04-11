@@ -19,7 +19,7 @@ from sklearn.metrics import roc_auc_score, average_precision_score
 from pickle import dump, load
 import matplotlib.pyplot as plt
 import wandb
-wandb.login(key="29968c684c2e412ed650ce0b5b52db584d572b86")
+# wandb.login(key="29968c684c2e412ed650ce0b5b52db584d572b86")
 import warnings
 
 # Filter out a specific warning
@@ -347,7 +347,8 @@ if __name__ == '__main__':
 
     args.model = "HTGN"
     args.seed = 710
-    args.dataset = "AMB"
+    # args.dataset = "AMB"
+    # args.dataset = "unnamedtoken150x0000000000095413afc295d19edeb1ad7b71c952"
     args.max_epoch=200
     args.testlength=10
 
@@ -357,13 +358,13 @@ if __name__ == '__main__':
     print("INFO: Dataset: {}".format(args.dataset))
     print("INFO: Model: {}".format(args.model))
     data = loader(dataset=args.dataset, neg_sample=args.neg_sample)
-    args.num_nodes = data['num_nodes']
-    print("INFO: Number of nodes:", args.num_nodes)
-    set_random(args.seed)
-    init_logger(
-        prepare_dir(args.output_folder) + args.model + '_' + args.dataset + '_seed_' + str(args.seed) + '_log.txt')
-    runner = Runner()
-    runner.run()
+    # args.num_nodes = data['num_nodes']
+    # print("INFO: Number of nodes:", args.num_nodes)
+    # set_random(args.seed)
+    # init_logger(
+    #     prepare_dir(args.output_folder) + args.model + '_' + args.dataset + '_seed_' + str(args.seed) + '_log.txt')
+    # runner = Runner()
+    # runner.run()
 
 # ----------------------
 # commands to run:

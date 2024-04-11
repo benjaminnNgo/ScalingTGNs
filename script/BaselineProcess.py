@@ -5,7 +5,7 @@ import pandas as pd
 
 root_path = "../data/input/tokens/raw/"
 timeseries_file_path = "../data/input/tokens/raw/"
-timeseries_file_path = '/network/scratch/r/razieh.shirzadkhani/fm_data/selected/'
+timeseries_file_path = '/network/scratch/r/razieh.shirzadkhani/fm_data/'
 
 def creatBaselineDatasets(file, normalization=False):
     print("Processing {}".format(file))
@@ -20,7 +20,7 @@ def creatBaselineDatasets(file, normalization=False):
     if os.path.exists("../data/input/tokens/reformatted/Labels/" + file):
         os.remove("../data/input/tokens/reformatted/Labels/" + file)
 
-    csv_edgelist_file_path = "../data/input/tokens/reformatted/EdgeLists/" + file.split("_")[0] + "_edgelist.txt"
+    csv_edgelist_file_path = "../data/input/raw/edgelists/" + file.split("_")[0] + "_edgelist.txt"
     if os.path.exists(csv_edgelist_file_path):
         appended_edgelist_df = pd.read_csv(csv_edgelist_file_path)
     else:
@@ -99,7 +99,7 @@ def creatBaselineDatasets(file, normalization=False):
 
         # ------------------------------------------------
         # Storing each snapshot label data
-        label_file_path = "../data/input/tokens/reformatted/Labels/" + file.split("_")[0] + "_labels.csv"
+        label_file_path = "../data/input/raw/labels/" + file.split("_")[0] + "_labels.csv"
         batch_lables.append(label)
         # Open a file in append mode and write a line to it
         if (indx % batch_size == 0):
@@ -131,3 +131,4 @@ def creatBaselineDatasets(file, normalization=False):
 # "unnamed_token_1898_0x00a8b738e453ffd858a7edf03bccfe20412f0eb0.csv",
 # "unnamed_token_21630_0xcc4304a31d09258b0029ea7fe63d032f52e44efe.csv",
 # "unnamed_token_21636_0xfca59cd816ab1ead66534d82bc21e7515ce441cf.csv"]
+creatBaselineDatasets("unnamed_token_21635_0xe53ec727dbdeb9e2d5456c3be40cff031ab40a55.csv")
