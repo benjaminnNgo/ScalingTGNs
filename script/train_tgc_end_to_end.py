@@ -159,7 +159,7 @@ class Runner(object):
         if args.wandb:
             wandb.init(
                 # set the wandb project where this run will be logged
-                project="testing",
+                project="scalingTGNs_i3",
                 # Set name of the run:
                 name="{}_{}".format(args.dataset, args.model),
                 # track hyperparameters and run metadata
@@ -301,8 +301,9 @@ class Runner(object):
         train_avg_epoch_loss_dict = {}
 
         best_model = self.model.state_dict()
+        best_epoch = -1
         patience = 0
-        pre_eval_auc = -1 #Set previous evaluation result to very small number
+        best_eval_auc = -1 #Set previous evaluation result to very small number
 
         for epoch in range(1, args.max_epoch + 1):
         # for epoch in range(1, 5):
@@ -341,16 +342,27 @@ class Runner(object):
             train_avg_epoch_loss_dict[epoch] = avg_epoch_loss
             train_auc, train_ap = roc_auc_score(tg_labels, tg_preds), average_precision_score(tg_labels, tg_preds)
             eval_epoch, eval_auc, eval_ap = self.tgclassification_eval(epoch, self.readout_scheme)
-            if pre_eval_auc < eval_auc: #Use AUC as metric to define early stoping
+
+            #Only apply early stopping when after min_epoch of training
+            if best_eval_auc < eval_auc : #Use AUC as metric to define early stoping
                 patience = 0
                 best_model = self.model.state_dict() #Saved the best model for testing
+                best_epoch = epoch
+                best_eval_auc = eval_auc
             else:
-                patience += 1
+                if epoch < args.min_epoch: #If it is less than min_epoch, reset best AUC to current AUC and save current model as best model
+                    patience = 0
+                    best_eval_auc = eval_auc
+                    best_model = self.model.state_dict()
+                    best_epoch = epoch
+                if best_eval_auc - eval_auc > 0.05:
+                    patience += 1
                 if epoch > args.min_epoch and patience > args.patience:  # NOTE: args.min_epoch prevents it from stopping early in most cases
                     print('INFO: Early Stopping...')
+                    logger.info("Early stopping at epoch: {}".format(epoch))
                     break
 
-            pre_eval_auc = eval_auc
+
             gpu_mem_alloc = torch.cuda.max_memory_allocated() / 1000000 if torch.cuda.is_available() else 0
 
             if epoch == 1 or epoch % args.log_interval == 0:
@@ -381,7 +393,7 @@ class Runner(object):
         logger.info(">> Parameters: lr:%.4f |Dim:%d |Window:%d |" % (args.lr, args.nhid, args.nb_window))
 
         logger.info("INFO: Saving the models...")
-        torch.save(self.model.state_dict(), self.model_path)
+        torch.save(best_model, self.model_path)
         logger.info("INFO: The models is saved. Done.")
 
         # ------------ DEBUGGING ------------
@@ -396,9 +408,9 @@ class Runner(object):
 
         # Final Test
         self.model.load_state_dict(best_model) #Load the best model for testing
-        eval_epoch, eval_auc, eval_ap = self.tgclassification_test(epoch, self.readout_scheme)
-        logger.info("Final Test: Epoch:{} , AUC: {:.4f}, AP: {:.4f}".format(eval_epoch, eval_auc, eval_ap))
-        save_results(args.dataset, eval_auc, eval_ap,self.tgc_lr,len(self.train_shots),len(self.test_shots))
+        test_epoch, test_auc, test_ap = self.tgclassification_test(epoch, self.readout_scheme)
+        logger.info("Final Test: Epoch:{} , AUC: {:.4f}, AP: {:.4f}".format(test_epoch, test_auc, test_ap))
+        save_results(args.dataset, test_auc, test_ap,self.tgc_lr,len(self.train_shots),len(self.test_shots))
 
 
 if __name__ == '__main__':
