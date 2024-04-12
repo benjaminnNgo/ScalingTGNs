@@ -7,6 +7,7 @@ July 14, 2023
 """
 
 import os
+import math
 import sys
 import time
 import torch
@@ -125,6 +126,37 @@ def extra_dataset_attributes_loading(args, readout_scheme='mean'):
     logger.info("INFO: Extracting extra dataset attributes done!")
     return TG_labels_data, TG_feats_data
   
+def save_results(dataset, test_auc, test_ap,lr,train_snapshot,test_snapshot):
+    result_path = f"../data/output/{dataset}_{args.results_file}"
+    if not os.path.exists(result_path):
+        result_df = pd.DataFrame(columns=["dataset", "test_auc", "test_ap","lr","train_snapshot","test_snapshot"])
+    else:
+        result_df = pd.read_csv(result_path)
+
+    result_df = result_df._append({'dataset': dataset, 'test_auc': test_auc, 'test_ap': test_ap,"lr":lr,"train_snapshot":train_snapshot,"test_snapshot":test_snapshot}, ignore_index=True)
+    result_df.to_csv(result_path, index=False)
+
+def save_epoch_results(epoch,test_auc, test_ap,loss):
+    result_path = "../data/output/epoch_result/{}_{}_{}_epochResult".format(len(args.dataset),args.model,args.seed)
+    if not os.path.exists(result_path):
+        result_df = pd.DataFrame(columns=["epoch", "test_auc", "test_ap","loss"])
+    else:
+        result_df = pd.read_csv(result_path)
+
+    result_df = result_df._append({'epoch': epoch, 'test_auc': test_auc, 'test_ap': test_ap,"loss":loss}, ignore_index=True)
+    result_df.to_csv(result_path, index=False)
+
+def save_epoch_training(epoch,test_auc, test_ap):
+    result_path = "../data/output/training_test/{}_{}_{}_epochResult".format(len(args.dataset),args.model,args.seed)
+    if not os.path.exists(result_path):
+        result_df = pd.DataFrame(columns=["epoch", "test_auc", "test_ap"])
+    else:
+        result_df = pd.read_csv(result_path)
+
+    result_df = result_df._append({'epoch': epoch, 'test_auc': test_auc, 'test_ap': test_ap}, ignore_index=True)
+    result_df.to_csv(result_path, index=False)
+
+
 
 class Runner(object):
     def __init__(self):
@@ -132,7 +164,7 @@ class Runner(object):
             wandb.init(
                 # set the wandb project where this run will be logged
                 project="ScalingTGNs",
-                
+                name="{}_{}_01".format(len(data), args.model),
                 # track hyperparameters and run metadata
                 config={
                 "learning_rate": args.lr,
@@ -146,20 +178,21 @@ class Runner(object):
 
         self.num_datasets = len(data)
         self.len = [data[i]['time_length'] for i in range(self.num_datasets)]
-        # self.len = data['time_length']
+        self.testlength = [math.floor(self.len[i] * args.test_ratio) for i in range(self.num_datasets)] 
+        self.evalLength = [math.floor(self.len[i] * args.eval_ratio) for i in range(self.num_datasets)]
+        # print(self.evalLength, self.testlength)
         self.start_train = 0
-        self.train_shots = [list(range(0, self.len[i] - args.testlength)) for i in range(self.num_datasets)] #Changed
-        self.test_shots = [list(range(self.len[i] - args.testlength, self.len[i])) for i in range(self.num_datasets)] #Changed
-        
+        self.train_shots = [list(range(0, self.len[i] - self.testlength[i] - self.evalLength[i])) for i in range(self.num_datasets)] #Changed
+        self.eval_shots = [list(range(self.len[i] - self.testlength[i] - self.evalLength[i], self.len[i] - self.testlength[i])) for i in range(self.num_datasets)] #Changed
+        self.test_shots = [list(range(self.len[i] - self.testlength[i], self.len[i])) for i in range(self.num_datasets)]
+        # print(len(self.train_shots[0]),len(self.train_shots[1]), len(self.eval_shots[0]), len(self.eval_shots[1]),len(self.test_shots[0]),len(self.test_shots[1]))
         args.num_nodes = max(args.num_nodes)
         self.criterion = torch.nn.BCELoss()
-        # self.train_shots = list(range(self.start_train, self.len - args.testlength))
-        # self.test_shots = list(range(self.len - args.testlength, self.len))
         self.load_feature()
-        logger.info('INFO: total length: {}, train length: {}, test length: {}'.format(self.len, len(self.train_shots), args.testlength))
+        # logger.info('INFO: total length: {}, train length: {}, test length: {}'.format(self.len, len(self.train_shots), args.testlength))
 
         self.model = load_model(args).to(args.device)
-        self.model_path = '../saved_models/fm/'
+        self.model_path = '../saved_models/fm/{}_seed_{}_{}_01.pth'.format(args.model, args.seed, self.num_datasets)
         # logger.info("The models is going to be loaded from {}".format(self.model_path))
         # self.models.load_state_dict(torch.load(self.model_path))
 
@@ -187,41 +220,65 @@ class Runner(object):
                 logger.info('INFO: using one-hot feature')
             args.nfeat = self.x.size(1)
 
-
-    def tgclassification_test(self, epoch, readout_scheme):
+    def tgclassification_eval(self, epoch, readout_scheme, dataset_idx):
         """
         Final inference on the test set
         """
-        
-        auc, ap, loss = [], [], []
-        for dataset_idx in range(self.num_datasets):
-            print(dataset_idx)
-            tg_labels, tg_preds, data_test_loss = [], [], []
-            for t_test_idx, t in enumerate(self.test_shots[dataset_idx]):
-                self.model.eval()
-                self.tgc_decoder.eval()
-                with torch.no_grad():
-                    edge_index, pos_edge, neg_edge = prepare(data[dataset_idx], t)[:3]
-                    # new_pos_edge, new_neg_edge = prepare(data[dataset_idx], t)[-2:]
+        tg_labels, tg_preds = [], []
 
-                    embeddings = self.model(edge_index, self.x)
+        for t_eval_idx, t in enumerate(self.eval_shots[dataset_idx]):
+            self.model.eval()
+            self.tgc_decoder.eval()
+            with torch.no_grad():
+                edge_index, pos_edge, neg_edge = prepare(data[dataset_idx], t)[:3]
+                # new_pos_edge, new_neg_edge = prepare(data, t)[-2:]
 
-                    # graph readout
-                    tg_readout = readout_function(embeddings, readout_scheme)
-                    tg_embedding = torch.cat((tg_readout, 
-                                                torch.from_numpy((self.t_graph_feat[dataset_idx])[t_test_idx + 
-                                                                                                  len(self.train_shots)]).to(args.device)))
-                
-                    # graph classification
-                    tg_labels.append((self.t_graph_labels[dataset_idx])[t_test_idx + len(self.train_shots)].cpu().numpy())
-                    tg_preds.append(self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid().cpu().numpy())
-                    
-                    # data_test_loss.append(self.criterion(tg_preds[t_test_idx], tg_labels[t_test_idx]))
-            auc.append(roc_auc_score(tg_labels, tg_preds)), 
-            ap.append(average_precision_score(tg_labels, tg_preds))
-            # loss.append(np.mean(data_test_loss))
+                embeddings = self.model(edge_index, self.x)
+
+                # graph readout
+                tg_readout = readout_function(embeddings, readout_scheme)
+                tg_embedding = torch.cat((tg_readout,
+                                          torch.from_numpy(self.t_graph_feat[dataset_idx][t_eval_idx + len(self.train_shots[dataset_idx])]).to(
+                                              args.device)))
+
+                # graph classification
+                tg_labels.append(self.t_graph_labels[dataset_idx][t_eval_idx + len(self.train_shots[dataset_idx])].cpu().numpy())
+                tg_preds.append(
+                    self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid().cpu().numpy())
+        # print(tg_labels)
+        auc, ap = roc_auc_score(tg_labels, tg_preds), average_precision_score(tg_labels, tg_preds)
         return epoch, auc, ap
-        
+
+    def tgclassification_test(self, epoch, readout_scheme, dataset_idx):
+        """
+        Final inference on the test set
+        """
+        tg_labels, tg_preds = [], []
+
+        for t_test_idx, t in enumerate(self.test_shots[dataset_idx]):
+            self.model.eval()
+            self.tgc_decoder.eval()
+            with torch.no_grad():
+                edge_index, pos_edge, neg_edge = prepare(data[dataset_idx], t)[:3]
+                # new_pos_edge, new_neg_edge = prepare(data, t)[-2:]
+
+                embeddings = self.model(edge_index, self.x)
+
+                # graph readout
+                tg_readout = readout_function(embeddings, readout_scheme)
+                tg_embedding = torch.cat((tg_readout,
+                                          torch.from_numpy(self.t_graph_feat[dataset_idx][t_test_idx + len(self.train_shots[dataset_idx]) + len(self.eval_shots[dataset_idx])]).to(
+                                              args.device)))
+
+                # graph classification
+                tg_labels.append(self.t_graph_labels[dataset_idx][t_test_idx + len(self.train_shots[dataset_idx]) + len(self.eval_shots[dataset_idx])].cpu().numpy())
+                tg_preds.append(
+                    self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid().cpu().numpy())
+
+        auc, ap = roc_auc_score(tg_labels, tg_preds), average_precision_score(tg_labels, tg_preds)
+        return epoch, auc, ap
+
+   
 
     def run(self):
         """
@@ -246,15 +303,22 @@ class Runner(object):
         self.tgc_decoder = self.tgc_decoder.train()
         
         t_total_start = time.time()
-        min_loss = 10
+        # min_loss = 10
+
+        best_model = self.model.state_dict()
+        patience = 0
+        pre_eval_auc = -1
         min_test_auc = 0
         train_avg_epoch_loss_dict = {} # Stores the average of epoch loss over all datasets
         epoch_losses_per_dataset = {} # Stores each dataset loss at each epoch: {"data_1" : [e_1, e_2, ..], ...}
         test_auc, test_ap = [], []
         for epoch in range(1, args.max_epoch + 1):
             epoch_losses = [] # Used for saving average losses of datasets in each epoch
-
+            train_aucs, train_aps, eval_aucs, eval_aps = [], [], [], []
             for dataset_idx in range(self.num_datasets):
+                tg_labels, tg_preds = [], []
+                
+                
                 # initialize a list to save the dataset losses for each epoch
                 if epoch == 1:
                     epoch_losses_per_dataset[dataset_idx] = []
@@ -271,12 +335,14 @@ class Runner(object):
                     
                     # graph readout
                     tg_readout = readout_function(embeddings, self.readout_scheme)
-                    tg_embedding = torch.cat((tg_readout, torch.from_numpy((self.t_graph_feat[dataset_idx])[t_train_idx]).to(args.device)))
+                    tg_embedding = torch.cat((tg_readout, torch.from_numpy(self.t_graph_feat[dataset_idx][t_train_idx]).to(args.device)))
                     
                     # graph classification
-                    tg_label = (self.t_graph_labels[dataset_idx])[t_train_idx].float().view(1, )
+                    tg_label = self.t_graph_labels[dataset_idx][t_train_idx].float().view(1, )
                     tg_pred = self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid()
 
+                    tg_labels.append(tg_label.cpu().numpy())
+                    tg_preds.append(tg_pred.cpu().detach().numpy())
                     train_loss = self.criterion(tg_pred, tg_label)
                     train_loss.backward()
                     optimizer.step()
@@ -293,98 +359,90 @@ class Runner(object):
                 if isnan(train_loss):
                     print('ATTENTION: nan loss')
                     break
-
-            # Calculating performance for all datasets
-            # patience = 0  I don't think it should be zero here
             
-            self.model.eval()
+                self.model.eval()
+                
+                train_auc, train_ap = roc_auc_score(tg_labels, tg_preds), average_precision_score(tg_labels, tg_preds)
+                eval_epoch, eval_auc, eval_ap = self.tgclassification_eval(epoch, self.readout_scheme, dataset_idx)
+                train_aucs.append(train_auc)
+                train_aps.append(train_ap)
+                eval_aucs.append(eval_auc)
+                eval_aps.append(eval_ap)
+
+                if pre_eval_auc < eval_auc: #Use AUC as metric to define early stoping
+                    patience = 0
+                    best_model = self.model.state_dict() #Saved the best model for testing
+                else:
+                    patience += 1
+                    if epoch > args.min_epoch and patience > args.patience:  # NOTE: args.min_epoch prevents it from stopping early in most cases
+                        print('INFO: Early Stopping...')
+                        break
+                # print(avg_dataset_loss, train_auc, train_ap, eval_auc, eval_ap)
+                if (args.wandb):
+                    wandb.log({"Data {} Train Loss".format(dataset_idx+1): avg_dataset_loss,
+                               "Data {} Train AUC".format(dataset_idx+1) : train_auc,
+                               "Data {} Train AP".format(dataset_idx+1) : train_ap,
+                               "Data {} Eval AUC".format(dataset_idx+1) : eval_auc,
+                               "Data {} Eval AP".format(dataset_idx+1) : eval_ap                                
+                        })
+
             avg_epoch_loss = np.mean(epoch_losses)
-            train_avg_epoch_loss_dict[epoch] = avg_epoch_loss
-
-            if avg_epoch_loss < min_loss:
-                min_loss = avg_epoch_loss
-                _,  test_auc_i, test_ap_i= self.tgclassification_test(epoch, self.readout_scheme)
-                # test_loss.append(test_loss_i)
-                test_auc.append(test_auc_i)
-                test_ap.append(test_ap_i)
-                patience = 0
-            else:
-                patience += 1
-                if epoch > args.min_epoch and patience > args.patience:  # NOTE: args.min_epoch prevents it from stopping early in most cases
-                    print('INFO: Early Stopping...')
-                    break
-
+            train_avg_epoch_loss_dict[epoch] = avg_epoch_loss 
             gpu_mem_alloc = torch.cuda.max_memory_allocated() / 1000000 if torch.cuda.is_available() else 0
             # print(avg_epoch_loss)
-            
             if epoch == 1 or epoch % args.log_interval == 0:
-                    logger.info('==' * 30)
-                    logger.info("Epoch:{}, Loss: {:.4f}, Time: {:.3f}, GPU: {:.1f}MiB".format(epoch, 
-                                                                                              avg_epoch_loss,
-                                                                                              time.time() - t_epoch_start,
-                                                                                              gpu_mem_alloc))
-                    logger.info(
-                        "Test: Epoch:{}, AUC: {:.4f}, AP: {:.4f}".format(epoch, 
-                                                                        #  np.mean(test_loss[-1]), 
-                                                                         np.mean(test_auc[-1]), 
-                                                                         np.mean(test_ap[-1])))
+                logger.info('==' * 30)
+                logger.info("Epoch:{}, Loss: {:.4f}, Time: {:.3f}, GPU: {:.1f}MiB".format(epoch, avg_epoch_loss,
+                                                                                          time.time() - t_epoch_start,
+                                                                                          gpu_mem_alloc))
+                logger.info(
+                    "Train: Epoch:{}, AUC: {:.4f}, AP: {:.4f}".format(epoch, np.mean(train_aucs), np.mean(train_aps)))
+                logger.info(
+                    "Eval: Epoch:{}, AUC: {:.4f}, AP: {:.4f}".format(eval_epoch, np.mean(eval_aucs), np.mean(eval_aps)))
+
+                
 
             if (args.wandb):
-                wandb.log({"Train Loss": avg_epoch_loss,
-                            # "Test Loss" : np.mean(test_loss[-1]),
-                            "Test AUC" : np.mean(test_auc[-1]),
-                            "Test AP" : np.mean(test_ap[-1]),
+                wandb.log({"Avg Train Loss": avg_epoch_loss,
+                            "Avg Train AUC" : np.mean(train_aucs),
+                            "Avg Train AP" : np.mean(train_aps),
+                            "Avg Eval AUC" : np.mean(eval_aucs),
+                            "Avg Eval AP" : np.mean(eval_aps)                            
                     })
-                
             
-            # logger.info('>> Total time : %6.2f' % (time.time() - t_total0))
-            # logger.info(">> Parameters: lr:%.4f |Dim:%d |Window:%d |" % (args.lr, args.nhid, args.nb_window))
-
-            # check if this model has the best performance so far:
-            print("Epoch {} len test_auc {} len test_ap {}".format(epoch, len(test_auc), len(test_ap)))
-            if len(test_auc) == epoch and np.mean(test_auc[epoch-1]) > min_test_auc:
-                print("Best model for epoch {}".format(epoch))
-                min_test_auc = np.mean(test_auc[epoch-1])
-                best_model = copy.deepcopy(self.model) ################ I am not sure how I should make acopy of the model
-
-
-        # saving the best trained models
-        logger.info("INFO: Saving the models...")
-        curr_stage_model_path = (self.model_path + '{}_{}_seed_{}.pth'.format(dataset_idx,
-                                                                args.models, args.seed))
-        torch.save(best_model.state_dict(), curr_stage_model_path)
-        logger.info("INFO: The models is saved. Done.")
-
-
+            
+                
+            save_epoch_results(epoch,np.mean(eval_aucs),np.mean(eval_aps),avg_epoch_loss)
+            save_epoch_training(epoch,np.mean(train_aucs),np.mean(train_ap))
+        
         logger.info('>> Total time : %6.2f' % (time.time() - t_total_start))
         logger.info(">> Parameters: lr:%.4f |Dim:%d |Window:%d |" % (args.lr, args.nhid, args.nb_window))
 
+        logger.info("INFO: Saving the models...")
+        torch.save(self.model.state_dict(), self.model_path)
+        logger.info("INFO: The models is saved. Done.")
+
         # ------------ DEBUGGING ------------
         # save the training loss values
-        # partial_results_path = f'../data/output/log/{args.dataset}/{args.model}/'
-        # loss_log_filename = f'{partial_results_path}/{args.model}_{args.dataset}_{args.seed}_train_loss.pkl'
-        # with open(loss_log_filename, 'wb') as file:
-        #     dump(train_avg_epoch_loss_dict, file)
-        
-        # plotting the training losses
-        # train_avg_epoch_loss_dict = load(open(loss_log_filename, 'rb'))
-        # train_values = train_avg_epoch_loss_dict.values()
-        # epoch_range = range(0, epoch)
-        # plt.plot(epoch_range, train_values, label='Training Loss')
-        # plt.title('Training Loss')
-        # plt.xlabel('Epochs')
-        # plt.ylabel('Loss')
-        # plt.xticks(np.arange(0, epoch, 50))
-        # plt.legend(loc='best')
-        # plt.show()
-        # plt.savefig(f'{partial_results_path}/{args.model}_{args.dataset}_{args.seed}_train_loss.png')
-        # -----------------------------------
-        # -----------------------------------
+        partial_results_path = f'../data/output/log/{args.model}/'
+        loss_log_filename = f'{partial_results_path}/{args.model}_{args.dataset}_{args.seed}_train_loss.pkl'
+        if os.path.exists(partial_results_path)==False:
+            os.makedirs(partial_results_path)
+
+        with open(loss_log_filename, 'wb') as file:
+            dump(train_avg_epoch_loss_dict, file)
 
         # Final Test
-        # test_epoch, test_auc, test_ap = self.tgclassification_test(epoch, self.readout_scheme)
-        # logger.info("Final Test: Epoch:{} , AUC: {:.4f}, AP: {:.4f}".format(test_epoch, test_auc, test_ap))
-
+        self.model.load_state_dict(best_model) #Load the best model for testing
+        test_aucs, test_aps = [], []
+        for dataset_idx in range(self.num_datasets):
+            test_epoch, test_auc, test_ap = self.tgclassification_test(epoch, self.readout_scheme, dataset_idx)
+            test_aucs.append(test_auc)
+            test_aps.append(test_ap)
+            logger.info("Final Test Data {}: Epoch:{} , AUC: {:.4f}, AP: {:.4f}".format(dataset_idx, test_epoch, test_auc, test_ap))
+            save_results(dataset_idx, test_auc, test_ap,self.tgc_lr, len(self.train_shots[dataset_idx]),len(self.test_shots[dataset_idx]))
+        logger.info("Final Test Average: Epoch:{} , AUC: {:.4f}, AP: {:.4f}".format(test_epoch, np.mean(test_aucs), np.mean(test_aps)))
+        save_results("ave", test_auc, test_ap, self.tgc_lr, self.tgc_lr, len(self.train_shots),len(self.test_shots))
 
 if __name__ == '__main__':
     from script.config import args
@@ -396,11 +454,11 @@ if __name__ == '__main__':
 
     args.model = "HTGN"
     args.seed = 710
-    args.max_epoch=200
+    args.max_epoch=400
     args.testlength=30
-    args.lr = 0.001
+    args.lr = 0.01
     args.log_interval=5
-
+    args.wandb = True
     print("INFO: >>> Temporal Graph Classification <<<")
     print("INFO: Args: ", args)
     print("======================================")
@@ -408,7 +466,7 @@ if __name__ == '__main__':
     print("INFO: Model: {}".format(args.model))
     # args.dataset = ["unnamedtoken216550xbcca60bb61934080951369a648fb03df4f96263c",
     #              "unnamedtoken216620x429881672b9ae42b8eba0e26cd9c73711b891ca5"]
-    args.dataset, data = load_multiple_datasets()
+    args.dataset, data = load_multiple_datasets("two_data")
     args.num_nodes = [data[i]['num_nodes'] for i in range(len(data))]
     # data = loader(dataset=args.dataset, neg_sample=args.neg_sample)
     # args.num_nodes = data['num_nodes']
