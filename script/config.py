@@ -37,7 +37,7 @@ parser.add_argument('--debug_mode', type=int, default=0, help='debug_mode, 0: no
 parser.add_argument('--min_epoch', type=int, default=100, help='min epoch')
 parser.add_argument('--test_ratio', type=int, default=0.15, help='ratio for testing, default:0.15')
 parser.add_argument('--eval_ratio', type=int, default=0.15, help='ratio for evaluation, default:0.15')
-
+parser.add_argument('--curr_time', type=str, default='0', help='local time for run to be used for saved models')
 #For testing model only
 parser.add_argument('--test_dataset', type=str, default=None, help='define dataset for testing')
 parser.add_argument('--test_snapshot', type=str, default=5, help='define test snapshot for testing')
