@@ -137,8 +137,12 @@ def save_results(dataset, test_auc, test_ap,lr,train_snapshot,test_snapshot):
     result_df = result_df._append({'dataset': int(dataset), 'test_auc': test_auc, 'test_ap': test_ap,"lr":lr,"train_snapshot":train_snapshot,"test_snapshot":test_snapshot}, ignore_index=True)
     result_df.to_csv(result_path, index=False)
 
-def save_epoch_results(epoch,test_auc, test_ap):
-    result_path = "../data/output/epoch_result/{}_{}_{}_{}_epochResult".format(len(args.dataset),args.model,args.seed, args.curr_time)
+def save_epoch_results(epoch,test_auc, test_ap, dataset=0):
+    if dataset == 0:
+        result_path = "../data/output/epoch_result/{}_{}_{}_{}_epochResult".format(len(args.dataset),args.model,args.seed, args.curr_time)
+    else:
+        result_path = "../data/output/epoch_result/data_{}/{}_{}_{}_{}_epochResult".format(dataset, len(args.dataset),args.model,args.seed, args.curr_time)
+    
     if not os.path.exists(result_path):
         result_df = pd.DataFrame(columns=["epoch", "test_auc", "test_ap"])
     else:
@@ -147,8 +151,12 @@ def save_epoch_results(epoch,test_auc, test_ap):
     result_df = result_df._append({'epoch': int(epoch), 'test_auc': test_auc, 'test_ap': test_ap}, ignore_index=True)
     result_df.to_csv(result_path, index=False)
 
-def save_epoch_training(epoch, train_auc, train_ap, loss):
-    result_path = "../data/output/training_test/{}_{}_{}_{}_epochResult".format(len(args.dataset),args.model,args.seed, args.curr_time)
+def save_epoch_training(epoch, train_auc, train_ap, loss, dataset=0):
+    if dataset == 0:
+        result_path = "../data/output/training_test/{}_{}_{}_{}_epochResult".format(len(args.dataset),args.model,args.seed, args.curr_time)
+    else:
+        result_path = "../data/output/training_test/data_{}/{}_{}_{}_{}_epochResult".format(dataset, len(args.dataset),args.model,args.seed, args.curr_time)
+        
     if not os.path.exists(result_path):
         result_df = pd.DataFrame(columns=["epoch", "train_loss", "train_auc", "train_ap"])
     else:
@@ -364,6 +372,9 @@ class Runner(object):
                 avg_dataset_loss = np.mean(dataset_losses)
                 epoch_losses_per_dataset[dataset_idx].append(avg_dataset_loss)
                 epoch_losses.append(avg_dataset_loss)
+
+                save_epoch_results(epoch,np.mean(eval_aucs),np.mean(eval_aps), dataset=dataset_idx+1)
+                save_epoch_training(epoch,np.mean(train_aucs),np.mean(train_ap), avg_epoch_loss, dataset=dataset_idx+1)
 
                 if isnan(train_loss):
                     print('ATTENTION: nan loss')
