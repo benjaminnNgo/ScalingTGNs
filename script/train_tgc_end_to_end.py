@@ -232,6 +232,7 @@ class Runner(object):
         criterion = torch.nn.BCELoss()
 
         # load the TG-models
+        #TODO: change this reseting to the epoch
         self.model.init_hiddens()
         logger.info("Start training the temporal graph classification models.")
 
@@ -298,9 +299,7 @@ class Runner(object):
             if (args.wandb):
                 wandb.log({"train_loss": avg_epoch_loss,
                            "test_AUC": test_auc,
-                           "test AP": test_ap
-
-                           })
+                           "test AP": test_ap})
 
         logger.info('>> Total time : %6.2f' % (time.time() - t_total_start))
         logger.info(">> Parameters: lr:%.4f |Dim:%d |Window:%d |" % (args.lr, args.nhid, args.nb_window))
@@ -309,7 +308,7 @@ class Runner(object):
         # save the training loss values
         partial_results_path = f'../data/output/log/{args.dataset}/{args.model}/'
         loss_log_filename = f'{partial_results_path}/{args.model}_{args.dataset}_{args.seed}_train_loss.pkl'
-        if os.path.exists(partial_results_path)==False:
+        if os.path.exists(partial_results_path) == False:
             os.makedirs(partial_results_path)
 
         with open(loss_log_filename, 'wb') as file:
@@ -347,8 +346,9 @@ if __name__ == '__main__':
     args.model = "HTGN"
     args.seed = 710
     args.dataset = "AMB"
-    args.max_epoch=200
-    args.testlength=10
+    args.max_epoch = 200
+    args.testlength = 10
+    args.wandb = True
 
     print("INFO: >>> Temporal Graph Classification <<<")
     print("INFO: Args: ", args)
