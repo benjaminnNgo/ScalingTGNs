@@ -122,24 +122,36 @@ def extra_dataset_attributes_loading(args, readout_scheme='mean'):
     return TG_labels, TG_feats
 
 
-def save_results(dataset, test_auc, test_ap,lr,train_snapshot,test_snapshot):
+def save_results(dataset, test_auc, test_ap,lr,train_snapshot,test_snapshot,best_epoch):
     result_path = f"../data/output/{args.results_file}"
     if not os.path.exists(result_path):
-        result_df = pd.DataFrame(columns=["dataset", "test_auc", "test_ap","lr","train_snapshot","test_snapshot"])
+        result_df = pd.DataFrame(columns=["dataset", "test_auc", "test_ap","lr","train_snapshot","test_snapshot","seed","best_epoch"])
     else:
         result_df = pd.read_csv(result_path)
 
-    result_df = result_df._append({'dataset': dataset, 'test_auc': test_auc, 'test_ap': test_ap,"lr":lr,"train_snapshot":train_snapshot,"test_snapshot":test_snapshot}, ignore_index=True)
+    result_df = result_df._append({'dataset': dataset,
+                                   'test_auc': test_auc,
+                                   'test_ap': test_ap,
+                                   "lr":lr,
+                                   "train_snapshot":train_snapshot,
+                                   "test_snapshot":test_snapshot,
+                                   "seed":args.seed,
+                                   "best_epoch":best_epoch}, ignore_index=True)
     result_df.to_csv(result_path, index=False)
 
-def save_epoch_results(epoch,test_auc, test_ap,loss):
+def save_epoch_results(epoch,test_auc, test_ap,loss,train_auc,train_ap):
     result_path = "../data/output/epoch_result/{}_{}_{}_epochResult".format(args.dataset,args.model,args.seed)
     if not os.path.exists(result_path):
-        result_df = pd.DataFrame(columns=["epoch", "test_auc", "test_ap","loss"])
+        result_df = pd.DataFrame(columns=["epoch", "test_auc", "test_ap","loss","train_auc","train_ap"])
     else:
         result_df = pd.read_csv(result_path)
 
-    result_df = result_df._append({'epoch': epoch, 'test_auc': test_auc, 'test_ap': test_ap,"loss":loss}, ignore_index=True)
+    result_df = result_df._append({'epoch': epoch,
+                                   'test_auc': test_auc,
+                                   'test_ap': test_ap,
+                                   "loss":loss,
+                                   "train_auc":train_auc,
+                                   "train_ap":train_ap}, ignore_index=True)
     result_df.to_csv(result_path, index=False)
 
 def save_epoch_traing(epoch,test_auc, test_ap):
@@ -159,9 +171,9 @@ class Runner(object):
         if args.wandb:
             wandb.init(
                 # set the wandb project where this run will be logged
-                project="scalingTGNs_i3",
+                project="scalingTGNs_i4",
                 # Set name of the run:
-                name="{}_{}".format(args.dataset, args.model),
+                name="{}_{}_{}".format(args.dataset, args.model,args.seed),
                 # track hyperparameters and run metadata
                 config={
                     "learning_rate": args.lr,
@@ -310,6 +322,8 @@ class Runner(object):
         best_epoch = -1
         patience = 0
         best_eval_auc = -1 #Set previous evaluation result to very small number
+        best_test_auc = -1
+        best_test_ap = -1
 
         for epoch in range(1, args.max_epoch + 1):
         # for epoch in range(1, 5):
@@ -353,13 +367,16 @@ class Runner(object):
             if best_eval_auc < eval_auc : #Use AUC as metric to define early stoping
                 patience = 0
                 best_model = self.model.state_dict() #Saved the best model for testing
-                best_epoch = epoch
+
                 best_eval_auc = eval_auc
+                best_epoch, best_test_auc, best_test_ap = self.tgclassification_test(epoch, self.readout_scheme)
             else:
                 if epoch < args.min_epoch: #If it is less than min_epoch, reset best AUC to current AUC and save current model as best model
                     patience = 0
                     best_eval_auc = eval_auc
                     best_model = self.model.state_dict()
+                    best_epoch, best_test_auc, best_test_ap = self.tgclassification_test(epoch, self.readout_scheme)
+
                     best_epoch = epoch
                 if best_eval_auc - eval_auc > 0.05:
                     patience += 1
@@ -392,8 +409,8 @@ class Runner(object):
                            "train AUC":train_auc,
                            "train AP": train_ap
                            })
-            save_epoch_results(epoch,eval_auc,eval_ap,avg_epoch_loss)
-            save_epoch_traing(epoch,train_auc,train_ap)
+            save_epoch_results(epoch,eval_auc,eval_ap,avg_epoch_loss,train_auc,train_ap)
+            # save_epoch_traing(epoch,train_auc,train_ap)
 
         logger.info('>> Total time : %6.2f' % (time.time() - t_total_start))
         logger.info(">> Parameters: lr:%.4f |Dim:%d |Window:%d |" % (args.lr, args.nhid, args.nb_window))
@@ -413,10 +430,8 @@ class Runner(object):
             dump(train_avg_epoch_loss_dict, file)
 
         # Final Test
-        self.model.load_state_dict(best_model) #Load the best model for testing
-        test_epoch, test_auc, test_ap = self.tgclassification_test(epoch, self.readout_scheme)
-        logger.info("Final Test: Epoch:{} , AUC: {:.4f}, AP: {:.4f}".format(test_epoch, test_auc, test_ap))
-        save_results(args.dataset, test_auc, test_ap,self.tgc_lr,len(self.train_shots),len(self.test_shots))
+        logger.info("Best Test: Epoch:{} , AUC: {:.4f}, AP: {:.4f}".format(best_epoch, best_test_auc, best_test_ap))
+        save_results(args.dataset, best_test_auc, best_test_ap,self.tgc_lr,len(self.train_shots),len(self.test_shots),best_epoch)
 
 
 if __name__ == '__main__':
