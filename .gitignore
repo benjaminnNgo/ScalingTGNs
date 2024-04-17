@@ -5,12 +5,11 @@ __pycache__/
 *.npy
 *.py[cod]
 *$py.class
-*.csv
+
 *.pth
 *.zip
 *.json
 *.pkl
-*.txt
 # C extensions
 *.so
 .sh

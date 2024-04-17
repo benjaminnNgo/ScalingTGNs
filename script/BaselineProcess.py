@@ -3,11 +3,12 @@ import shutil
 import datetime as dt
 import pandas as pd
 
-root_path = "../data/input/tokens/raw/"
-timeseries_file_path = "../data/input/tokens/raw/"
+root_path = "../data/input/tokens/"
+timeseries_file_path = "../data/input/tokens/"
 
 
 def creatBaselineDatasets(file, normalization=False):
+    save_file_name = file.split(".")[0].replace("_", "")
     print("Processing {}".format(file))
     windowSize = 7  # Day
     gap = 3
@@ -17,10 +18,10 @@ def creatBaselineDatasets(file, normalization=False):
     batch_size = 20
     batch_lables = []
 
-    if os.path.exists("../data/input/tokens/reformatted/Labels/" + file):
-        os.remove("../data/input/tokens/reformatted/Labels/" + file)
+    if os.path.exists("../data/input/raw/labels/{}.csv".format(save_file_name) ):
+        os.remove("../data/input/raw/labels/{}.csv".format(save_file_name))
 
-    csv_edgelist_file_path = "../data/input/tokens/reformatted/EdgeLists/" + file.split("_")[0] + "_edgelist.txt"
+    csv_edgelist_file_path = "../data/input/raw/edgeLists/" +save_file_name + "_edgelist.txt"
     if os.path.exists(csv_edgelist_file_path):
         appended_edgelist_df = pd.read_csv(csv_edgelist_file_path)
     else:
@@ -67,10 +68,10 @@ def creatBaselineDatasets(file, normalization=False):
     base_progress = (data_last_date - window_start_date).days / (windowSize + gap + lableWindowSize)
 
     while (data_last_date - window_start_date).days > (windowSize + gap + lableWindowSize):
-        print("\nCompleted Process  {} % ".format(
-
-            (1 - ((data_last_date - window_start_date).days / (
-                        windowSize + gap + lableWindowSize)) / base_progress) * 100))
+        # print("\nCompleted Process  {} % ".format(
+        #
+        #     (1 - ((data_last_date - window_start_date).days / (
+        #                 windowSize + gap + lableWindowSize)) / base_progress) * 100))
         indx += 1
 
         # select window data
@@ -99,7 +100,7 @@ def creatBaselineDatasets(file, normalization=False):
 
         # ------------------------------------------------
         # Storing each snapshot label data
-        label_file_path = "../data/input/tokens/reformatted/Labels/" + file.split("_")[0] + "_labels.csv"
+        label_file_path = "../data/input/raw/labels/" + save_file_name + "_labels.csv"
         batch_lables.append(label)
         # Open a file in append mode and write a line to it
         if (indx % batch_size == 0):
@@ -111,9 +112,9 @@ def creatBaselineDatasets(file, normalization=False):
                 file_label.close()
 
             batch_lables = []
-            print("Caching step done for batch {}".format(indx / 20))
+            # print("Caching step done for batch {}".format(indx / 20))
         # --------------------------------------------------
-        print("Snapshot {} Done ".format(indx))
+        # print("Snapshot {} Done ".format(indx))
 
         window_start_date = window_start_date + dt.timedelta(days=1)
 
