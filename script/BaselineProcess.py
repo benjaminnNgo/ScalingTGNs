@@ -3,9 +3,9 @@ import shutil
 import datetime as dt
 import pandas as pd
 
-root_path = "../data/input/tokens/"
-timeseries_file_path = "../data/input/tokens/"
-
+root_path = "../data/input/tokens/raw/"
+timeseries_file_path = "../data/input/tokens/raw/"
+timeseries_file_path = '/network/scratch/r/razieh.shirzadkhani/fm_data/'
 
 def creatBaselineDatasets(file, normalization=False):
     save_file_name = file.split(".")[0].replace("_", "")
@@ -119,3 +119,17 @@ def creatBaselineDatasets(file, normalization=False):
         window_start_date = window_start_date + dt.timedelta(days=1)
 
     print(f"f{file} Process completed! 100%")
+
+
+
+# ["unnamed_token_15_0x0000000000095413afc295d19edeb1ad7b71c952.csv",
+# "unnamed_token_21662_0x429881672b9ae42b8eba0e26cd9c73711b891ca5.csv",
+# "unnamed_token_21658_0x5f98805a4e8be255a32880fdec7f6728c6568ba0.csv",
+# "unnamed_token_21655_0xbcca60bb61934080951369a648fb03df4f96263c.csv",
+# "unnamed_token_21654_0x09a3ecafa817268f77be1283176b946c4ff2e608.csv",
+# "unnamed_token_21639_0x1ceb5cb57c4d4e2b2433641b95dd330a33185a44.csv",
+# "unnamed_token_21624_0x83e6f1e41cdd28eaceb20cb649155049fac3d5aa.csv",
+# "unnamed_token_1898_0x00a8b738e453ffd858a7edf03bccfe20412f0eb0.csv",
+# "unnamed_token_21630_0xcc4304a31d09258b0029ea7fe63d032f52e44efe.csv",
+# "unnamed_token_21636_0xfca59cd816ab1ead66534d82bc21e7515ce441cf.csv"]
+creatBaselineDatasets("unnamed_token_21635_0xe53ec727dbdeb9e2d5456c3be40cff031ab40a55.csv")

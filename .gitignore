@@ -13,7 +13,7 @@ __pycache__/
 # C extensions
 *.so
 .sh
-
+.netrc
 data
 # Distribution / packaging
 .Python
@@ -54,3 +54,5 @@ venv.bak/
 
 /run_scripts
 /data
+/script/wandb
+/saved_models
