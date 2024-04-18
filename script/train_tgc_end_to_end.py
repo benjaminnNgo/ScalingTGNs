@@ -442,6 +442,10 @@ if __name__ == '__main__':
     from script.utils.data_util import loader, prepare_dir
     from script.inits import prepare
 
+    args.num_nodes = 10000000
+    args.dataset = "AMB"
+    args.model = "HTGN"
+
 
     print("INFO: >>> Temporal Graph Classification <<<")
     print("INFO: Args: ", args)

@@ -14,8 +14,8 @@ import matplotlib.pyplot as plt
 import wandb
 import warnings
 
-def extra_dataset_attributes_loading(dataset):
 
+def extra_dataset_attributes_loading(dataset):
     partial_path = f'../data/input/raw/'
 
     # load graph lables
@@ -25,13 +25,22 @@ def extra_dataset_attributes_loading(dataset):
 
     return TG_labels
 
+def extract_dataset_predicted_lables(dataset):
+    label_filename = f'{partial_path}/labels/{dataset}_labels.csv'
+    label_df = pd.read_csv(label_filename, header=None, names=['label'])
+
+
+
+
+
 class BaseLineModel:
-    def __init__(self,data,dataset_name):
+    def __init__(self, data, dataset_name):
         test_ratio = 0.15
         self.len = data['time_length']
         testlength = math.floor(self.len * test_ratio)  # Re-calculate number of test snapshots
         self.start_train = 0
-        self.train_shots = list(range(self.start_train, self.len - testlength*2)) #exclude validation sets and test sets
+        self.train_shots = list(
+            range(self.start_train, self.len - testlength * 2))  # exclude validation sets and test sets
         self.test_shots = list(range(self.len - testlength, self.len))
         self.t_graph_labels = extra_dataset_attributes_loading(dataset_name)
 
@@ -42,13 +51,11 @@ class BaseLineModel:
 
         tg_preds = []
         for t_eval_idx, t in enumerate(self.test_shots):
-            tg_preds.append(self.t_graph_labels[len(self.train_shots) - (len(self.test_shots) - t_eval_idx)].cpu().numpy())
-
-
+            tg_preds.append(
+                self.t_graph_labels[len(self.train_shots) - (len(self.test_shots) - t_eval_idx)].cpu().numpy())
 
         auc, ap = roc_auc_score(tg_labels, tg_preds), average_precision_score(tg_labels, tg_preds)
         return auc, ap
-
 
 
 if __name__ == '__main__':
@@ -58,6 +65,7 @@ if __name__ == '__main__':
     from script.loss import ReconLoss, VGAEloss
     from script.utils.data_util import loader, prepare_dir
     from script.inits import prepare
+
     datasets_list_name = [
         'unnamedtoken18980x00a8b738e453ffd858a7edf03bccfe20412f0eb0',
         'unnamedtoken216240x83e6f1e41cdd28eaceb20cb649155049fac3d5aa',
@@ -70,17 +78,17 @@ if __name__ == '__main__':
         'unnamedtoken216580x5f98805a4e8be255a32880fdec7f6728c6568ba0',
         'unnamedtoken216620x429881672b9ae42b8eba0e26cd9c73711b891ca5'
     ]
-    columns = ['dataset','auc','ap']
+    columns = ['dataset', 'auc', 'ap']
     rowlist = []
     for dataname in datasets_list_name:
         row = []
         data = loader(dataset=dataname, neg_sample="rnd")
-        baseModel = BaseLineModel(data,dataname)
+        baseModel = BaseLineModel(data, dataname)
         auc, ap = baseModel.test()
         row.append(dataname)
         row.append(auc)
         row.append(ap)
         rowlist.append(row)
 
-    df = pd.DataFrame(rowlist,columns= columns)
+    df = pd.DataFrame(rowlist, columns=columns)
     df.to_csv('../data/output/baselinemodel.csv', index=False)

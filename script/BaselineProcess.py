@@ -5,7 +5,7 @@ import pandas as pd
 
 root_path = "../data/input/tokens/raw/"
 timeseries_file_path = "../data/input/tokens/raw/"
-timeseries_file_path = '/network/scratch/r/razieh.shirzadkhani/fm_data/'
+# timeseries_file_path = '/network/scratch/r/razieh.shirzadkhani/fm_data/'
 
 def creatBaselineDatasets(file, normalization=False):
     save_file_name = file.split(".")[0].replace("_", "")
@@ -68,10 +68,10 @@ def creatBaselineDatasets(file, normalization=False):
     base_progress = (data_last_date - window_start_date).days / (windowSize + gap + lableWindowSize)
 
     while (data_last_date - window_start_date).days > (windowSize + gap + lableWindowSize):
-        # print("\nCompleted Process  {} % ".format(
-        #
-        #     (1 - ((data_last_date - window_start_date).days / (
-        #                 windowSize + gap + lableWindowSize)) / base_progress) * 100))
+        print("\nCompleted Process  {} % ".format(
+
+            (1 - ((data_last_date - window_start_date).days / (
+                        windowSize + gap + lableWindowSize)) / base_progress) * 100))
         indx += 1
 
         # select window data
@@ -120,6 +120,196 @@ def creatBaselineDatasets(file, normalization=False):
 
     print(f"f{file} Process completed! 100%")
 
+def createDummyBaselineLabelsFisrtDayLastDay(file, normalization=False):
+    save_file_name = file.split(".")[0].replace("_", "")
+    print("Processing {}".format(file))
+    windowSize = 7  # Day
+    gap = 3
+    lableWindowSize = 7  # Day
+    minValidDuration = 20  # Day
+    indx = 0
+    batch_size = 20
+    batch_lables = []
+
+
+    selectedNetwork = pd.read_csv((timeseries_file_path + file), sep=',')
+    selectedNetwork['date'] = pd.to_datetime(selectedNetwork['timestamp'], unit='s').dt.date
+    selectedNetwork['value'] = selectedNetwork['value'].astype(float)
+    selectedNetwork = selectedNetwork.sort_values(by='date')
+    window_start_date = selectedNetwork['date'].min()
+    data_last_date = selectedNetwork['date'].max()
+
+    # drop unused data
+    selectedNetwork = selectedNetwork.drop('tokenAddress', axis=1)
+    selectedNetwork = selectedNetwork.drop('timestamp', axis=1)
+    selectedNetwork = selectedNetwork.drop('blockNumber', axis=1)
+    selectedNetwork = selectedNetwork.drop('fileBlock', axis=1)
+
+    # rename columns
+    selectedNetwork.rename(columns={'from': 'source', 'to': 'destination', 'value': 'weight'}, inplace=True)
+
+    print(f"{file} -- {window_start_date} -- {data_last_date}")
+
+    print("\n {} Days OF Data -> {} ".format(file, (data_last_date - window_start_date).days))
+    # check if the network has more than 20 days of data
+    if ((data_last_date - window_start_date).days < minValidDuration):
+        print(file + "Is not a valid network")
+        shutil.move(root_path + file, root_path + "Invalid/" + file)
+        return
+
+    # normalize the edge weights for the graph network {0-9}
+    max_transfer = float(selectedNetwork['weight'].max())
+    min_transfer = float(selectedNetwork['weight'].min())
+    if max_transfer == min_transfer:
+        max_transfer = min_transfer + 1
+
+    # value normalization
+    if normalization:
+        selectedNetwork['weight'] = selectedNetwork['weight'].apply(
+            lambda x: 1 + (9 * ((float(x) - min_transfer) / (max_transfer - min_transfer))))
+
+    while (data_last_date - window_start_date).days > (windowSize + gap + lableWindowSize):
+        print("\nCompleted Process  {} % ".format(
+
+            (1 - ((data_last_date - window_start_date).days / (
+                        windowSize + gap + lableWindowSize)) / base_progress) * 100))
+        indx += 1
+
+        # select window data
+        window_end_date = window_start_date + dt.timedelta(days=windowSize)
+        selectedNetworkInGraphDataWindowFirstDate = selectedNetwork[
+            (selectedNetwork['date'] >= window_start_date) & (
+                    selectedNetwork['date'] < window_start_date + dt.timedelta(days=1))]
+
+        selectedNetworkInGraphDataWindowLastDate = selectedNetwork[
+            (selectedNetwork['date'] >= window_end_date - dt.timedelta(days=1)) & (
+                    selectedNetwork['date'] < window_end_date)]
+
+        # generating the label for this window
+        # 1 -> Increading Transactions 0 -> Decreasing Transactions
+        label = 1 if (len(selectedNetworkInGraphDataWindowLastDate) - len(
+            selectedNetworkInGraphDataWindowFirstDate)) > 0 else 0
+
+        # Storing the new snapshot data after processing
+
+        # ------------------------------------------------
+        # Storing each snapshot label data
+        label_file_path = "../data/input/raw/labels/" + save_file_name + "_dummy_fd_ld_labels.csv"
+        batch_lables.append(label)
+        # Open a file in append mode and write a line to it
+        if (indx % batch_size == 0):
+            with open(label_file_path, 'a') as file_label:
+                for l in batch_lables:
+                    file_label.write(str(l) + "\n")
+                file_label.close()
+
+            batch_lables = []
+            # print("Caching step done for batch {}".format(indx / 20))
+        # --------------------------------------------------
+        # print("Snapshot {} Done ".format(indx))
+
+        window_start_date = window_start_date + dt.timedelta(days=1)
+
+    print(f"f{file} Process completed! 100%")
+
+
+def createDummyBaselineLabelsWeekly(file, normalization=False):
+    save_file_name = file.split(".")[0].replace("_", "")
+    print("Processing {}".format(file))
+    windowSize = 7  # Day
+    gap = 3
+    lableWindowSize = 7  # Day
+    minValidDuration = 20  # Day
+    indx = 0
+    batch_size = 20
+    batch_lables = []
+
+
+    selectedNetwork = pd.read_csv((timeseries_file_path + file), sep=',')
+    selectedNetwork['date'] = pd.to_datetime(selectedNetwork['timestamp'], unit='s').dt.date
+    selectedNetwork['value'] = selectedNetwork['value'].astype(float)
+    selectedNetwork = selectedNetwork.sort_values(by='date')
+    window_start_date = selectedNetwork['date'].min()
+    data_last_date = selectedNetwork['date'].max()
+
+    # drop unused data
+    selectedNetwork = selectedNetwork.drop('tokenAddress', axis=1)
+    selectedNetwork = selectedNetwork.drop('timestamp', axis=1)
+    selectedNetwork = selectedNetwork.drop('blockNumber', axis=1)
+    selectedNetwork = selectedNetwork.drop('fileBlock', axis=1)
+
+    # rename columns
+    selectedNetwork.rename(columns={'from': 'source', 'to': 'destination', 'value': 'weight'}, inplace=True)
+
+    print(f"{file} -- {window_start_date} -- {data_last_date}")
+
+    print("\n {} Days OF Data -> {} ".format(file, (data_last_date - window_start_date).days))
+    # check if the network has more than 20 days of data
+    if ((data_last_date - window_start_date).days < minValidDuration):
+        print(file + "Is not a valid network")
+        shutil.move(root_path + file, root_path + "Invalid/" + file)
+        return
+
+    # normalize the edge weights for the graph network {0-9}
+    max_transfer = float(selectedNetwork['weight'].max())
+    min_transfer = float(selectedNetwork['weight'].min())
+    if max_transfer == min_transfer:
+        max_transfer = min_transfer + 1
+
+    # value normalization
+    if normalization:
+        selectedNetwork['weight'] = selectedNetwork['weight'].apply(
+            lambda x: 1 + (9 * ((float(x) - min_transfer) / (max_transfer - min_transfer))))
+
+    base_progress = (data_last_date - window_start_date).days / (windowSize + gap + lableWindowSize)
+
+    while (data_last_date - window_start_date).days > (windowSize + gap + lableWindowSize):
+        print("\nCompleted Process  {} % ".format(
+
+            (1 - ((data_last_date - window_start_date).days / (
+                        windowSize + gap + lableWindowSize)) / base_progress) * 100))
+        indx += 1
+
+        window_end_date = window_start_date + dt.timedelta(days=windowSize)
+        selectedNetworkInGraphDataWindow = selectedNetwork[
+            (selectedNetwork['date'] >= window_start_date) & (
+                    selectedNetwork['date'] < window_end_date)]
+
+        # select labeling data
+        label_end_date = window_start_date
+        label_start_date = window_start_date - dt.timedelta(days=windowSize)
+        selectedNetworkInLbelingWindow = selectedNetwork[
+            (selectedNetwork['date'] >= label_start_date) & (selectedNetwork['date'] < label_end_date)]
+
+
+
+        # generating the label for this window
+        # 1 -> Increading Transactions 0 -> Decreasing Transactions
+        label = 1 if (len(selectedNetworkInLbelingWindow) - len(
+            selectedNetworkInGraphDataWindow)) > 0 else 0
+
+        # Storing the new snapshot data after processing
+
+        # ------------------------------------------------
+        # Storing each snapshot label data
+        label_file_path = "../data/input/raw/labels/" + save_file_name + "_dummy_fd_ld_labels.csv"
+        batch_lables.append(label)
+        # Open a file in append mode and write a line to it
+        if (indx % batch_size == 0):
+            with open(label_file_path, 'a') as file_label:
+                for l in batch_lables:
+                    file_label.write(str(l) + "\n")
+                file_label.close()
+
+            batch_lables = []
+            # print("Caching step done for batch {}".format(indx / 20))
+        # --------------------------------------------------
+        # print("Snapshot {} Done ".format(indx))
+
+        window_start_date = window_start_date + dt.timedelta(days=1)
+
+    print(f"f{file} Process completed! 100%")
+
 
 
 # ["unnamed_token_15_0x0000000000095413afc295d19edeb1ad7b71c952.csv",
@@ -132,4 +322,6 @@ def creatBaselineDatasets(file, normalization=False):
 # "unnamed_token_1898_0x00a8b738e453ffd858a7edf03bccfe20412f0eb0.csv",
 # "unnamed_token_21630_0xcc4304a31d09258b0029ea7fe63d032f52e44efe.csv",
 # "unnamed_token_21636_0xfca59cd816ab1ead66534d82bc21e7515ce441cf.csv"]
-creatBaselineDatasets("unnamed_token_21635_0xe53ec727dbdeb9e2d5456c3be40cff031ab40a55.csv")
+createDummyBaselineLabelsWeekly("AMB_0x4dc3643dbc642b72c158e7f3d2ff232df61cb6ce.csv")
+
+
