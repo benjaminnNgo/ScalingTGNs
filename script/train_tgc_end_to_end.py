@@ -171,7 +171,7 @@ class Runner(object):
         if args.wandb:
             wandb.init(
                 # set the wandb project where this run will be logged
-                project="scalingTGNs_i4",
+                project="scalingTGNs_i5",
                 # Set name of the run:
                 name="{}_{}_{}".format(args.dataset, args.model,args.seed),
                 # track hyperparameters and run metadata
@@ -199,7 +199,7 @@ class Runner(object):
                                                                                        args.testlength))
 
         self.model = load_model(args).to(args.device)
-        self.model_path = '../saved_models/{}_{}_seed_{}.pth'.format(args.dataset,
+        self.model_path = '../saved_models/{}_{}_seed_{}/'.format(args.dataset,
                                                                    args.model, args.seed)
         # logger.info("The models is going to be loaded from {}".format(self.model_path))
         # self.models.load_state_dict(torch.load(self.model_path))
@@ -319,6 +319,8 @@ class Runner(object):
         train_avg_epoch_loss_dict = {}
 
         best_model = self.model.state_dict()
+        best_MLP = self.tgc_decoder.state_dict()
+
         best_epoch = -1
         patience = 0
         best_eval_auc = -1 #Set previous evaluation result to very small number
@@ -367,6 +369,7 @@ class Runner(object):
             if best_eval_auc < eval_auc : #Use AUC as metric to define early stoping
                 patience = 0
                 best_model = self.model.state_dict() #Saved the best model for testing
+                best_MLP = self.tgc_decoder.state_dict()
 
                 best_eval_auc = eval_auc
                 best_epoch, best_test_auc, best_test_ap = self.tgclassification_test(epoch, self.readout_scheme)
@@ -415,8 +418,12 @@ class Runner(object):
         logger.info('>> Total time : %6.2f' % (time.time() - t_total_start))
         logger.info(">> Parameters: lr:%.4f |Dim:%d |Window:%d |" % (args.lr, args.nhid, args.nb_window))
 
+        #Save the model
         logger.info("INFO: Saving the models...")
-        torch.save(best_model, self.model_path)
+        if not os.path.exists(self.model_path):
+            os.makedirs(self.model_path)
+        torch.save(best_model, "{}{}.pth".format(self.model_path,args.model))
+        torch.save(self.tgc_decoder,"{}{}_MLP.pth".format(self.model_path,args.model))
         logger.info("INFO: The models is saved. Done.")
 
         # ------------ DEBUGGING ------------

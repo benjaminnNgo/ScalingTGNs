@@ -266,28 +266,51 @@ def load_multiple_datasets(datasets_package_file,neg_sample):
         print("ERROR: error in processing data pack {}".format(datasets_package_path))
         print(e)
 
-    print("BAO:Number of dataset{}".format(len(datasets_packages)))
     return datasets_packages
 
 
-def process_data_gaps(directory):
+def process_data_gaps(directory,min_size = 10 ,max_size =100 ):
     columns = ["blockNumber", "timestamp", "tokenAddress", "from", "to", "value", "fileBlock"]
     file1 = open('dataset_features.txt', 'w')
-    file1.writelines(["filename, start, end, duration, max_gap"])
+    file1.writelines(["filename, start, end, duration, max_gap,networkSize"])
+    file_count = len(os.listdir(directory))
+    counter = 0
     for filename in os.listdir(directory):
+        counter += 1
         filepath = directory + "/" + filename
-        if filename.endswith('.csv'):
-            data = pd.read_csv(filepath, usecols=columns, index_col=False)
-            timestamps = pd.to_datetime(data["timestamp"], unit="s").dt.date
-            start = timestamps[0]
-            end = timestamps.iloc[-1]
-            time_difference = (end - start).days
-            unique_timestamps = timestamps.unique()
-            tot_len = len(unique_timestamps)
-            gaps = max(set([(unique_timestamps[i+1] - unique_timestamps[i]).days for i in range(tot_len-1)]))
-            file1.writelines([filename, ",", str(start), ",", str(end), ",",str(time_difference),",", str(gaps) ,"\n"])
+        file_size = os.path.getsize(filepath)/(1024*1024)
+        try:
+            if filename.endswith('.csv') and file_size>=min_size and file_size<=max_size:
+                data = pd.read_csv(filepath, usecols=columns, index_col=False)
+                timestamps = pd.to_datetime(data["timestamp"], unit="s").dt.date
+                start = timestamps[0]
+                end = timestamps.iloc[-1]
+                time_difference = (end - start).days
+                unique_timestamps = timestamps.unique()
+                tot_len = len(unique_timestamps)
+                gaps = max(set([(unique_timestamps[i+1] - unique_timestamps[i]).days for i in range(tot_len-1)]))
+                file1.writelines([filename, ",", str(start), ",", str(end), ",",str(time_difference),",", str(gaps),",",str(file_size),"\n"])
+        except Exception as e:
+            print("ERROR while processing {} due to\n {}".format(filename,e))
+
+        print("Done processing {}/{}".format(counter,file_count))
     file1.close()
+
+def select_datset_no_gap(filename,max_gap):
+    dataset_df = pd.read_csv(filename)
+    filtered_df = dataset_df[dataset_df[' max_gap'] <= max_gap]
+    filtered_df.to_csv('dataset_no_gap_{}_day.csv'.format(max_gap), index=False)
+
 
 
 if __name__ == '__main__':
-    process_data_gaps("/network/scratch/r/razieh.shirzadkhani/fm_data")
+    max_size_bytes = 500
+    min_size_bytes = 10
+    # process_data_gaps("/network/scratch/r/razieh.shirzadkhani/fm_data")
+    # process_data_gaps("E:/token/",min_size_bytes,max_size_bytes)
+
+    # select_datset_no_gap("dataset_features.txt",6)
+    dataset_df = pd.read_csv('dataset_no_gap_1_day.csv')
+    filtered_df = dataset_df[dataset_df['networkSize'] <= 20]
+    # filtered_df.to_csv('dataset_no_gap_{}_day.csv'.format(max_gap), index=False)
+    print(filtered_df.shape[0])

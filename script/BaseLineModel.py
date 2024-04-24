@@ -18,12 +18,21 @@ def extra_dataset_attributes_loading(dataset):
 
     partial_path = f'../data/input/raw/'
 
-    # load graph lables
+    # load graph labels
     label_filename = f'{partial_path}/labels/{dataset}_labels.csv'
     label_df = pd.read_csv(label_filename, header=None, names=['label'])
     TG_labels = torch.from_numpy(np.array(label_df['label'].tolist())).to(args.device)
 
+
     return TG_labels
+
+def extra_dataset_baseLine_label(dataset):
+    partial_path = f'../data/input/raw/'
+    # load baseline model labels
+    baseline_label_filename = f'{partial_path}/labels/{dataset}_dummy_fd_ld_labels.csv'
+    baseline_label_df = pd.read_csv(baseline_label_filename, header=None, names=['label'])
+    baseline_labels = torch.from_numpy(np.array(baseline_label_df['label'].tolist())).to(args.device)
+    return baseline_labels
 
 class BaseLineModel:
     def __init__(self,data,dataset_name):
@@ -34,6 +43,7 @@ class BaseLineModel:
         self.train_shots = list(range(self.start_train, self.len - testlength*2)) #exclude validation sets and test sets
         self.test_shots = list(range(self.len - testlength, self.len))
         self.t_graph_labels = extra_dataset_attributes_loading(dataset_name)
+        self.baseline_labels = extra_dataset_baseLine_label(dataset_name)
 
     def test(self):
         tg_labels = []
@@ -42,7 +52,7 @@ class BaseLineModel:
 
         tg_preds = []
         for t_eval_idx, t in enumerate(self.test_shots):
-            tg_preds.append(self.t_graph_labels[len(self.train_shots) - (len(self.test_shots) - t_eval_idx)].cpu().numpy())
+            tg_preds.append(self.baseline_labels[t_eval_idx + len(self.train_shots)].cpu().numpy())
 
 
 
