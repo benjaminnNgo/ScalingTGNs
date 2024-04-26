@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+from kmean import find_optimal_k
 # General function
 np.random.seed(702)
 def best_fit_rep(X, Y):
@@ -74,6 +76,8 @@ def create_subgragh_from_pack(dataset,pack,normalization = False, readout_scheme
     """
     list_G = []
     partial_path = "../../data/{}".format(pack)
+    # partial_path = "../../data/input/raw"
+
 
     # load and process graph-pooled (node-level) features
     edgelist_filename = f'{partial_path}/edgelists/{dataset}_edgelist.txt'
@@ -130,22 +134,41 @@ def random_rgb_color():
     """Generate a random RGB color."""
     return tuple(np.random.randint(0, 256, size=3) / 255)
 
-def plot_toper_values(pack_dict):
+def plot_toper_values(pack_dict, kmean = False):
     plt.figure(figsize=(15,10))  # Optional: set the size of the figure
-    plt.xlim(-1000, 1000)  # Set the x-axis range from 0 to 6
+    plt.xlim(-5000, 2000)  # Set the x-axis range from 0 to 6
 
     for pack in pack_dict:
         dataset_list = pack_dict[pack]
         for dataset in dataset_list:
+            print(dataset)
             toper_vallues_df = pd.read_csv("./toper_values/{}/{}.csv".format(pack,dataset))
-            x = []
-            y = []
-            for index,row in toper_vallues_df.iterrows():
-                x.append(row['x'])
-                y.append(row['y'])
 
+            if not kmean:
+                x= []
+                y = []
+                for index,row in toper_vallues_df.iterrows():
+                    x.append(row['x'])
+                    y.append(row['y'])
+            else:
+                points = []
+                for index, row in toper_vallues_df.iterrows():
+                    point = []
+                    point.append(row['x'])
+                    point.append(row['y'])
+                    points.append(point)
+                points = np.array(points)
+                optimal_k = find_optimal_k(points)
 
-            plt.plot(x, y, marker='o',linestyle='',color=random_rgb_color(),label=dataset, alpha=0.5)  # Plotting the points with markers
+                kmeans = KMeans(n_clusters=optimal_k, random_state=42)
+                kmeans.fit_predict(points)
+                x = kmeans.cluster_centers_[:, 0]
+                y = kmeans.cluster_centers_[:, 1]
+
+            if not kmean:
+                plt.scatter(x, y, marker='o', linestyle='', color=random_rgb_color(), label=dataset.replace("unnamed",""), alpha=0.6)  # Plotting the points with markers
+            else:
+                plt.scatter(x, y, marker='o',linestyle='',color=random_rgb_color(),label=dataset.replace("unnamed",""), alpha=0.9,s=200)  # Plotting the points with markers
 
     plt.xlabel('pivot')  # Label for the x-axis
     plt.ylabel('growth')  # Label for the y-axis
@@ -167,37 +190,62 @@ if __name__ == '__main__':
             'CVC0x41e5560054824ea6b0732e656e3ad64e20e94e45'
         ],
         "data_lt_25MB":[
-            'ARC0xc82e3db60a52cf7529253b4ec688f631aad9e7c2',
+            # 'ARC0xc82e3db60a52cf7529253b4ec688f631aad9e7c2',
             # 'FNKOS0xeb021dd3e42dc6fdb6cde54d0c4a09f82a6bca29',
             # 'INU0xc76d53f988820fe70e01eccb0248b312c2f1c7ca',
             # 'unnamedtoken270x00000000051b48047be6dc0ada6de5c3de86a588',
-            # 'unnamedtoken124310x04906695d6d12cf5459975d7c3c03356e4ccd460'
-        ],
+            # 'unnamedtoken124310x04906695d6d12cf5459975d7c3c03356e4ccd460',
 
+            "unnamedtoken214030x07e0edf8ce600fb51d44f51e3348d77d67f298ae",
+            "unnamedtoken187160x06da0fd433c1a5d7a4faa01111c044910a184553",
+
+                # "unnamedtoken219440x619beb58998ed2278e08620f97007e1116d5d25b",
+            #     "unnamedtoken219500xaa8330fb2b4d5d07abfe7a72262752a8505c6b37",
+            #     "unnamedtoken219530x48c80f1f4d53d5951e5d5438b54cba84f29f32a5"
+        ],
+        #
         "data_bw_25_and_40":[
-            'CMT0xf85feea2fdd81d51177f6b8f35f0e6734ce45f5f',
+            # 'CMT0xf85feea2fdd81d51177f6b8f35f0e6734ce45f5f',
             # 'CELR0x4f9254c83eb525f9fcf346490bbb3ed28a81c667',
             # 'GHST0x3f382dbd960e3a9bbceae22651e88158d2791550',
             # 'REP0xe94327d07fc17907b4db788e5adf2ed424addff6',
-            'RFD0x955d5c14c8d4944da1ea7836bd44d54a8ec35ba1'
+            # 'RFD0x955d5c14c8d4944da1ea7836bd44d54a8ec35ba1'
         ],
     }
 
     # dataset_per_pack = {
-    #     "data_lt_25MB": [
-    #         'ARC0xc82e3db60a52cf7529253b4ec688f631aad9e7c2',
-    #         'FNKOS0xeb021dd3e42dc6fdb6cde54d0c4a09f82a6bca29',
-    #         'INU0xc76d53f988820fe70e01eccb0248b312c2f1c7ca',
-    #         # 'unnamedtoken270x00000000051b48047be6dc0ada6de5c3de86a588',
-    #         # 'unnamedtoken124310x04906695d6d12cf5459975d7c3c03356e4ccd460'
-    #         'ARC0xc82e3db60a52cf7529253b4ec688f631aad9e7c2_normalization',
-    #         'FNKOS0xeb021dd3e42dc6fdb6cde54d0c4a09f82a6bca29_normalization',
-    #         'INU0xc76d53f988820fe70e01eccb0248b312c2f1c7ca_normalization'
+    #     "original": [
+    #         "unnamedtoken18980x00a8b738e453ffd858a7edf03bccfe20412f0eb0",
+    #         "unnamedtoken216240x83e6f1e41cdd28eaceb20cb649155049fac3d5aa",
+    #         "unnamedtoken216300xcc4304a31d09258b0029ea7fe63d032f52e44efe",
+    #         "unnamedtoken216350xe53ec727dbdeb9e2d5456c3be40cff031ab40a55",
+    #         "unnamedtoken216360xfca59cd816ab1ead66534d82bc21e7515ce441cf"
+    #     ]
     #
-    #     ],
     # }
-    # generate_toper_from_package(dataset_per_pack,normalization= True)
-    plot_toper_values(dataset_per_pack)
+
+    # dataset_per_pack = {
+    #     # "data_lt_25MB": [
+    #     #     "unnamedtoken187160x06da0fd433c1a5d7a4faa01111c044910a184553",
+    #     #     "unnamedtoken214030x07e0edf8ce600fb51d44f51e3348d77d67f298ae",
+    #     #     "unnamedtoken219440x619beb58998ed2278e08620f97007e1116d5d25b",
+    #     #     "unnamedtoken219500xaa8330fb2b4d5d07abfe7a72262752a8505c6b37",
+    #     #     "unnamedtoken219530x48c80f1f4d53d5951e5d5438b54cba84f29f32a5"
+    #     # ],
+    #
+    #     "data_bw_40_and_70": [
+    #         "DRGN0x419c4db4b9e25d6db2ad9691ccb832c8d9fda05e",
+    #         "IOTX0x6fb3e0a217407efff7ca062d46c26e5d60a14d69",
+    #         "QSP0x99ea4db9ee77acd40b119bd1dc4e33e1c070b80d",
+    #         "TNT0x08f5a9235b08173b7569f83645d2c7fb55e8ccd8",
+    #         "TRAC0xaa7a9ca87d3694b5755f213b5d04094b8d0f0a6f"
+    #     ],
+    #
+    # }
+
+
+    # generate_toper_from_package(dataset_per_pack)
+    plot_toper_values(dataset_per_pack,True)
 
 
         

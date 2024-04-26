@@ -8,7 +8,6 @@ July 14, 2023
 import math
 import os
 import sys
-import time
 import torch
 import numpy as np
 import pandas as pd
@@ -20,6 +19,7 @@ from pickle import dump, load
 import matplotlib.pyplot as plt
 import wandb
 import warnings
+import timeit
 
 # Filter out a specific warning
 warnings.filterwarnings("ignore")
@@ -122,10 +122,13 @@ def extra_dataset_attributes_loading(args, readout_scheme='mean'):
     return TG_labels, TG_feats
 
 
-def save_results(dataset, test_auc, test_ap,lr,train_snapshot,test_snapshot,best_epoch):
-    result_path = f"../data/output/{args.results_file}"
+def save_results(dataset, test_auc, test_ap,lr,train_snapshot,test_snapshot,best_epoch,time):
+    partial_path =  "../data/output/single_model/"
+    if not os.path.exists(partial_path):
+        os.makedirs(partial_path)
+    result_path = f"{partial_path}/{args.results_file}"
     if not os.path.exists(result_path):
-        result_df = pd.DataFrame(columns=["dataset", "test_auc", "test_ap","lr","train_snapshot","test_snapshot","seed","best_epoch"])
+        result_df = pd.DataFrame(columns=["dataset", "test_auc", "test_ap","lr","train_snapshot","test_snapshot","seed","best_epoch","time"])
     else:
         result_df = pd.read_csv(result_path)
 
@@ -136,13 +139,19 @@ def save_results(dataset, test_auc, test_ap,lr,train_snapshot,test_snapshot,best
                                    "train_snapshot":train_snapshot,
                                    "test_snapshot":test_snapshot,
                                    "seed":args.seed,
-                                   "best_epoch":best_epoch}, ignore_index=True)
+                                   "best_epoch":best_epoch,
+                                   "time":time
+                                   }, ignore_index=True)
     result_df.to_csv(result_path, index=False)
 
-def save_epoch_results(epoch,test_auc, test_ap,loss,train_auc,train_ap):
-    result_path = "../data/output/epoch_result/{}_{}_{}_epochResult".format(args.dataset,args.model,args.seed)
+def save_epoch_results(epoch,test_auc, test_ap,loss,train_auc,train_ap,time):
+    partial_path = "../data/output/epoch_result/single_model/"
+    if not os.path.exists(partial_path):
+        os.makedirs(partial_path)
+
+    result_path = "{}/{}_{}_{}_epochResult".format(partial_path,args.dataset,args.model,args.seed)
     if not os.path.exists(result_path):
-        result_df = pd.DataFrame(columns=["epoch", "test_auc", "test_ap","loss","train_auc","train_ap"])
+        result_df = pd.DataFrame(columns=["epoch", "test_auc", "test_ap","loss","train_auc","train_ap","time"])
     else:
         result_df = pd.read_csv(result_path)
 
@@ -151,19 +160,10 @@ def save_epoch_results(epoch,test_auc, test_ap,loss,train_auc,train_ap):
                                    'test_ap': test_ap,
                                    "loss":loss,
                                    "train_auc":train_auc,
-                                   "train_ap":train_ap}, ignore_index=True)
+                                   "train_ap":train_ap,
+                                   "time":time
+                                   }, ignore_index=True)
     result_df.to_csv(result_path, index=False)
-
-def save_epoch_traing(epoch,test_auc, test_ap):
-    result_path = "../data/output/training_test/{}_{}_{}_epochResult".format(args.dataset,args.model,args.seed)
-    if not os.path.exists(result_path):
-        result_df = pd.DataFrame(columns=["epoch", "test_auc", "test_ap"])
-    else:
-        result_df = pd.read_csv(result_path)
-
-    result_df = result_df._append({'epoch': epoch, 'test_auc': test_auc, 'test_ap': test_ap}, ignore_index=True)
-    result_df.to_csv(result_path, index=False)
-
 
 
 class Runner(object):
@@ -199,7 +199,7 @@ class Runner(object):
                                                                                        args.testlength))
 
         self.model = load_model(args).to(args.device)
-        self.model_path = '../saved_models/{}_{}_seed_{}/'.format(args.dataset,
+        self.model_path = '../saved_models/single_model/{}_{}_seed_{}/'.format(args.dataset,
                                                                    args.model, args.seed)
         # logger.info("The models is going to be loaded from {}".format(self.model_path))
         # self.models.load_state_dict(torch.load(self.model_path))
@@ -314,7 +314,7 @@ class Runner(object):
         self.model = self.model.train()
         self.tgc_decoder = self.tgc_decoder.train()
 
-        t_total_start = time.time()
+        t_total_start = timeit.default_timer()
         min_loss = 10
         train_avg_epoch_loss_dict = {}
 
@@ -332,7 +332,7 @@ class Runner(object):
             self.model.train()
             self.model.init_hiddens() #Just added
             self.tgc_decoder.train()
-            t_epoch_start = time.time()
+            t_epoch_start = timeit.default_timer()
             epoch_losses = []
             tg_labels = []
             tg_preds =  []
@@ -390,11 +390,12 @@ class Runner(object):
 
 
             gpu_mem_alloc = torch.cuda.max_memory_allocated() / 1000000 if torch.cuda.is_available() else 0
+            total_epoch_time = timeit.default_timer() - t_epoch_start
 
             if epoch == 1 or epoch % args.log_interval == 0:
                 logger.info('==' * 30)
                 logger.info("Epoch:{}, Loss: {:.4f}, Time: {:.3f}, GPU: {:.1f}MiB".format(epoch, avg_epoch_loss,
-                                                                                          time.time() - t_epoch_start,
+                                                                                          total_epoch_time,
                                                                                           gpu_mem_alloc))
                 logger.info(
                     "Test: Epoch:{}, AUC: {:.4f}, AP: {:.4f}".format(eval_epoch, eval_auc, eval_ap))
@@ -412,10 +413,11 @@ class Runner(object):
                            "train AUC":train_auc,
                            "train AP": train_ap
                            })
-            save_epoch_results(epoch,eval_auc,eval_ap,avg_epoch_loss,train_auc,train_ap)
+            save_epoch_results(epoch,eval_auc,eval_ap,avg_epoch_loss,train_auc,train_ap,total_epoch_time)
             # save_epoch_traing(epoch,train_auc,train_ap)
 
-        logger.info('>> Total time : %6.2f' % (time.time() - t_total_start))
+        total_time = timeit.default_timer() - t_total_start
+        logger.info('>> Total time : %6.2f' % (total_time))
         logger.info(">> Parameters: lr:%.4f |Dim:%d |Window:%d |" % (args.lr, args.nhid, args.nb_window))
 
         #Save the model
@@ -428,7 +430,7 @@ class Runner(object):
 
         # ------------ DEBUGGING ------------
         # save the training loss values
-        partial_results_path = f'../data/output/log/{args.dataset}/{args.model}/'
+        partial_results_path = f'../data/output/log/single_model/{args.dataset}/{args.model}/'
         loss_log_filename = f'{partial_results_path}/{args.model}_{args.dataset}_{args.seed}_train_loss.pkl'
         if os.path.exists(partial_results_path)==False:
             os.makedirs(partial_results_path)
@@ -438,7 +440,7 @@ class Runner(object):
 
         # Final Test
         logger.info("Best Test: Epoch:{} , AUC: {:.4f}, AP: {:.4f}".format(best_epoch, best_test_auc, best_test_ap))
-        save_results(args.dataset, best_test_auc, best_test_ap,self.tgc_lr,len(self.train_shots),len(self.test_shots),best_epoch)
+        save_results(args.dataset, best_test_auc, best_test_ap,self.tgc_lr,len(self.train_shots),len(self.test_shots),best_epoch,total_time)
 
 
 if __name__ == '__main__':
