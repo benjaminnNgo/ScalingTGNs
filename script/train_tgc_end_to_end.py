@@ -171,7 +171,7 @@ class Runner(object):
         if args.wandb:
             wandb.init(
                 # set the wandb project where this run will be logged
-                project="scalingTGNs_i5",
+                project="single_models_i5",
                 # Set name of the run:
                 name="{}_{}_{}".format(args.dataset, args.model,args.seed),
                 # track hyperparameters and run metadata

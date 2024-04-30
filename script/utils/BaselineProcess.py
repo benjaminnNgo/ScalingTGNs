@@ -212,6 +212,8 @@ def createDummyBaselineLabelsFisrtDayLastDay(file, normalization=False):
 
 
 def createDummyBaselineLabelsWeekly(file, normalization=False):
+    timeseries_file_path = "E:/token/"
+
     save_file_name = file.split(".")[0].replace("_", "")
     print("Processing {}".format(file))
     windowSize = 7  # Day

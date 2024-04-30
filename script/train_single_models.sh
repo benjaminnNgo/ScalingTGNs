@@ -3,7 +3,6 @@ data_pack_file="../data/dataset_pack_original"
 model="HTGN"
 space="==============================="
 
-#datasets=("data" "banana" "cherry" "date")
 seeds=(710 720 800)
 
 if [ -f "$data_pack_file" ]; then
