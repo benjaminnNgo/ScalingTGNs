@@ -31,8 +31,8 @@ def replace_addresses_with_ids(df, address_columns):
 
 
 # Insert your folder paths here
-folder_path = 'D:\\Token_Data\\SelectedForIDExtraction\\'
-folder_output = 'D:\\Token_Data\\pythonProject4\\data\\selected tokens\\1000_wi_tokens'
+folder_path = 'ADD_INPUT_FOLDER_CONTAINS_TOKEN_FILES'
+folder_output = 'ADD_OUTPUT_FOLDER_FOR_MAPPED_FILES'
 
 # List and sort all CSV files by size
 files = [f for f in os.listdir(folder_path) if f.endswith('.csv')]
