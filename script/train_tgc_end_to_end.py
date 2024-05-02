@@ -458,13 +458,13 @@ if __name__ == '__main__':
     print("INFO: Dataset: {}".format(args.dataset))
     print("INFO: Model: {}".format(args.model))
     data = loader(dataset=args.dataset, neg_sample=args.neg_sample)
-    args.num_nodes = data['num_nodes']
-    print("INFO: Number of nodes:", args.num_nodes)
-    set_random(args.seed)
-    init_logger(
-        prepare_dir(args.output_folder) + args.model + '_' + args.dataset + '_seed_' + str(args.seed) + '_log.txt')
-    runner = Runner()
-    runner.run()
+    # args.num_nodes = data['num_nodes']
+    # print("INFO: Number of nodes:", args.num_nodes)
+    # set_random(args.seed)
+    # init_logger(
+    #     prepare_dir(args.output_folder) + args.model + '_' + args.dataset + '_seed_' + str(args.seed) + '_log.txt')
+    # runner = Runner()
+    # runner.run()
 
 # ----------------------
 # commands to run:

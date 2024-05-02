@@ -224,6 +224,7 @@ def loader(dataset='enron10', neg_sample=''):
         return torch.load(filepath)
     
     # if not cached, to process and cached
+    available_edgelist_TGSB = os.listdir('../data/input/raw/edgelists/')
     print('INFO: data does not exits, processing ...')
     if dataset in ['enron10', 'dblp']:
         data = load_vgrnn_dataset(dataset)
@@ -232,17 +233,15 @@ def loader(dataset='enron10', neg_sample=''):
     elif dataset in ['canVote', 'LegisEdgelist', 'wikipedia', 'UNtrade']:
         print("INFO: Loading a continuous-time dynamic graph dataset: {}".format(dataset))
         data = load_continuous_time_dataset(dataset, neg_sample)
-    # elif dataset in ['adex', 'aeternity', 'aion', 'aragon', 'bancor', 'centra', 'cindicator',
-    #                  'coindash', 'dgd', 'iconomi',  'mathoverflow', 'RedditB', 'CollegeMsg']:
-    #
+
     elif dataset in ['adex', 'aeternity', 'aion', "AMB"]:
         print("INFO: Loading a dynamic graph datasets for TG-Classification: {}".format(dataset))
         data = load_TGC_dataset(dataset)
+    elif dataset in available_edgelist_TGSB:
+        print("INFO: Loading a dynamic graph datasets from TGSB")
+        data = load_TGC_dataset(dataset)
     else:
-        try:
-            data = load_TGC_dataset(dataset)
-        except Exception as e:
-            raise ValueError("ERROR: Undefined dataset!")
+        raise ValueError("ERROR: Undefined dataset!")
 
     torch.save(data, filepath)
     print('INFO: Dataset is saved!')
@@ -303,14 +302,4 @@ def select_datset_no_gap(filename,max_gap):
 
 
 
-if __name__ == '__main__':
-    max_size_bytes = 500
-    min_size_bytes = 10
-    # process_data_gaps("/network/scratch/r/razieh.shirzadkhani/fm_data")
-    # process_data_gaps("E:/token/",min_size_bytes,max_size_bytes)
 
-    # select_datset_no_gap("dataset_features.txt",6)
-    dataset_df = pd.read_csv('dataset_no_gap_1_day.csv')
-    filtered_df = dataset_df[dataset_df['networkSize'] <= 20]
-    # filtered_df.to_csv('dataset_no_gap_{}_day.csv'.format(max_gap), index=False)
-    print(filtered_df.shape[0])
