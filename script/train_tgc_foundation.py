@@ -23,17 +23,10 @@ from pickle import dump, load
 import random
 import wandb
 
-
-# from script.config import args, dataset_names
-# from script.utils.util import set_random, logger, init_logger, disease_path
-# from script.models.load_model import load_model
-# from script.loss import ReconLoss, VGAEloss
-# from script.utils.data_util import loader, prepare_dir, load_multiple_datasets
-# from script.inits import prepare
-
-
-wandb.login(key="29968c684c2e412ed650ce0b5b52db584d572b86")
-model_file_path = '/network/scratch/r/razieh.shirzadkhani/fm/'
+# wandb.login(key="29968c684c2e412ed650ce0b5b52db584d572b86")
+# model_file_path = '/network/scratch/r/razieh.shirzadkhani/fm'
+# data_file_path = '/network/scratch/r/razieh.shirzadkhani/fm/fm_data/data_lt_70/all_data/raw/'
+model_file_path = '..'
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
@@ -87,7 +80,7 @@ def extra_dataset_attributes_loading(args, readout_scheme='mean'):
     This includes graph labels and node features for the nodes of each snapshot
     """
     partial_path = f'../data/input/raw/'
-    partial_path = "/network/scratch/r/razieh.shirzadkhani/fm/fm_data/data_lt_70/all_data/raw/"
+    # partial_path = "/network/scratch/r/razieh.shirzadkhani/fm/fm_data/data_lt_70/all_data/raw/"
     TG_labels_data = []
     TG_feats_data = []
     logger.info("INFO: Extracting extra dataset attributes")
@@ -596,7 +589,7 @@ if __name__ == '__main__':
     args.curr_time = time.strftime("%Y-%m-%d-%H:%M:%S", t)
     # load_multiple_datasets("")
 
-    args.dataset, data = load_multiple_datasets("dataset_package_8.txt")
+    args.dataset, data = load_multiple_datasets("dataset_package_1.txt")
     # num_nodes_per_data = [data[i]['num_nodes'] for i in range(len(data))]
     # args.num_nodes = max(num_nodes_per_data)
     # print(args.num_nodes)
