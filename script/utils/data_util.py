@@ -13,9 +13,15 @@ from script.utils.make_edges_new import get_edges, get_prediction_edges, get_pre
 import shutil
 import datetime as dt
 
-root_path = "../data/all_network/"
+# root_path = "../data/all_network/"
 # timeseries_file_path = "../data/all_network/TimeSeries/"
-timeseries_file_path = "/network/scratch/r/razieh.shirzadkhani/fm_data/selected/"
+# timeseries_file_path = "/network/scratch/r/razieh.shirzadkhani/fm_data/selected/"
+# root_path = "/network/scratch/r/razieh.shirzadkhani/fm/fm_data/data_lt_70/"
+# folder = "all_data"
+
+root_path = "../data/input"
+folder=""
+
 
 def mkdirs(path):
     if not os.path.isdir(path):
@@ -176,7 +182,9 @@ def load_continuous_time_dataset(dataset, neg_sample):
 def load_TGC_dataset(dataset):
     print("INFO: Loading a Graph from `Temporal Graph Classification (TGC)` Category: {}".format(dataset))
     data = {}
-    edgelist_rawfile = '../data/input/raw/edgelists/{}_edgelist.txt'.format( dataset)
+    ###############
+    # nodes = {}
+    edgelist_rawfile = '{}/raw/edgelists/{}_edgelist.txt'.format(root_path+folder, dataset)
     edgelist_df = pd.read_csv(edgelist_rawfile)
     uniq_ts_list = np.unique(edgelist_df['snapshot'])
     print("INFO: Number of unique snapshots: {}".format(len(uniq_ts_list)))
@@ -187,12 +195,15 @@ def load_TGC_dataset(dataset):
         ts_G = nx.from_pandas_edgelist(ts_edges, 'source', 'destination')
         ts_A = nx.to_scipy_sparse_array(ts_G)
         adj_time_list.append(ts_A)
+        
+
 
     # Now, exactly like "load_vgrnn_dataset_det"
     print('INFO: Generating edges, negative edges and new edges, wait for a while ...')
     edge_proc_start = time.time()
     data = {}
     edges, biedges = mask_edges_det(adj_time_list)  # list
+
     print("INFO: mask edges done!")
     pedges, nedges = mask_edges_prd(adj_time_list)  # list
     print("INFO: mask edges 2 done!")
@@ -211,7 +222,6 @@ def load_TGC_dataset(dataset):
     data['pedges'], data['nedges'] = pedges_list, nedges_list
     data['new_pedges'], data['new_nedges'] = new_pedges_list, new_nedges_list  # list
     data['num_nodes'] = int(np.max(np.vstack(edges))) + 1
-
     data['time_length'] = len(edge_index_list)
     data['weights'] = None
     print('INFO: Data: {}'.format(dataset))
@@ -222,7 +232,7 @@ def load_TGC_dataset(dataset):
 
 def loader(dataset='enron10', neg_sample=''):
     # if cached, load directly
-    data_root = '../data/input/cached/{}/'.format(dataset)
+    data_root = '{}/cached/{}/'.format(root_path+folder, dataset)
     filepath = mkdirs(data_root) + '{}.data'.format(dataset)  # the data will be saved here after generation.
     print("INFO: Dataset: {}".format(dataset))
     print("DEBUG: Look for data at {}.".format(filepath))
@@ -259,30 +269,44 @@ def loader(dataset='enron10', neg_sample=''):
 def load_multiple_datasets(datasets_package_path=""):
     datasets_packages = []
     dataset_names = []
-    datasets_package_path = '../data/input/raw/edgelists/' + datasets_package_path
+
+    # datasets_package_path = '{}/raw/edgelists/{}'.format(root_path+folder, datasets_package_path)
     print(datasets_package_path)
     if os.path.exists(datasets_package_path):
         print("Folder exists.")
     else:
         print("Folder does not exist.")
+    i = 0
+    text_path = "../data/{}".format(datasets_package_path)
 
-    for dataset in os.listdir(datasets_package_path):
-        print(dataset)
-        data_name, ext = os.path.splitext(dataset)
-        if ext == '.txt':
-            raw_data_name = data_name.split("_")
-            datasets_packages.append(loader(raw_data_name[0]))
-            dataset_names.append(raw_data_name[0])
 
-    
-    # try:
-    #     with open(datasets_package_path, 'r') as file:
-    #         for line in file:
-    #             print("INFO: Dataset: {}".format(line))
-    #             datasets_packages.append(loader(dataset=line.strip(), neg_sample=neg_sample))
-    # except Exception as e:
-    #     print("ERROR: error in processing data pack {}".format(datasets_package_path))
-    #     print(e)
+
+    # for dataset in os.listdir(datasets_package_path):
+    #     print(dataset)
+    #     data_name, ext = os.path.splitext(dataset)
+    #     # i += 1
+
+    #     if ext == '.txt':
+    #         i+= 1
+            # raw_data_name = data_name.split("_")
+            # a = loader(raw_data_name[0])
+            # print(a)
+            # loader(raw_data_name[0])
+            # datasets_packages.append(loader(raw_data_name[0]))
+            
+            # dataset_names.append(raw_data_name[0])
+        
+    # print(i)
+    try:
+        with open(text_path, 'r') as file:
+            for line in file:
+                print("INFO: Dataset: {}".format(line))
+                datasets_packages.append(loader(dataset=line.strip()))
+                dataset_names.append(line.strip())
+                
+    except Exception as e:
+        print("ERROR: error in processing data pack {}".format(datasets_package_path))
+        print(e)
 
     print("Number of dataset{}".format(len(datasets_packages)))
     return dataset_names, datasets_packages
@@ -312,4 +336,6 @@ def process_data_gaps(directory):
 
 
 # if __name__ == '__main__':
+    
+    # load_multiple_datasets(datasets_package_path= root_path+folder)
 #     process_data_gaps("/network/scratch/r/razieh.shirzadkhani/fm_data")
