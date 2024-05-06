@@ -267,7 +267,7 @@ if __name__ == '__main__':
 
 
     # generate_toper_from_package(dataset_per_pack)
-    plot_toper_values(dataset_per_pack,False)
+    plot_toper_values(dataset_per_pack,True)
 
 
         

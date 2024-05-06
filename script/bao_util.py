@@ -1,0 +1,246 @@
+import math
+import os
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+
+import shutil
+
+#Temp
+# new_datas = os.listdir('./data/input/cached/')
+# print(len(new_datas))
+#
+# old_datas = os.listdir('../data/input/cached/')
+#
+# counter = 0
+# for new_data in new_datas:
+#     if new_data not in old_datas:
+#         counter += 1
+# print(counter)
+#
+# with open("../data/data_package/updated_data.txt", "w") as file:
+#     for new_data in new_datas:
+#         file.write("{}\n".format(new_data))
+
+#Move file and remove _
+
+
+
+# TGS_datasets = pd.read_csv("../data/TGS_available_datasets.csv")
+# # old_root = "E:/token/"
+# new_root = "E:/TGS/"
+# available_datasets = os.listdir(new_root)
+# # os.makedirs(new_root, exist_ok=True)
+# counter = 0
+#
+# for filename in TGS_datasets['filename'].tolist():
+#     if filename not in available_datasets:
+#         counter += 1
+#
+# print(counter)
+
+# print(len(os.listdir(new_root)))
+#
+# TGS_datasets['filename'] = TGS_datasets['filename'].str.replace("_","")
+# TGS_datasets.to_csv("TGS_available_datasets.csv",index=False)
+
+
+
+
+#=================Count number of nodes=============
+def TGS_node_counts_distribution():
+    TGS_datasets = pd.read_csv("../data/TGS_available_datasets.csv")
+    token_root = 'E:/TGS/'
+
+    #cache
+    node_counts = np.array(
+        [117423, 11325, 523632, 65350, 86895, 543220, 288659, 113453, 581396, 105725, 105738, 35156, 332643, 221373,
+         8556, 63079, 2706788, 240487, 109935, 1392275, 344344, 117977, 83282, 23208, 107140, 380634, 435821, 51355,
+         88247, 71667, 28033, 23289, 268450, 163408, 19079, 4893910, 4800, 63042, 12985, 586115, 277002, 1250413,
+         198177, 340455, 468075, 487490, 449986, 318573, 222402, 474769, 60562, 285005, 391608, 129967, 63428, 348497,
+         288318, 293409, 134338, 360609, 294502, 34680, 50415, 23689, 75616, 94156, 48241, 128752, 46738, 359916,
+         119984, 39408, 128159, 276319, 69230, 83299, 87186, 39323, 34328, 145859, 79984, 23742, 21430, 25852, 26799,
+         28498, 48685, 47046, 43964, 71590, 34687, 118294, 91218, 45728, 16874, 52586, 52753, 34051, 60472, 220476,
+         75696, 54885, 28382, 59785, 49723, 46087, 23038, 83713, 32754, 83478, 25248, 31509, 45645, 31734, 20488, 26179,
+         53385, 14590, 40627, 45342, 22466, 42806, 55330, 35277, 42539, 19948, 50645, 34341, 36517, 37486, 48458, 11008,
+         35881, 38638, 39061, 67599, 17282, 21116, 29798, 25, 30931, 19063, 24514, 13146, 26221, 20346, 11647, 21531,
+         25450, 108714, 27201, 60717, 24185, 33728, 42592, 22574, 30721, 26153, 45920, 14378, 31965, 23793, 44733,
+         13193, 29201, 14299, 40023, 110570, 26000, 6765, 34704, 18420, 11222, 8730, 18692, 9992, 44597, 14472, 14782,
+         30737, 101699, 14567, 11860, 21757, 13658, 26521, 29231, 40476, 19990, 27245, 24277, 37355, 13669, 14924, 8450,
+         9127, 20085, 15784, 14686, 9426, 26867, 7471, 37004, 12137, 12091, 16355, 14013, 17962, 12324, 89140, 25344,
+         19512, 18401, 8430, 8497, 9883, 15837, 1454, 7854, 14501, 25852, 12838, 6675, 10228, 2950, 8969, 5949, 14238,
+         12401, 7943, 14791, 22398, 20792, 12426, 12057, 22441, 15089, 7552, 15388, 5075, 16037, 8483, 7664, 2155,
+         15724, 9294, 21035, 4946, 9216, 8082, 14457, 10662, 11331, 5291, 9202, 13026, 15738, 11346, 12076, 12365, 6494,
+         6376, 11819, 2976, 10414, 31864, 6947, 202675, 7402, 44010, 13648, 40055, 64261, 9205]
+    )
+    node_counts = np.log10(node_counts)
+
+    # for dataset in TGS_datasets['filename'].tolist():
+    #     # print(dataset)
+    #     data_df = pd.read_csv("{}{}".format(token_root,dataset))
+    #     unique_nodes = set()
+    #     unique_nodes.update(data_df['from'].tolist())
+    #     unique_nodes.update(data_df['to'].tolist())
+    #     node_counts.append(len(unique_nodes))
+
+    # print(node_counts)
+    sns.histplot(node_counts, bins=50, edgecolor='black')
+    # Add labels and title
+    plt.xlabel('Number of nodes (log base 10)')
+    plt.ylabel('Frequency')
+    plt.title('Number of unique nodes distribution')
+    plt.show()
+
+def TGS_duration_distribution():
+    TGS_datasets = pd.read_csv("../data/TGS_available_datasets.csv")
+    token_root = 'E:/TGS/'
+    durations_distribution = []
+    for dataset in TGS_datasets['filename'].tolist():
+        # print(dataset)
+        data_df = pd.read_csv("{}{}".format(token_root,dataset))
+        data_df['date'] = pd.to_datetime(data_df['timestamp'], unit='s').dt.date
+        window_start_date = data_df['date'].min()
+        data_last_date = data_df['date'].max()
+        duration =(data_last_date - window_start_date).days
+        durations_distribution.append(duration)
+    print(durations_distribution)
+    sns.histplot(durations_distribution, bins=50, edgecolor='black')
+    # Add labels and title
+    plt.xlabel('Days')
+    plt.ylabel('Frequency')
+    plt.title('Age distribution')
+    plt.show()
+
+def TGS_node_transaction_time_distribution():
+    TGS_datasets = pd.read_csv("../data/TGS_available_datasets.csv")
+    token_root = 'E:/TGS/'
+    rowlist = []
+    columns = ['dataset','node_count','transaction_count','age']
+
+    for dataset in TGS_datasets['filename'].tolist():
+        data_df = pd.read_csv("{}{}".format(token_root, dataset))
+        row = []
+        row.append(dataset)
+
+        #node_count
+        unique_nodes = set()
+        unique_nodes.update(data_df['from'].tolist())
+        unique_nodes.update(data_df['to'].tolist())
+        row.append(len(unique_nodes))
+
+        #Transaction count
+        transaction_count = data_df.shape[0]
+        row.append(transaction_count)
+
+        #age
+        data_df['date'] = pd.to_datetime(data_df['timestamp'], unit='s').dt.date
+        window_start_date = data_df['date'].min()
+        data_last_date = data_df['date'].max()
+        duration = (data_last_date - window_start_date).days
+        row.append(duration)
+
+        rowlist.append(row)
+
+    pd.DataFrame(rowlist,columns=columns).to_csv("TGS_stats.csv",index=False)
+
+def TGS_transaction_count_distribution():
+    TGS_datasets = pd.read_csv("../data/TGS_available_datasets.csv")
+    token_root = 'E:/TGS/'
+    transaction_distribution = []
+    for dataset in TGS_datasets['filename'].tolist():
+        # print(dataset)
+        data_df = pd.read_csv("{}{}".format(token_root, dataset))
+        transaction_count = data_df.shape[0]
+        transaction_distribution.append(transaction_count)
+    print(transaction_distribution)
+    sns.histplot(transaction_distribution, bins=50, edgecolor='black')
+    # Add labels and title
+    plt.xlabel('Days')
+    plt.ylabel('Frequency')
+    plt.title('Age distribution')
+    plt.show()
+
+def plot_hist(data_df,columns,title,log = False,kde = True):
+    target_count = np.array(data_df[columns].tolist())
+    # node_count = np.log10(node_count)
+    if not log:
+        g = sns.histplot(target_count, bins=50, kde=kde)
+    else:
+        g = sns.histplot(target_count, bins=50, kde=kde,log_scale=True)
+    # g.set(xscale="log")
+    g.set_xlabel(columns)
+    g.set_ylabel('Frequency')
+    plt.title(title)
+    plt.show()
+
+
+def get_edge_train_and_test(data_df,train_ratio = 0.7, test_ratio = 0.15):
+    edges_train = set()
+    edges_test = set()
+    number_snapshot = int(data_df['snapshot'].max())
+    snapshots = list(range(1,number_snapshot + 1))
+    training_shot_number = round(number_snapshot*train_ratio)
+    test_shot_number = round(number_snapshot * test_ratio)
+
+    train_snapshots = snapshots[:training_shot_number]
+    test_snapshots = snapshots[-test_shot_number:]
+
+    for idx_snapshot in train_snapshots:
+        TG_snapshot = data_df[data_df['snapshot'] == idx_snapshot]
+        for index,row in TG_snapshot.iterrows():
+            edges_train.add((str(row['source']),str(row['destination'])))
+
+    for idx_snapshot in test_snapshots:
+        TG_snapshot = data_df[data_df['snapshot'] == idx_snapshot]
+        for index,row in TG_snapshot.iterrows():
+            edges_test.add((str(row['source']),str(row['destination'])))
+
+    return edges_train,edges_test
+def calc_reocurrence(data_df):
+    edges_train,edges_test = get_edge_train_and_test(data_df)
+    reocurrence_set = edges_train & edges_test
+
+    return len(reocurrence_set)/len(edges_train)
+
+def calc_surprise(data_df):
+    edges_train,edges_test = get_edge_train_and_test(data_df)
+    different_set = edges_test.difference(edges_train)
+
+    return len(different_set)/len(edges_test)
+
+def calc_novelty(data_df):
+    data_df['date'] = pd.to_datetime(data_df['timestamp'], unit='s').dt.date
+    unique_dates = list(data_df['date'].unique())
+    unique_dates.sort()
+    seen_edge = set()
+    ratios = []
+    for timestamp in unique_dates:
+        graph_timestamp = data_df[data_df['date'] == timestamp]
+        t_edge = set()
+        for index,row in graph_timestamp.iterrows():
+            t_edge.add((str(row['from']), str(row['to'])))
+
+        never_seen_edge = t_edge.difference(seen_edge)
+        ratio = len(never_seen_edge)/len(t_edge)
+        ratios.append(ratio)
+        seen_edge.update(t_edge)
+    return sum(ratios)/len(ratios)
+
+
+
+
+
+if __name__ == '__main__':
+    # Load the example planets dataset
+    df = pd.read_csv('E:/TGS/unnamedtoken219740xcafe001067cdef266afb7eb5a286dcfd277f3de5.csv')
+    print(calc_novelty(df))
+
+
+
+    # TGS_node_transaction_time_distribution()
+
+
+
+
+

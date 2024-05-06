@@ -226,8 +226,10 @@ class Runner(object):
                 logger.info('INFO: using pre-defined feature')
             else:
                 self.x = torch.eye(args.num_nodes).to(args.device)
+                # self.x = np.fill_diagonal(torch.zeros(args.num_nodes,args.num_nodes),args.node_ids).to(args.device)
                 logger.info('INFO: using one-hot feature')
             args.nfeat = self.x.size(1)
+            print("BAO check:",self.x.size(1))
 
     def tgclassification_eval(self, epoch, readout_scheme):
         """
@@ -457,16 +459,14 @@ if __name__ == '__main__':
     print("======================================")
     print("INFO: Dataset: {}".format(args.dataset))
     print("INFO: Model: {}".format(args.model))
+    # args.dataset = "unnamedtoken214030x07e0edf8ce600fb51d44f51e3348d77d67f298ae"
     data = loader(dataset=args.dataset, neg_sample=args.neg_sample)
-    # args.num_nodes = data['num_nodes']
-    # print("INFO: Number of nodes:", args.num_nodes)
-    # set_random(args.seed)
-    # init_logger(
-    #     prepare_dir(args.output_folder) + args.model + '_' + args.dataset + '_seed_' + str(args.seed) + '_log.txt')
-    # runner = Runner()
-    # runner.run()
+    args.num_nodes = data['num_nodes']
+    print("INFO: Number of nodes:", args.num_nodes)
+    set_random(args.seed)
+    init_logger(
+        prepare_dir(args.output_folder) + args.model + '_' + args.dataset + '_seed_' + str(args.seed) + '_log.txt')
+    runner = Runner()
+    runner.run()
 
-# ----------------------
-# commands to run:
-# cd script
-# python train_tgc_end_to_end.py --models=HTGN --seed=710  --dataset=dgd --max_epoch=200
+

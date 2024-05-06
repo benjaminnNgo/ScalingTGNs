@@ -1,12 +1,12 @@
 import statistics as stat
 import pandas as pd
 
-target_dataset = "unnamedtoken216360xfca59cd816ab1ead66534d82bc21e7515ce441cf"
+target_dataset = "unnamedtoken218230x320623b8e4ff03373931769a31fc52a4e78b5d70"
 target_lr = 0.00015
 test_auc = []
 test_ap = []
 
-results_df = pd.read_csv('../../data/output/i4/results.csv')
+results_df = pd.read_csv('../../data/output/single_model/results.csv')
 for index, row in results_df.iterrows():
     if row['dataset'] == target_dataset and row['lr'] == target_lr:
         test_auc.append(row['test_auc'])

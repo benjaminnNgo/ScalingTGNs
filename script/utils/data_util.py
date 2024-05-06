@@ -8,6 +8,8 @@ from torch_geometric.utils import train_test_split_edges
 from torch_geometric.transforms import RandomLinkSplit
 from torch_geometric.data import Data
 import pickle
+
+from script.TGS.TGS import TGS_Handler
 from script.utils.make_edges_orign import mask_edges_det, mask_edges_prd, mask_edges_prd_new_by_marlin
 from script.utils.make_edges_new import get_edges, get_prediction_edges, get_prediction_edges_modified, get_new_prediction_edges, get_new_prediction_edges_modified
 
@@ -214,6 +216,8 @@ def load_TGC_dataset(dataset):
 
 
 def loader(dataset='enron10', neg_sample=''):
+
+
     # if cached, load directly
     data_root = '../data/input/cached/{}/'.format(dataset)
     filepath = mkdirs(data_root) + '{}.data'.format(dataset)  # the data will be saved here after generation.
@@ -224,7 +228,9 @@ def loader(dataset='enron10', neg_sample=''):
         return torch.load(filepath)
     
     # if not cached, to process and cached
-    available_edgelist_TGSB = os.listdir('../data/input/raw/edgelists/')
+    TGS_dataset_df = pd.read_csv("../data/TGS_available_datasets.csv")
+    TGS_available_dataset = [filename.replace(".csv", "") for filename in TGS_dataset_df['filename'].tolist()]
+
     print('INFO: data does not exits, processing ...')
     if dataset in ['enron10', 'dblp']:
         data = load_vgrnn_dataset(dataset)
@@ -236,12 +242,25 @@ def loader(dataset='enron10', neg_sample=''):
 
     elif dataset in ['adex', 'aeternity', 'aion', "AMB"]:
         print("INFO: Loading a dynamic graph datasets for TG-Classification: {}".format(dataset))
-        data = load_TGC_dataset(dataset)
-    elif dataset in available_edgelist_TGSB:
-        print("INFO: Loading a dynamic graph datasets from TGSB")
-        data = load_TGC_dataset(dataset)
+
+        edgelist_rawfile = '../data/input/raw/edgelists/{}_edgelist.txt'.format(dataset)
+        if os.path.exists(edgelist_rawfile):
+            data = load_TGC_dataset(dataset)
+
+    elif dataset in TGS_available_dataset:
+        edgelist_rawfile = '../data/input/raw/edgelists/{}_edgelist.txt'.format(dataset)
+        if os.path.exists(edgelist_rawfile):
+            data = load_TGC_dataset(dataset)
+        else:
+            TGS_Handler("E:/TGS/").creat_baseline_datasets(dataset)
+            data = load_TGC_dataset(dataset)
     else:
-        raise ValueError("ERROR: Undefined dataset!")
+        try:
+            print("INFO: Loading a dynamic graph datasets from TGS")
+            data = load_TGC_dataset(dataset)
+        except Exception as e:
+            raise ValueError("ERROR: Undefined dataset!")
+
 
     torch.save(data, filepath)
     print('INFO: Dataset is saved!')
@@ -267,11 +286,15 @@ def load_multiple_datasets(datasets_package_file,neg_sample):
 
     return datasets_packages
 
+def generate_edgelist_labels_from_raw_TGS():
+    #@TODO: Bao takes Kiarash function here
+    print("Generarating edge list")
 
-def process_data_gaps(directory,min_size = 10 ,max_size =100 ):
+
+def process_data_gaps(directory,min_size = 10 ,max_size = 4000):
     columns = ["blockNumber", "timestamp", "tokenAddress", "from", "to", "value", "fileBlock"]
-    file1 = open('dataset_features.txt', 'w')
-    file1.writelines(["filename, start, end, duration, max_gap,networkSize"])
+    dataset_feature_file = open('dataset_features.txt', 'w')
+    dataset_feature_file.writelines(["filename, start, end, duration, max_gap,networkSize\n"])
     file_count = len(os.listdir(directory))
     counter = 0
     for filename in os.listdir(directory):
@@ -281,25 +304,36 @@ def process_data_gaps(directory,min_size = 10 ,max_size =100 ):
         try:
             if filename.endswith('.csv') and file_size>=min_size and file_size<=max_size:
                 data = pd.read_csv(filepath, usecols=columns, index_col=False)
+
                 timestamps = pd.to_datetime(data["timestamp"], unit="s").dt.date
                 start = timestamps[0]
                 end = timestamps.iloc[-1]
                 time_difference = (end - start).days
+                if time_difference < 20:
+                    raise Exception("Token network last less than 20 days")
+
                 unique_timestamps = timestamps.unique()
                 tot_len = len(unique_timestamps)
                 gaps = max(set([(unique_timestamps[i+1] - unique_timestamps[i]).days for i in range(tot_len-1)]))
-                file1.writelines([filename, ",", str(start), ",", str(end), ",",str(time_difference),",", str(gaps),",",str(file_size),"\n"])
+                dataset_feature_file.writelines([filename, ",", str(start), ",", str(end), ",",str(time_difference),",", str(gaps),",",str(file_size),"\n"])
         except Exception as e:
             print("ERROR while processing {} due to\n {}".format(filename,e))
 
         print("Done processing {}/{}".format(counter,file_count))
-    file1.close()
+    dataset_feature_file.close()
 
 def select_datset_no_gap(filename,max_gap):
     dataset_df = pd.read_csv(filename)
     filtered_df = dataset_df[dataset_df[' max_gap'] <= max_gap]
     filtered_df.to_csv('dataset_no_gap_{}_day.csv'.format(max_gap), index=False)
 
+
+if __name__ == '__main__':
+    # process_data_gaps("E:/token/")
+    dataset_df = pd.read_csv("TGS_available_datasets.csv")
+    print(sum(dataset_df['networkSize'].tolist()))
+    print(max(dataset_df['networkSize'].tolist()))
+    # select_datset_no_gap("dataset_features.txt",1)
 
 
 
