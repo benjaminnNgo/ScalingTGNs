@@ -227,18 +227,94 @@ def calc_novelty(data_df):
         seen_edge.update(t_edge)
     return sum(ratios)/len(ratios)
 
+def check_valid_dataset(labels):
+    unique_labels = set(labels)
+    return len(unique_labels) != 1
+
+def find_label_csv(dataset):
+    partial_path = '../data/'
+    potiential_packages = ['data_bw_25_and_40/', 'data_bw_40_and_70/', 'data_gt_70/', 'data_lt_25MB/', 'input/raw/']
+    for package in potiential_packages:
+        file_path = "{}{}/labels/{}_labels.csv".format(partial_path, package, dataset)
+        if os.path.exists(file_path):
+            return file_path
+    raise Exception("Can't find label file")
+
+def get_val_test(labels,test_ratio = 0.15, val_ratio = 0.15):
+    total_snapshot = len(labels)
+    test_and_validation_total = round(total_snapshot * (test_ratio + val_ratio))
+    test_and_validation_snapshot =labels[-test_and_validation_total:]
+
+    test_total = round(total_snapshot * test_ratio)
+    val_total = round(total_snapshot * val_ratio)
+
+    return test_and_validation_snapshot[:val_total], test_and_validation_snapshot[-test_total:]
 
 
 
 
 if __name__ == '__main__':
     # Load the example planets dataset
-    df = pd.read_csv('E:/TGS/unnamedtoken219740xcafe001067cdef266afb7eb5a286dcfd277f3de5.csv')
-    print(calc_novelty(df))
+    # df = pd.read_csv('E:/TGS/unnamedtoken219740xcafe001067cdef266afb7eb5a286dcfd277f3de5.csv')
+    # print(calc_novelty(df))
 
 
 
     # TGS_node_transaction_time_distribution()
+    dataset_in_package_df = pd.read_csv('../data/data_package/datasets_package_64.txt')
+    dataset_64 = dataset_in_package_df.iloc[:,0].tolist()
+    # print(dataset_64)
+
+    partial_path = '../data/'
+    potiential_packages = ['data_bw_25_and_40/','data_bw_40_and_70/','data_gt_70/','data_lt_25MB/','input/raw/']
+    cant_find_dataset = []
+    invalid_dataset = []
+
+    for dataset in dataset_64:
+        try:
+            label_path = find_label_csv(dataset)
+            labels = pd.read_csv(label_path).iloc[:,0].tolist()
+            val_set,test_set = get_val_test(labels)
+            if not check_valid_dataset(val_set) and not check_valid_dataset(test_set):
+                invalid_dataset.append(dataset)
+
+        except Exception as e:
+            cant_find_dataset.append(cant_find_dataset)
+
+
+    print(invalid_dataset)
+    # set: 9[
+    #     'unnamedtoken220260x20561172f791f915323241e885b4f7d5187c36e1'
+
+    #     , 'unnamedtoken221770x511686014f39f487e5cdd5c37b4b37606b795ae3'
+
+    #     , 'unnamedtoken219600x75c97384ca209f915381755c582ec0e2ce88c1ba'
+
+    #     , 'unnamedtoken222140xe0f63a424a4439cbe457d80e4f4b51ad25b2c56c'
+
+    #     , 'unnamedtoken218200xa62894d5196bc44e4c3978400ad07e7b30352372'
+
+    #     , 'unnamedtoken221880x0b0a8c7c34374c1d0c649917a97eee6c6c929b1b'
+
+    #     , 'unnamedtoken219650xc50c1c8b7cfcc868cae13654134f1078b3b8a0f2'
+
+    #     , 'unnamedtoken221890xcb50350ab555ed5d56265e096288536e8cac41eb'
+
+    #     , 'unnamedtoken214030x07e0edf8ce600fb51d44f51e3348d77d67f298ae'
+
+    #        unnamedtoken221880x0b0a8c7c34374c1d0c649917a97eee6c6c929b1b
+    #        unnamedtoken221870x3e34eabf5858a126cb583107e643080cee20ca64
+    #     ]
+
+    # print("invalid set:",len(invalid_dataset),invalid_dataset)
+    # print("can't find set",cant_find_dataset)
+
+    # with open('filter_available_test.txt', 'w') as file:
+    #     # Write each element of the array to the file
+    #     for element in valid_dataset:
+    #         file.write(str(element) + '\n')
+
+
 
 
 

@@ -328,12 +328,65 @@ def select_datset_no_gap(filename,max_gap):
     filtered_df.to_csv('dataset_no_gap_{}_day.csv'.format(max_gap), index=False)
 
 
+def load_multiple_datasets(datasets_package_path=""):
+    datasets_packages = []
+    dataset_names = []
+
+    print(datasets_package_path)
+    if os.path.exists(datasets_package_path):
+        print("Folder exists.")
+    else:
+        print("Folder does not exist.")
+    i = 0
+    text_path = "../data/{}".format(datasets_package_path)
+
+    try:
+        with open(text_path, 'r') as file:
+            for line in file:
+                print("INFO: Dataset: {}".format(line))
+                datasets_packages.append(loader(dataset=line.strip()))
+                dataset_names.append(line.strip())
+
+    except Exception as e:
+        print("ERROR: error in processing data pack {}".format(datasets_package_path))
+        print(e)
+
+    print("Number of dataset{}".format(len(datasets_packages)))
+    return dataset_names, datasets_packages
+
+
+
+def find_max_node_id (dataname):
+    data_path = '../data/input/raw/edgelists/{}_edgelist.txt'.format(dataname)
+    data_df = pd.read_csv(data_path)
+    unique_node = set()
+    unique_node.update(data_df['source'].tolist())
+    unique_node.update(data_df['destination'].tolist())
+    return max(unique_node)
+
+
+def find_max_node_id_package(datasets_package_file):
+    text_path = "../data/{}".format(datasets_package_file)
+    max_id_dataset = []
+    try:
+        with open(text_path, 'r') as file:
+            for dataset in file:
+                max_id_dataset.append(find_max_node_id(dataset.strip()))
+        return int(max(max_id_dataset))
+
+    except Exception as e:
+        print("ERROR: error in processing data pack {}".format(datasets_package_file))
+        print(e)
+
 if __name__ == '__main__':
     # process_data_gaps("E:/token/")
-    dataset_df = pd.read_csv("TGS_available_datasets.csv")
-    print(sum(dataset_df['networkSize'].tolist()))
-    print(max(dataset_df['networkSize'].tolist()))
+    # dataset_df = pd.read_csv("TGS_available_datasets.csv")
+    # print(sum(dataset_df['networkSize'].tolist()))
+    # print(max(dataset_df['networkSize'].tolist()))
     # select_datset_no_gap("dataset_features.txt",1)
+
+    # print(find_max_node_id('unnamedtoken18980x00a8b738e453ffd858a7edf03bccfe20412f0eb0'))
+    print(find_max_node_id_package("node_id_package.txt"))
 
 
 

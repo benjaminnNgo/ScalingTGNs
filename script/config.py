@@ -173,3 +173,14 @@ if args.dataset in ['RedditB']:
 if args.dataset in ['AMB']:
     args.testlength = 10  # Total number of snapshots = 399
     args.trainable_feat = 1
+
+dataset_names = {'unnamedtoken18980x00a8b738e453ffd858a7edf03bccfe20412f0eb0' : 'ALBT',
+                 'unnamedtoken216240x83e6f1e41cdd28eaceb20cb649155049fac3d5aa' : 'POLS',
+                 'unnamedtoken216300xcc4304a31d09258b0029ea7fe63d032f52e44efe' : 'SWAP',
+                 'unnamedtoken216350xe53ec727dbdeb9e2d5456c3be40cff031ab40a55' : 'SUPER',
+                 'unnamedtoken216360xfca59cd816ab1ead66534d82bc21e7515ce441cf' : 'RARI',
+                 'unnamedtoken216390x1ceb5cb57c4d4e2b2433641b95dd330a33185a44' : 'KP3R',
+                 'unnamedtoken216540x09a3ecafa817268f77be1283176b946c4ff2e608' : 'MIR',
+                 'unnamedtoken216550xbcca60bb61934080951369a648fb03df4f96263c' : 'AUSDC',
+                 'unnamedtoken216580x5f98805a4e8be255a32880fdec7f6728c6568ba0' : 'LUSD',
+                 'unnamedtoken216620x429881672b9ae42b8eba0e26cd9c73711b891ca5' : 'PICKLE'}
