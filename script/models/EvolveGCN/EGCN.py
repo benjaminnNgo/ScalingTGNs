@@ -137,10 +137,16 @@ class TopK(torch.nn.Module):
         t.data.uniform_(-stdv, stdv)
 
     def forward(self, node_embs, mask=None):
+        print(node_embs.shape)
+        print(node_embs.matmul(self.scorer).shape)
         scores = node_embs.matmul(self.scorer) / self.scorer.norm()
         if mask is None:
             mask = torch.zeros_like(scores) if torch.cuda.is_available() else torch.zeros_like(scores)
         scores = scores + mask
+        print(scores.shape)
+        print(type( scores.view(-1)))
+        print(scores.view(-1).shape)
+        print(self.k)
         vals, topk_indices = scores.view(-1).topk(self.k)
         topk_indices = topk_indices[vals > -float("Inf")]
         if topk_indices.size(0) < self.k:

@@ -178,6 +178,7 @@ def plot_hist(data_df,columns,title,log = False,kde = True):
 def get_edge_train_and_test(data_df,train_ratio = 0.7, test_ratio = 0.15):
     edges_train = set()
     edges_test = set()
+
     number_snapshot = int(data_df['snapshot'].max())
     snapshots = list(range(1,number_snapshot + 1))
     training_shot_number = round(number_snapshot*train_ratio)
@@ -209,6 +210,8 @@ def calc_surprise(data_df):
 
     return len(different_set)/len(edges_test)
 
+
+
 def calc_novelty(data_df):
     data_df['date'] = pd.to_datetime(data_df['timestamp'], unit='s').dt.date
     unique_dates = list(data_df['date'].unique())
@@ -232,6 +235,7 @@ def check_valid_dataset(labels):
     return len(unique_labels) != 1
 
 def find_label_csv(dataset):
+    dataset = dataset.replace('.csv', '')
     partial_path = '../data/'
     potiential_packages = ['data_bw_25_and_40/', 'data_bw_40_and_70/', 'data_gt_70/', 'data_lt_25MB/', 'input/raw/']
     for package in potiential_packages:
@@ -239,6 +243,16 @@ def find_label_csv(dataset):
         if os.path.exists(file_path):
             return file_path
     raise Exception("Can't find label file")
+
+def find_edge_csv(dataset):
+    dataset = dataset.replace('.csv', '')
+    partial_path = '../data/'
+    potiential_packages = ['data_bw_25_and_40/', 'data_bw_40_and_70/', 'data_gt_70/', 'data_lt_25MB/', 'input/raw/']
+    for package in potiential_packages:
+        file_path = "{}{}/edgelists/{}_edgelist.txt".format(partial_path, package, dataset)
+        if os.path.exists(file_path):
+            return file_path
+    raise Exception("Can't find label file{}".format(file_path))
 
 def get_val_test(labels,test_ratio = 0.15, val_ratio = 0.15):
     total_snapshot = len(labels)
@@ -250,6 +264,28 @@ def get_val_test(labels,test_ratio = 0.15, val_ratio = 0.15):
 
     return test_and_validation_snapshot[:val_total], test_and_validation_snapshot[-test_total:]
 
+def compute_novelty_dist_from_datasets(datasets):
+    novelty_list = []
+    for dataset in datasets:
+        pd_df = pd.read_csv('E:/TGS/{}'.format(dataset))
+        novelty_list.append(calc_novelty(pd_df))
+
+
+    sns.histplot(novelty_list, bins=50, edgecolor='black')
+    # Add labels and title
+    plt.xlabel('Days')
+    plt.ylabel('Frequency')
+    plt.title('Age distribution')
+    plt.show()
+
+def compute_reocurrence_surprise_from_datasets(datasets):
+    reoccurrence_list = []
+    surprise_list = []
+    for dataset in datasets:
+        dataset_df = pd.read_csv(find_edge_csv(dataset))
+        reoccurrence_list.append(calc_reocurrence(dataset_df))
+        surprise_list.append(calc_surprise(dataset_df))
+    return reoccurrence_list, surprise_list
 
 
 
@@ -260,29 +296,29 @@ if __name__ == '__main__':
 
 
 
-    # TGS_node_transaction_time_distribution()
-    dataset_in_package_df = pd.read_csv('../data/data_package/datasets_package_64.txt')
-    dataset_64 = dataset_in_package_df.iloc[:,0].tolist()
-    # print(dataset_64)
-
-    partial_path = '../data/'
-    potiential_packages = ['data_bw_25_and_40/','data_bw_40_and_70/','data_gt_70/','data_lt_25MB/','input/raw/']
-    cant_find_dataset = []
-    invalid_dataset = []
-
-    for dataset in dataset_64:
-        try:
-            label_path = find_label_csv(dataset)
-            labels = pd.read_csv(label_path).iloc[:,0].tolist()
-            val_set,test_set = get_val_test(labels)
-            if not check_valid_dataset(val_set) and not check_valid_dataset(test_set):
-                invalid_dataset.append(dataset)
-
-        except Exception as e:
-            cant_find_dataset.append(cant_find_dataset)
-
-
-    print(invalid_dataset)
+    # # TGS_node_transaction_time_distribution()
+    # dataset_in_package_df = pd.read_csv('../data/data_package/datasets_package_64.txt')
+    # dataset_64 = dataset_in_package_df.iloc[:,0].tolist()
+    # # print(dataset_64)
+    #
+    # partial_path = '../data/'
+    # potiential_packages = ['data_bw_25_and_40/','data_bw_40_and_70/','data_gt_70/','data_lt_25MB/','input/raw/']
+    # cant_find_dataset = []
+    # invalid_dataset = []
+    #
+    # for dataset in dataset_64:
+    #     try:
+    #         label_path = find_label_csv(dataset)
+    #         labels = pd.read_csv(label_path).iloc[:,0].tolist()
+    #         val_set,test_set = get_val_test(labels)
+    #         if not check_valid_dataset(val_set) and not check_valid_dataset(test_set):
+    #             invalid_dataset.append(dataset)
+    #
+    #     except Exception as e:
+    #         cant_find_dataset.append(cant_find_dataset)
+    #
+    #
+    # print(invalid_dataset)
     # set: 9[
     #     'unnamedtoken220260x20561172f791f915323241e885b4f7d5187c36e1'
 
@@ -314,7 +350,20 @@ if __name__ == '__main__':
     #     for element in valid_dataset:
     #         file.write(str(element) + '\n')
 
+    TGS_available_dataset = pd.read_csv('../data/TGS_available_datasets.csv')['filename'].tolist()
+    novelty_list = []
+    for dataset in TGS_available_dataset:
+        pd_df = pd.read_csv('E:/TGS/{}'.format(dataset))
+        novelty_list.append(calc_novelty(pd_df))
 
+
+    print(novelty_list)
+    sns.histplot(novelty_list, bins=50, edgecolor='black')
+    # Add labels and title
+    plt.xlabel('Days')
+    plt.ylabel('Frequency')
+    plt.title('Age distribution')
+    plt.show()
 
 
 
