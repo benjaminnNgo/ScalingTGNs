@@ -175,6 +175,19 @@ def plot_hist(data_df,columns,title,log = False,kde = True):
     plt.show()
 
 
+def plot_hist_from_list(list,title,log = False,kde = True):
+    target_count = np.array(list)
+    # node_count = np.log10(node_count)
+    if not log:
+        g = sns.histplot(target_count, bins=50, kde=kde)
+    else:
+        g = sns.histplot(target_count, bins=50, kde=kde,log_scale=True)
+    # g.set(xscale="log")
+    g.set_xlabel(list)
+    g.set_ylabel('Frequency')
+    plt.title(title)
+    plt.show()
+
 def get_edge_train_and_test(data_df,train_ratio = 0.7, test_ratio = 0.15):
     edges_train = set()
     edges_test = set()
@@ -350,21 +363,110 @@ if __name__ == '__main__':
     #     for element in valid_dataset:
     #         file.write(str(element) + '\n')
 
-    TGS_available_dataset = pd.read_csv('../data/TGS_available_datasets.csv')['filename'].tolist()
-    novelty_list = []
-    for dataset in TGS_available_dataset:
-        pd_df = pd.read_csv('E:/TGS/{}'.format(dataset))
-        novelty_list.append(calc_novelty(pd_df))
+    # TGS_available_dataset = pd.read_csv('../data/TGS_available_datasets.csv')['filename'].tolist()
+
+    # for dataset in TGS_available_dataset:
+    #     pd_df = pd.read_csv('E:/TGS/{}'.format(dataset))
+    #     novelty_list.append(calc_novelty(pd_df))
+
+    #
+    # # print(novelty_list)
+    # sns.histplot(novelty_list, bins=50, edgecolor='black')
+    # # Add labels and title
+    # plt.xlabel('Days')
+    # plt.ylabel('Frequency')
+    # plt.title('Age distribution')
+    # plt.show()
+
+    # with open('../data/data_package/datasets_package_64.txt', 'r') as file:
+    #     # Read all lines into a list
+    #     lines = file.readlines()
+    #
+    # # Strip newline characters and create an array
+    # dataset_64 = set([line.strip() for line in lines])
+    #
+    # with open('../data/data_package/datasets_package_32.txt', 'r') as file:
+    #     # Read all lines into a list
+    #     lines = file.readlines()
+    #
+    #     # Strip newline characters and create an array
+    # dataset_32 = set([line.strip() for line in lines])
+    #
+    # with open('../data/data_package/datasets_package_16.txt', 'r') as file:
+    #     # Read all lines into a list
+    #     lines = file.readlines()
+    #
+    #     # Strip newline characters and create an array
+    # dataset_16 = set([line.strip() for line in lines])
+    #
+    # with open('../data/data_package/datasets_package_8.txt', 'r') as file:
+    #     # Read all lines into a list
+    #     lines = file.readlines()
+    #
+    #     # Strip newline characters and create an array
+    # dataset_8 = set([line.strip() for line in lines])
 
 
-    print(novelty_list)
-    sns.histplot(novelty_list, bins=50, edgecolor='black')
-    # Add labels and title
-    plt.xlabel('Days')
-    plt.ylabel('Frequency')
-    plt.title('Age distribution')
-    plt.show()
+    # print(len(dataset_32.intersection(dataset_32)))
+    # print(len(dataset_32.intersection(dataset_16)))
+    # print(len(dataset_32.intersection(dataset_8)))
 
+    # not_used_data = []
+    # # dataset_in_package_df = pd.read_csv('')
+    # for data in os.listdir("../data/input/cached/"):
+    #     if data not in dataset_64 and data not in dataset_32 and data not in dataset_16:
+    #         not_used_data.append(data)
+    #
+    #
+    # not_used_data.remove("temp")
+    # print(len(not_used_data))
+    #
+    # partial_path = '../data/'
+    # potiential_packages = ['data_bw_25_and_40/','data_bw_40_and_70/','data_gt_70/','data_lt_25MB/','input/raw/']
+    # cant_find_dataset = []
+    # valid_data = set()
+    #
+    # for dataset in not_used_data:
+    #     try:
+    #         label_path = find_label_csv(dataset)
+    #         labels = pd.read_csv(label_path).iloc[:,0].tolist()
+    #         val_set,test_set = get_val_test(labels)
+    #         if check_valid_dataset(val_set) and check_valid_dataset(test_set):
+    #             valid_data.add(dataset)
+    #
+    #     except Exception as e:
+    #         cant_find_dataset.append(cant_find_dataset)
+    #
+    # for dataset in valid_data:
+    #     print(dataset)
+
+    # with open('../data/data_package/datasets_testing_package.txt', 'r') as file:
+    #     # Read all lines into a list
+    #     lines = file.readlines()
+    #
+    #     # Strip newline characters and create an array
+    # test_data = set([line.strip() for line in lines])
+    # print(len(test_data.intersection(dataset_64)))
+
+    # partial_path = '../data/'
+    # potiential_packages = ['data_bw_25_and_40/','data_bw_40_and_70/','data_gt_70/','data_lt_25MB/','input/raw/']
+    # cant_find_dataset = []
+    # invalid_data = set()
+    #
+    # for dataset in not_used_data:
+    #     try:
+    #         label_path = find_label_csv(dataset)
+    #         labels = pd.read_csv(label_path).iloc[:,0].tolist()
+    #         val_set,test_set = get_val_test(labels)
+    #         if not check_valid_dataset(val_set) or not check_valid_dataset(test_set):
+    #             invalid_data.add(dataset)
+    #
+    #     except Exception as e:
+    #         cant_find_dataset.append(cant_find_dataset)
+    # print(invalid_data)
+
+    datadf = pd.read_csv("TGS_stats.csv")
+    plot_hist(datadf,'age','Age distribution')
 
 
 

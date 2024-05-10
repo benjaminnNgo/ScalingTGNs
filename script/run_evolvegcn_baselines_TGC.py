@@ -8,6 +8,7 @@ import numpy as np
 from math import isnan
 import torch.optim as optim
 import networkx as nx
+from sklearn.preprocessing import MinMaxScaler
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(BASE_DIR)
@@ -17,10 +18,61 @@ from script.loss import ReconLoss, VGAEloss
 from script.config import args
 from script.utils.util import init_logger, logger
 from script.utils.data_util import loader,prepare_dir
-from script.utils.util import MLP, readout_function, extra_dataset_attributes_loading
+from script.utils.util import MLP, readout_function
 from sklearn.metrics import roc_auc_score, average_precision_score
+import pandas as pd
 from pickle import dump, load
 import matplotlib.pyplot as plt
+
+def extra_dataset_attributes_loading(args, readout_scheme='mean'):
+    """
+    Load and process additional dataset attributes for TG-Classification
+    This includes graph labels and node features for the nodes of each snapshot
+    """
+    partial_path = f'../data/input/raw/'
+
+    # load graph lables
+    label_filename = f'{partial_path}/labels/{args.dataset}_labels.csv'
+    label_df = pd.read_csv(label_filename, header=None, names=['label'])
+    TG_labels = torch.from_numpy(np.array(label_df['label'].tolist())).to(args.device)
+
+    # load and process graph-pooled (node-level) features
+    edgelist_filename = f'{partial_path}/edgelists/{args.dataset}_edgelist.txt'
+    edgelist_df = pd.read_csv(edgelist_filename)
+    uniq_ts_list = np.unique(edgelist_df['snapshot'])
+    TG_feats = []
+    for ts in uniq_ts_list:
+        ts_edges = edgelist_df.loc[edgelist_df['snapshot'] == ts, ['source', 'destination', 'weight']]
+        ts_G = nx.from_pandas_edgelist(ts_edges, source='source', target='destination', edge_attr='weight',
+                                       create_using=nx.MultiDiGraph)
+        node_list = list(ts_G.nodes)
+        indegree_list = np.array(ts_G.in_degree(node_list))
+        weighted_indegree_list = np.array(ts_G.in_degree(node_list, weight='weight'))
+        outdegree_list = np.array(ts_G.out_degree(node_list))
+        weighted_outdegree_list = np.array(ts_G.out_degree(node_list, weight='weight'))
+
+        if readout_scheme == 'max':
+            TG_this_ts_feat = np.array([np.max(indegree_list), np.max(weighted_indegree_list),
+                                        np.max(outdegree_list), np.max(weighted_outdegree_list)])
+        elif readout_scheme == 'mean':
+            TG_this_ts_feat = np.array([np.mean(indegree_list[:, 1].astype(float)),
+                                        np.mean(weighted_indegree_list[:, 1].astype(float)),
+                                        np.mean(outdegree_list[:, 1].astype(float)),
+                                        np.mean(weighted_outdegree_list[:, 1].astype(float))])
+        elif readout_scheme == 'sum':
+            TG_this_ts_feat = np.array([np.sum(indegree_list), np.sum(weighted_indegree_list),
+                                        np.sum(outdegree_list), np.sum(weighted_outdegree_list)])
+        else:
+            TG_this_ts_feat = None
+            raise ValueError("Readout scheme is Undefined!")
+
+        TG_feats.append(TG_this_ts_feat)
+
+    # scale the temporal graph features to have a reasonable range
+    scalar = MinMaxScaler()
+    TG_feats = scalar.fit_transform(TG_feats)
+
+    return TG_labels, TG_feats
 
 
 log_interval = 50
@@ -90,7 +142,8 @@ class Runner(object):
         print("2. Start training")
         t_total_start = time.time()
         # best_results = [0] * 5
-        for epoch in range(1, args.max_epoch + 1):
+        # for epoch in range(1, args.max_epoch + 1):
+        for epoch in range(1, 2):
             self.model.train()
             self.tgc_decoder.train()
             t_epoch_start = time.time()
@@ -185,8 +238,8 @@ class Runner(object):
 if __name__ == '__main__':
     random.seed(args.seed)  # random seed
     args.model = "EGCN"
-    args.datase = "aion"
-    data = loader(dataset="aion")  # enron10, fb, dblp
+    args.dataset = "unnamedtoken216350xe53ec727dbdeb9e2d5456c3be40cff031ab40a55"
+    data = loader(dataset="unnamedtoken216350xe53ec727dbdeb9e2d5456c3be40cff031ab40a55")  # enron10, fb, dblp
     args.num_nodes = data['num_nodes']
     log_folder = prepare_dir(args.output_folder)  # 2.create folder
     init_logger(log_folder + args.dataset + '_seed_' + str(args.seed) + '.txt')

@@ -155,7 +155,7 @@ def save_epoch_results(epoch,test_auc, test_ap,loss,train_auc,train_ap,time):
     else:
         result_df = pd.read_csv(result_path)
 
-    result_df = result_df._append({'epoch': epoch,
+    result_df = result_df.append({'epoch': epoch,
                                    'test_auc': test_auc,
                                    'test_ap': test_ap,
                                    "loss":loss,
@@ -229,7 +229,7 @@ class Runner(object):
                 # self.x = np.fill_diagonal(torch.zeros(args.num_nodes,args.num_nodes),args.node_ids).to(args.device)
                 logger.info('INFO: using one-hot feature')
             args.nfeat = self.x.size(1)
-            print("BAO check:",self.x.size(1))
+            # print("BAO check:",self.x.size(1))
 
     def tgclassification_eval(self, epoch, readout_scheme):
         """
