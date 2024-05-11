@@ -82,7 +82,7 @@ def save_results(dataset, test_auc, test_ap,lr,train_snapshot,test_snapshot,best
     else:
         result_df = pd.read_csv(result_path)
 
-    result_df = result_df._append({'dataset': dataset,
+    result_df = result_df.append({'dataset': dataset,
                                    'test_auc': test_auc,
                                    'test_ap': test_ap,
                                    "lr":lr,
@@ -154,8 +154,19 @@ class Runner(object):
                 logger.info('using pre-defined feature')
             else:
                 self.x = [torch.eye(args.num_nodes).to(args.device)] * len(self.train_shots)
-                logger.info('using one-hot feature')
+                # print(args.num_nodes)
+                # self.x = torch.eye(args.num_nodes).to(args.device)
+                # print(len(self.train_shots))
+                # print(type(self.x))
+                # print(len(self.x))
+                # print(type(self.x[0]))
+                # print(self.x[0].size(0),self.x[0].size(1))
+
+                # self.x = [torch.arange(args.num_nodes + 1).float().view(args.num_nodes + 1, 1).to(args.device) * len(self.train_shots)]
+                # logger.info('using one-hot feature')
+
             args.nfeat = self.x[0].size(1)
+            # print(args.nfeat)
 
         # load the temporal graph embedding models
         self.model = load_model(args).to(args.device)
@@ -211,15 +222,16 @@ class Runner(object):
             t_epoch_start = timeit.default_timer()
             epoch_losses = []
             optimizer.zero_grad()
+
+            print("===========================Training=================================")
             embeddings = self.model([data['edge_index_list'][ix].long().to(args.device) for ix in self.train_shots], self.x)
+
             self.model.update_hiddens_all_with(embeddings[-1])
+            tg_labels = []
+            tg_preds = []
             # compute loss
             for t, z in enumerate(embeddings):
-                # edge_index = prepare(data, t)[0]
-                # epoch_loss = self.loss(z, edge_index)
-                pos_edge_index, neg_edge_index = prepare(data, t)[1], prepare(data, t)[2]
-                # epoch_loss = self.loss(z, pos_edge_index, neg_edge_index)
-                # epoch_losses.append(epoch_loss)
+
 
                 # graph readout
                 tg_readout = readout_function(z, self.readout_scheme)
@@ -228,6 +240,8 @@ class Runner(object):
                 # graph classification
                 tg_label = self.t_graph_labels[t].float().view(1, )
                 tg_pred = self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid()
+                tg_labels.append(tg_label.cpu().numpy())
+                tg_preds.append(tg_pred.cpu().detach().numpy())
                 epoch_loss = criterion(tg_pred, tg_label)
                 epoch_losses.append(epoch_loss)
 
@@ -237,8 +251,8 @@ class Runner(object):
             # update the best results.
             average_epoch_loss = np.mean([epoch_loss.item() for epoch_loss in epoch_losses])
             train_avg_epoch_loss_dict[epoch] = average_epoch_loss
-            train_auc, train_ap = roc_auc_score(tg_label, tg_pred), average_precision_score(tg_label, tg_pred)
-            eval_epoch, eval_auc, eval_ap = self.tgclassification_eval(epoch, self.readout_scheme)
+            train_auc, train_ap = roc_auc_score(tg_labels, tg_preds), average_precision_score(tg_labels, tg_preds)
+            eval_epoch, eval_auc, eval_ap = self.tgclassification_eval(epoch)
 
             # Only apply early stopping when after min_epoch of training
             if best_eval_auc < eval_auc:  # Use AUC as metric to define early stoping
@@ -247,13 +261,13 @@ class Runner(object):
                 best_MLP = self.tgc_decoder.state_dict()
 
                 best_eval_auc = eval_auc
-                best_epoch, best_test_auc, best_test_ap = self.tgclassification_test(epoch, self.readout_scheme)
+                best_epoch, best_test_auc, best_test_ap = self.tgclassification_test(epoch)
             else:
                 if epoch < args.min_epoch:  # If it is less than min_epoch, reset best AUC to current AUC and save current model as best model
                     patience = 0
                     best_eval_auc = eval_auc
                     best_model = self.model.state_dict()
-                    best_epoch, best_test_auc, best_test_ap = self.tgclassification_test(epoch, self.readout_scheme)
+                    best_epoch, best_test_auc, best_test_ap = self.tgclassification_test(epoch)
 
                     best_epoch = epoch
                 if best_eval_auc - eval_auc > 0.05:
@@ -297,7 +311,7 @@ class Runner(object):
         if not os.path.exists(self.model_path):
             os.makedirs(self.model_path)
         torch.save(best_model, "{}{}.pth".format(self.model_path, args.model))
-        torch.save(self.tgc_decoder, "{}{}_MLP.pth".format(self.model_path, args.model))
+        torch.save(best_MLP, "{}{}_MLP.pth".format(self.model_path, args.model))
         logger.info("INFO: The models is saved. Done.")
 
         # ------------ DEBUGGING ------------
@@ -375,7 +389,11 @@ if __name__ == '__main__':
     from script.utils.util import MLP, readout_function
     random.seed(args.seed)  # random seed
     args.model = "EGCN"
-    args.dataset = "CMT0xf85feea2fdd81d51177f6b8f35f0e6734ce45f5f"
+    args.max_epoch = 200
+    args.log_interval = 20
+    args.lr = 0.00015
+    args.patience = 20
+    args.dataset = "aion"
     data = loader(dataset=args.dataset)  # enron10, fb, dblp
     args.num_nodes = data['num_nodes']
     log_folder = prepare_dir(args.output_folder)  # 2.create folder
