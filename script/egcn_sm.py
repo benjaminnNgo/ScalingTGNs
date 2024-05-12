@@ -336,9 +336,7 @@ class Runner():
                 tg_labels.append(self.t_graph_labels[t_eval_idx].cpu().numpy())
                 tg_preds.append(
                     self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid().cpu().numpy())
-
-        print(len(tg_labels))
-        print(len(tg_preds))
+                    self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid().cpu().numpy())
 
         auc, ap = roc_auc_score(tg_labels, tg_preds), average_precision_score(tg_labels, tg_preds)
         return epoch, auc, ap
