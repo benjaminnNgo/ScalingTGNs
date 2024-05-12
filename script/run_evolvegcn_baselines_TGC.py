@@ -154,16 +154,6 @@ class Runner(object):
                 logger.info('using pre-defined feature')
             else:
                 self.x = [torch.eye(args.num_nodes).to(args.device)] * len(self.train_shots)
-                # print(args.num_nodes)
-                # self.x = torch.eye(args.num_nodes).to(args.device)
-                # print(len(self.train_shots))
-                # print(type(self.x))
-                # print(len(self.x))
-                # print(type(self.x[0]))
-                # print(self.x[0].size(0),self.x[0].size(1))
-
-                # self.x = [torch.arange(args.num_nodes + 1).float().view(args.num_nodes + 1, 1).to(args.device) * len(self.train_shots)]
-                # logger.info('using one-hot feature')
 
             args.nfeat = self.x[0].size(1)
             # print(args.nfeat)

@@ -427,7 +427,7 @@ class Runner(object):
         if not os.path.exists(self.model_path):
             os.makedirs(self.model_path)
         torch.save(best_model, "{}{}.pth".format(self.model_path,args.model))
-        torch.save(self.tgc_decoder,"{}{}_MLP.pth".format(self.model_path,args.model))
+        torch.save(best_MLP,"{}{}_MLP.pth".format(self.model_path,args.model))
         logger.info("INFO: The models is saved. Done.")
 
         # ------------ DEBUGGING ------------
