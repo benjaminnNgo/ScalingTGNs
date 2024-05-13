@@ -336,7 +336,8 @@ class Runner():
                 tg_labels.append(self.t_graph_labels[t_eval_idx].cpu().numpy())
                 tg_preds.append(
                     self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid().cpu().numpy())
-                    self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid().cpu().numpy())
+
+
 
         auc, ap = roc_auc_score(tg_labels, tg_preds), average_precision_score(tg_labels, tg_preds)
         return epoch, auc, ap
@@ -363,8 +364,8 @@ class Runner():
         for param in self.model.parameters():
             param.retain_grad()
         t_total_start = timeit.default_timer()
-        for epoch in range(20):
-        # for epoch in range(1, args.max_epoch + 1):
+        # for epoch in range(20):
+        for epoch in range(1, args.max_epoch + 1):
             print("------------------------------------------")
             t_epoch_start = timeit.default_timer()
             optimizer.zero_grad()
@@ -495,11 +496,13 @@ if __name__ == '__main__':
     from script.inits import prepare
 
     args.wandb = True
-    args.dataset = "CMT0xf85feea2fdd81d51177f6b8f35f0e6734ce45f5f"
+    args.dataset = "unnamedtoken18980x00a8b738e453ffd858a7edf03bccfe20412f0eb0"
     args.model = "EGCN"
-    args.log_interval = 5
+    args.log_interval = 10
     args.lr = 0.00015
     set_random(args.seed)
+    init_logger(
+        prepare_dir(args.output_folder) + args.model + '_' + args.dataset + '_seed_' + str(args.seed) + '_log.txt')
     runner = Runner()
     runner.run()
     # t_graph_labels, t_graph_feat = extra_dataset_attributes_loading(args)
