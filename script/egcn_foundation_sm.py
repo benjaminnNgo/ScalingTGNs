@@ -50,14 +50,6 @@ def readout_function(embeddings, readout_scheme='mean'):
         raise ValueError("Readout Method Undefined!")
     return readout
 
-def get_node_id_int(node_id_dict,lookup_node,curr_idx):
-    if lookup_node not in node_id_dict:
-        node_id_dict[lookup_node] = curr_idx
-        curr_idx += 1
-    return node_id_dict[lookup_node],curr_idx
-
-
-
 
 def extra_dataset_attributes_loading(args, readout_scheme='mean'):
     """
@@ -116,6 +108,12 @@ def extra_dataset_attributes_loading(args, readout_scheme='mean'):
     
     logger.info("INFO: Extracting extra dataset attributes done!")
     return TG_labels_data, TG_feats_data
+
+def get_node_id_int(node_id_dict,lookup_node,curr_idx):
+    if lookup_node not in node_id_dict:
+        node_id_dict[lookup_node] = curr_idx
+        curr_idx += 1
+    return node_id_dict[lookup_node],curr_idx
 
 
 def data_loader_egcn(dataset):
@@ -200,16 +198,18 @@ def save_results(dataset, test_auc, test_ap,lr,train_snapshot,test_snapshot,best
 
 def save_epoch_results(epoch, test_auc, test_ap, time, dataset=None):
     if dataset is None:
-        result_path = "../data/output/epoch_result/average/{}_seed_{}_{}_epochResult.csv".format(args.model,
+        result_path = "../data/output/epoch_result/average/{}_seed_{}_{}_{}_epochResult.csv".format(args.model,
                                                                                                 args.seed,
-                                                                                                len(args.dataset))
+                                                                                                len(args.dataset),
+                                                                                                args.curr_time)
     else:
         # data_name = args.data_name[args.dataset[dataset]] if args.dataset[dataset] in args.data_name else args.dataset[dataset]
         # print(data_name)
         result_folder = "../data/output/epoch_result/data/{}".format(dataset)
-        result_path = result_folder + "/{}_seed_{}_{}_epochResult.csv".format(args.model,
+        result_path = result_folder + "/{}_seed_{}_{}_{}_epochResult.csv".format(args.model,
                                                                                  args.seed,
-                                                                                 len(args.dataset))
+                                                                                 len(args.dataset),
+                                                                                                args.curr_time)
         if not os.path.exists(result_folder):
             os.makedirs(result_folder)
     
@@ -223,16 +223,18 @@ def save_epoch_results(epoch, test_auc, test_ap, time, dataset=None):
 
 def save_epoch_training(epoch, train_auc, train_ap, loss, time, dataset=None):
     if dataset is None:
-        result_path = "../data/output/training_test/average/{}_seed_{}_{}_epochResult.csv".format(args.model,
+        result_path = "../data/output/training_test/average/{}_seed_{}_{}_{}_epochResult.csv".format(args.model,
                                                                                                     args.seed,
-                                                                                                    len(args.dataset))
+                                                                                                    len(args.dataset),
+                                                                                                args.curr_time)
     else:
         # data_name = args.data_name[args.dataset[dataset]] if args.dataset[dataset] in args.data_name else args.dataset[dataset]
         # print(data_name)
         result_folder = "../data/output/training_test/data/{}".format(dataset)
-        result_path = result_folder + "/{}_seed_{}_{}_epochResult.csv".format(args.model,
+        result_path = result_folder + "/{}_seed_{}_{}_{}_epochResult.csv".format(args.model,
                                                                                  args.seed,
-                                                                                 len(args.dataset))
+                                                                                 len(args.dataset),
+                                                                                                args.curr_time)
         if not os.path.exists(result_folder):
             os.makedirs(result_folder)
 
@@ -408,8 +410,9 @@ class Runner():
     def run(self):
         optimizer = torch.optim.Adam(
             set(self.model.parameters()) | set(self.tgc_decoder.parameters()), lr=args.lr)
-        criterion = torch.nn.MSELoss()
+        criterion = torch.nn.BCELoss()
         train_avg_epoch_loss_dict = {}
+        self.model.init_hiddens()
         t_total_start = timeit.default_timer()
         min_loss = 10
         train_avg_epoch_loss_dict = {}
@@ -441,7 +444,7 @@ class Runner():
                 self.model.train()
                 self.tgc_decoder.train()
                 self.model.init_hiddens()
-                h = None
+                embeddings = None
                 tg_labels, tg_preds = [], []
                 dataset_losses = []
 
@@ -466,9 +469,12 @@ class Runner():
                     t_loss = criterion(tg_pred, tg_label)
                     t_loss.backward(retain_graph=True)
                     optimizer.step()
+                    # dataset_losses1.append(t_loss)
                     dataset_losses.append(t_loss.item())
-                    # epoch_losses.append(t_loss.item())
-                
+                    self.model.update_hiddens_all_with(embeddings)
+
+                # sum(dataset_losses1).backward(retain_graph=True)
+                # optimizer.step()
                 avg_dataset_loss = np.mean(dataset_losses)
                 epoch_losses.append(avg_dataset_loss)
             
@@ -498,16 +504,18 @@ class Runner():
             avg_eval_ap = np.mean(eval_aps)    
                 
             # Saving model checkpoint:
-            torch.save({'epoch': epoch,
-                        'model_state_dict': self.model.state_dict()}, 
-                        self.model_chkp_path)
+            # torch.save({'epoch': epoch,
+            #             'model_state_dict': self.model.state_dict()}, 
+            #             self.model_chkp_path)
             
-            torch.save({'epoch': epoch,
-                        'model_state_dict': self.tgc_decoder.state_dict()}, 
-                        self.mlp_chkp_path)
+            # torch.save({'epoch': epoch,
+            #             'model_state_dict': self.tgc_decoder.state_dict()}, 
+            #             self.mlp_chkp_path)
             
             # Only apply early stopping when after min_epoch of training
             if best_eval_auc < avg_eval_auc or epoch <= args.min_epoch: #Use AUC as metric to define early stoping
+                    print("average eval auc: ", avg_eval_auc)
+                    print("difference: ", best_eval_auc - avg_eval_auc)
                     patience = 0
                     best_eval_auc = avg_eval_auc
                     best_model = self.model.state_dict() #Saved the best model for testing
@@ -515,7 +523,8 @@ class Runner():
                     best_test_results = [test_aucs, test_aps]
                     best_epoch = epoch
             else:
-                if best_eval_auc - np.mean(eval_aucs) > 0.005:
+                print("difference: ", best_eval_auc - avg_eval_auc)
+                if best_eval_auc - avg_eval_auc > 0.002:
                     patience += 1
                     print("patience at epoch {}: {}".format(epoch, patience))
                 if patience > args.patience:  
@@ -585,15 +594,14 @@ if __name__ == '__main__':
     from script.config import args
     from script.utils.util import set_random, logger, init_logger
 
-    args.wandb = True
-    # args.dataset = "unnamedtoken216350xe53ec727dbdeb9e2d5456c3be40cff031ab40a55"
-    args.seed = 720
+    # args.wandb = True
+    args.seed = 800
 
     args.dataset = []
     args.model = "EGCN"
     args.log_interval = 5
     args.max_epoch=300
-    args.lr = 0.00005
+    args.lr = 0.0003
     args.patience = 30
     args.min_epoch = 100
     set_random(args.seed)
@@ -602,7 +610,7 @@ if __name__ == '__main__':
     logger.info("INFO: Args: {}".format(args))
     t = time.localtime()
     args.curr_time = time.strftime("%Y-%m-%d-%H:%M:%S", t)
-    datasets_package_path = "dataset_package_2.txt"
+    datasets_package_path = "dataset_package_2_copy.txt"
     runner = Runner()
     runner.run()
     
