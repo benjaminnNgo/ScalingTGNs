@@ -345,7 +345,7 @@ class Runner():
 
     def run(self):
         optimizer = torch.optim.Adam(
-            set(self.model.parameters()) | set(self.tgc_decoder.parameters()), lr=0.0001)
+            set(self.model.parameters()) | set(self.tgc_decoder.parameters()), lr=self.tgc_lr)
         criterion = torch.nn.MSELoss()
         train_avg_epoch_loss_dict = {}
         t_total_start = timeit.default_timer()
@@ -366,7 +366,6 @@ class Runner():
         t_total_start = timeit.default_timer()
         # for epoch in range(20):
         for epoch in range(1, args.max_epoch + 1):
-            print("------------------------------------------")
             t_epoch_start = timeit.default_timer()
             optimizer.zero_grad()
             total_loss = 0
@@ -495,11 +494,13 @@ if __name__ == '__main__':
     from script.utils.data_util import loader, prepare_dir
     from script.inits import prepare
 
+    args.seed = 710
+    args.max_epoch = 400
     args.wandb = True
     args.dataset = "unnamedtoken18980x00a8b738e453ffd858a7edf03bccfe20412f0eb0"
     args.model = "EGCN"
     args.log_interval = 10
-    args.lr = 0.00015
+    args.lr = 0.0005
     set_random(args.seed)
     init_logger(
         prepare_dir(args.output_folder) + args.model + '_' + args.dataset + '_seed_' + str(args.seed) + '_log.txt')
