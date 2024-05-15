@@ -250,17 +250,6 @@ class RecurrentGCN(torch.nn.Module):
         super(RecurrentGCN, self).__init__()
         self.recurrent = EvolveGCNO(node_feat_dim)
         self.linear = torch.nn.Linear(node_feat_dim, hidden_dim)
-        self.hidden_initial = torch.ones(args.num_nodes, args.nhid).to(args.device)
-        self.num_window = args.nb_window
-
-    def init_hiddens(self):
-        self.hiddens = [self.hidden_initial] * self.num_window
-        return self.hiddens
-
-    def update_hiddens_all_with(self, z_t):
-        self.hiddens.pop(0)  # [element0, element1, element2] remove the first element0
-        self.hiddens.append(z_t.clone().detach().requires_grad_(False))  # [element1, element2, z_t]
-        return z_t
     
     def forward(self, x, edge_index, edge_weight):
         h = self.recurrent(x, edge_index, edge_weight)
@@ -306,7 +295,7 @@ class Runner():
         if args.wandb:
             wandb.init(
                 # set the wandb project where this run will be logged
-                project="egcn",
+                project="egcn_no_init",
                 # set the wandb project where this run will be logged
                 name="{}_{}_{}_{}".format(len(self.data), args.model, args.seed, args.curr_time),
                 # track hyperparameters and run metadata
@@ -316,11 +305,13 @@ class Runner():
                 "dataset": args.dataset,
                 }
             )
-        
-        
-        
-        self.t_graph_labels, self.t_graph_feat = extra_dataset_attributes_loading(args)
+
         self.num_datasets = len(self.data)
+        init_logger('../data/output/log/{}/{}_{}_seed_{}_{}_log.txt'.format(args.model, args.model, args.seed, self.num_datasets,
+                                                                           args.curr_time))
+        logger.info("INFO: Args: {}".format(args))
+        self.t_graph_labels, self.t_graph_feat = extra_dataset_attributes_loading(args)
+        
         # self.data = data_loader_egcn(args.dataset)
         self.edge_idx_list = [self.data[i]['edge_index'] for i in range(self.num_datasets)]
         self.edge_att_list = [self.data[i]['edge_attribute'] for i in range(self.num_datasets)]
@@ -401,7 +392,7 @@ class Runner():
                 tg_labels.append(self.t_graph_labels[dataset_idx][t_eval_idx].cpu().numpy())
                 tg_preds.append(
                     self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid().cpu().numpy())
-                self.model.update_hiddens_all_with(embeddings)
+                # self.model.update_hiddens_all_with(embeddings)
 
         auc, ap = roc_auc_score(tg_labels, tg_preds), average_precision_score(tg_labels, tg_preds)
         return epoch, auc, ap
@@ -410,9 +401,9 @@ class Runner():
     def run(self):
         optimizer = torch.optim.Adam(
             set(self.model.parameters()) | set(self.tgc_decoder.parameters()), lr=args.lr)
-        criterion = torch.nn.BCELoss()
+        criterion = torch.nn.MSELoss()
         train_avg_epoch_loss_dict = {}
-        self.model.init_hiddens()
+        # self.model.init_hiddens()
         t_total_start = timeit.default_timer()
         min_loss = 10
         train_avg_epoch_loss_dict = {}
@@ -436,6 +427,7 @@ class Runner():
             t_epoch_start = timeit.default_timer()
             # optimizer.zero_grad()
             epoch_losses = [] # Used for saving average losses of datasets in each epoch
+            total_loss = 0
             train_aucs, train_aps, eval_aucs, eval_aps = [], [], [], []
             test_aucs, test_aps = [], []
             dataset_rnd = random.sample(range(self.num_datasets), self.num_datasets)
@@ -443,13 +435,12 @@ class Runner():
                 data_name = args.data_name[args.dataset[dataset_idx]] if args.dataset[dataset_idx] in args.data_name else args.dataset[dataset_idx]
                 self.model.train()
                 self.tgc_decoder.train()
-                self.model.init_hiddens()
+                # self.model.init_hiddens()
                 embeddings = None
                 tg_labels, tg_preds = [], []
                 dataset_losses = []
 
                 for snapshot_idx in self.train_shots_mask[dataset_idx]:
-
                     optimizer.zero_grad()
 
                     edge_idx = self.edge_idx_list[dataset_idx][snapshot_idx].to(args.device)
@@ -457,9 +448,9 @@ class Runner():
 
                     embeddings = self.model(self.node_feat[dataset_idx], edge_idx, edge_att)
                     tg_readout = readout_function(embeddings, "mean")
-                    tg_embedding = torch.cat((tg_readout, torch.from_numpy(self.t_graph_feat[dataset_idx][snapshot_idx]).to(args.device)))
-                    # print(tg_embedding)
-                    #
+                    tg_embedding = torch.cat((tg_readout, torch.from_numpy(self.t_graph_feat[dataset_idx][snapshot_idx])
+                                              .to(args.device)))
+                    
                     # graph classification
                     tg_label = self.t_graph_labels[dataset_idx][snapshot_idx].float().view(1, )
                     tg_pred = self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid()
@@ -467,14 +458,12 @@ class Runner():
                     tg_labels.append(tg_label.cpu().numpy())
                     tg_preds.append(tg_pred.cpu().detach().numpy())
                     t_loss = criterion(tg_pred, tg_label)
-                    t_loss.backward(retain_graph=True)
-                    optimizer.step()
-                    # dataset_losses1.append(t_loss)
+                    
+                    total_loss += t_loss
                     dataset_losses.append(t_loss.item())
-                    self.model.update_hiddens_all_with(embeddings)
 
-                # sum(dataset_losses1).backward(retain_graph=True)
-                # optimizer.step()
+                total_loss.backward(retain_graph=True)
+                optimizer.step()
                 avg_dataset_loss = np.mean(dataset_losses)
                 epoch_losses.append(avg_dataset_loss)
             
@@ -520,7 +509,7 @@ class Runner():
                     best_eval_auc = avg_eval_auc
                     best_model = self.model.state_dict() #Saved the best model for testing
                     best_mlp = self.tgc_decoder.state_dict()
-                    best_test_results = [test_aucs, test_aps]
+                    # best_test_results = [test_aucs, test_aps]
                     best_epoch = epoch
             else:
                 print("difference: ", best_eval_auc - avg_eval_auc)
@@ -605,9 +594,9 @@ if __name__ == '__main__':
     args.patience = 30
     args.min_epoch = 100
     set_random(args.seed)
-    init_logger('../data/output/log/{}/{}_{}_seed_{}_{}_log.txt'.format(args.model, args.model, args.seed, 2,
-                                                                           args.curr_time))
-    logger.info("INFO: Args: {}".format(args))
+    # init_logger('../data/output/log/{}/{}_{}_seed_{}_{}_log.txt'.format(args.model, args.model, args.seed, 2,
+    #                                                                        args.curr_time))
+    # logger.info("INFO: Args: {}".format(args))
     t = time.localtime()
     args.curr_time = time.strftime("%Y-%m-%d-%H:%M:%S", t)
     datasets_package_path = "dataset_package_2_copy.txt"
