@@ -391,7 +391,7 @@ class Runner():
     def run(self):
         optimizer = torch.optim.Adam(
             set(self.model.parameters()) | set(self.tgc_decoder.parameters()), lr=self.tgc_lr)
-        criterion = torch.nn.MSELoss()
+        criterion = torch.nn.BCELoss()
 
         train_avg_epoch_loss_dict = {}
 
@@ -543,13 +543,13 @@ if __name__ == '__main__':
     datasets = ['unnamedtoken18980x00a8b738e453ffd858a7edf03bccfe20412f0eb0']
 
     args.seed = 710
-    args.max_epoch = 400
+    args.max_epoch = 200
     args.wandb = True
-    args.min_epoch = 200
+    args.min_epoch = 100
     args.dataset = 'unnamedtoken18980x00a8b738e453ffd858a7edf03bccfe20412f0eb0'
     args.model = "GCLSTM"
     args.log_interval = 10
-    args.lr = 0.0005
+    args.lr = 0.00015
     set_random(args.seed)
     init_logger(
         prepare_dir(args.output_folder) + args.model + '_' + args.dataset + '_seed_' + str(args.seed) + '_log.txt')

@@ -72,8 +72,18 @@ novelty_list = [0.5418744898434803, 0.32207179505897277, 0.7418105777193522, 0.5
                 0.5668682025476977, 0.46179144593948707, 0.5502333159384324, 0.3870849807108505, 0.473236496684864,
                 0.45797998850763444, 0.40418119045040984, 0.4347444218193582, 0.48655300620900394]
 
-g = sns.histplot(novelty_list, bins=50, kde=True)
-g.set_xlabel("novelty")
+# fig, ax = plt.subplots()
+
+df = pd.read_csv('TGS_stats.csv')
+
+g = sns.histplot(df['node_count'].to_list(), bins=50,log_scale=True )
+sns.kdeplot(df['node_count'].to_list(), color='red',ax=g)
+
+# ax = sns.histplot(novelty_list, bin = 50, kde=False)
+# sns.kdeplot(novelty_list, color='crimson', ax=ax)
+
+g.set_xlabel("Nodes")
 g.set_ylabel('Frequency')
-plt.title("Novelty distribution of 275 token networks")
+plt.title("Number of unique nodes distribution")
 plt.show()
+
