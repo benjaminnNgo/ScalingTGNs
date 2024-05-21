@@ -14,7 +14,7 @@ from sklearn.metrics import roc_auc_score, average_precision_score
 from pickle import dump, load
 import random
 import wandb
-from torch_geometric_temporal import EvolveGCNO, GCLSTM
+from torch_geometric_temporal import EvolveGCNO
 import torch.nn.functional as F
 
 
@@ -41,16 +41,12 @@ def readout_function(embeddings, readout_scheme='mean'):
         raise ValueError("Readout Method Undefined!")
     return readout
 
-
 def get_node_id_int(node_id_dict,lookup_node,curr_idx):
-    """
-        Because node addresses are string, so function map string to a int
-        This function also makes 2 node have the same address have the same node id
-    """
     if lookup_node not in node_id_dict:
         node_id_dict[lookup_node] = curr_idx
         curr_idx += 1
     return node_id_dict[lookup_node],curr_idx
+
 
 
 
@@ -106,15 +102,7 @@ def extra_dataset_attributes_loading(args, readout_scheme='mean'):
 
     return TG_labels, TG_feats
 
-def data_loader_geometric_temporal(dataset):
-    """
-        Data loader for traing models with PyTorch geometric temporal
-        data is a dictionary has following attributes:
-            - edge index for each snapshot ( to get edge index for snapshot 0: data['edge_index'][0])
-            - edge attribute for each snapshot ( similar above)
-            - time length : number of snapshots
-            - number of nodes
-    """
+def data_loader_egcn(dataset):
     partial_path = f'../data/input/raw/'
 
     data_root = '../data/input/cached/{}/'.format(dataset)
@@ -161,16 +149,19 @@ def data_loader_geometric_temporal(dataset):
         edge_idx_list.append(torch.tensor(np.transpose(np.array(ts_edges_idx))))
         edge_att_list.append(torch.tensor(np.array(ts_edges_atts),dtype=torch.long))
 
+    # print(node_id_dict)
     data = {}
     data['edge_index'] = edge_idx_list
     data['edge_attribute'] = edge_att_list
     data['time_length'] = len(uniq_ts_list)
     data['num_nodes'] = curr_idx
+
+
     torch.save(data, filepath)
     return data
 
 def save_results(dataset, test_auc, test_ap,lr,train_snapshot,test_snapshot,best_epoch,time):
-    partial_path = "../data/output/single_model_gclstm/"
+    partial_path = "../data/output/single_model_egcn/"
     if not os.path.exists(partial_path):
         os.makedirs(partial_path)
     result_path = f"{partial_path}/{args.results_file}"
@@ -192,7 +183,7 @@ def save_results(dataset, test_auc, test_ap,lr,train_snapshot,test_snapshot,best
     result_df.to_csv(result_path, index=False)
 
 def save_epoch_results(epoch,test_auc, test_ap,loss,train_auc,train_ap,time):
-    partial_path = "../data/output/epoch_result/single_model_gclstm/"
+    partial_path = "../data/output/epoch_result/single_model_egcn/"
     if not os.path.exists(partial_path):
         os.makedirs(partial_path)
 
@@ -214,23 +205,28 @@ def save_epoch_results(epoch,test_auc, test_ap,loss,train_auc,train_ap,time):
 
 
 
-
 class RecurrentGCN(torch.nn.Module):
-    """
-        GCLSTM model from PyTorch Geometric Temporal
-        reference:
-        https://github.com/benedekrozemberczki/pytorch_geometric_temporal/blob/master/examples/recurrent/gclstm_example.py
-    """
-    def __init__(self, node_feat_dim,hidden_dim):
+    def __init__(self, node_feat_dim, hidden_dim):
         super(RecurrentGCN, self).__init__()
-        self.recurrent = GCLSTM(node_feat_dim, hidden_dim, 1)
-        self.linear = torch.nn.Linear(hidden_dim, hidden_dim)
+        self.num_window = args.nb_window
+        self.recurrent = EvolveGCNO(node_feat_dim)
+        self.linear = torch.nn.Linear(node_feat_dim, hidden_dim)
+        self.hidden_initial = torch.ones(args.num_nodes, args.nhid).to(args.device)
 
-    def forward(self, x, edge_index, edge_weight, h, c):
-        h_0, c_0 = self.recurrent(x, edge_index, edge_weight, h, c)
-        h = F.relu(h_0)
+    def forward(self, x, edge_index, edge_weight):
+        h = self.recurrent(x, edge_index, edge_weight)
+        h = F.relu(h)
         h = self.linear(h)
-        return h, h_0, c_0
+        return h
+
+    def init_hiddens(self):
+        self.hiddens = [self.hidden_initial] * self.num_window
+        return self.hiddens
+
+    def update_hiddens_all_with(self, z_t):
+        self.hiddens.pop(0)  # [element0, element1, element2] remove the first element0
+        self.hiddens.append(z_t.clone().detach().requires_grad_(False))  # [element1, element2, z_t]
+        return z_t
 
 class MLP(torch.nn.Module):
     """
@@ -259,7 +255,7 @@ class Runner():
         if args.wandb:
             wandb.init(
                 # set the wandb project where this run will be logged
-                project="gclstm_i1",
+                project="egcn",
                 # Set name of the run:
                 name="{}_{}_{}".format(args.dataset, args.model, args.seed),
                 # track hyperparameters and run metadata
@@ -274,7 +270,7 @@ class Runner():
         self.model_path = '../saved_models/single_model/{}_{}_seed_{}/'.format(args.dataset,
                                                                                args.model, args.seed)
         self.t_graph_labels, self.t_graph_feat = extra_dataset_attributes_loading(args)
-        self.data = data_loader_geometric_temporal(args.dataset)
+        self.data = data_loader_egcn(args.dataset)
         self.edge_idx_list = self.data['edge_index']
         self.edge_att_list = self.data['edge_attribute']
         self.num_nodes = self.data['num_nodes'] + 1
@@ -294,7 +290,7 @@ class Runner():
         self.node_feat_dim = 256 #@TODO: Replace with args to config it easily
         self.node_feat = torch.randn((self.num_nodes, self.node_feat_dim)).to(args.device)
 
-
+        # print(self.num_nodes)
 
         # self.node_feat = torch.eye(5351).to(args.device)
         self.node_feat_dim = self.node_feat.size(1)  # @TODO: Replace with args to config it easily
@@ -309,43 +305,18 @@ class Runner():
                           hidden_dim_2=self.hidden_dim + num_extra_feat,
                           drop=0.1).to(args.device)  # @NOTE: these hyperparameters may need to be changed
 
-        #Hidden for gclstm
-        self.h = None
-        self.h_0 = None
-        self.c_0 = None
-
-    # Hidden for gclstm
-    def init_hidden(self):
-        self.h = None
-        self.h_0 = None
-        self.c_0 = None
-
-    # Detach gradient
-    def detach_hidden(self):
-        self.h =  self.h.detach()
-        self.h_0 =  self.h_0.detach()
-        self.c_0 = self.c_0.detach()
-
-    def train(self):
-        self.model.train()
-        self.tgc_decoder.train()
-
-    def eval(self):
-        self.model.eval()
-        self.tgc_decoder.eval()
-
     def tgclassification_test(self,epoch,readout_scheme):
-        self.detach_hidden()
         tg_labels, tg_preds = [], []
 
         for t_test_idx in self.test_shots_mask:
-            self.eval()
+            self.model.eval()
+            self.tgc_decoder.eval()
             with torch.no_grad():
                 edge_idx = self.edge_idx_list[t_test_idx].to(args.device)
                 edge_att = self.edge_att_list[t_test_idx].float().to(args.device)
 
-                self.h, self.h_0, self.c_0 = self.model(self.node_feat, edge_idx, edge_att, self.h_0, self.c_0)
-                tg_readout = readout_function(self.h, readout_scheme)
+                h = self.model(self.node_feat, edge_idx, edge_att)
+                tg_readout = readout_function(h, readout_scheme)
 
                 tg_embedding = torch.cat((tg_readout,
                                           torch.from_numpy(self.t_graph_feat[t_test_idx]).to(
@@ -356,25 +327,25 @@ class Runner():
                     self.t_graph_labels[t_test_idx].cpu().numpy())
                 tg_preds.append(
                     self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid().cpu().numpy())
+            self.model.update_hiddens_all_with(h)
 
         auc, ap = roc_auc_score(tg_labels, tg_preds), average_precision_score(tg_labels, tg_preds)
         return epoch, auc, ap
 
     def tgclassification_val(self,epoch,readout_scheme):
-        self.detach_hidden()
 
         tg_labels, tg_preds = [], []
         for t_eval_idx in self.eval_shots_mask:
-            self.eval()
+            self.model.eval()
+            self.tgc_decoder.eval()
             with torch.no_grad():
                 edge_idx = self.edge_idx_list[t_eval_idx].to(args.device)
                 edge_att = self.edge_att_list[t_eval_idx].float().to(args.device)
 
-                self.h, self.h_0, self.c_0 = self.model(self.node_feat, edge_idx, edge_att, self.h_0, self.c_0)
-
+                h = self.model(self.node_feat, edge_idx, edge_att)
 
                 # graph readout
-                tg_readout = readout_function(self.h, readout_scheme)
+                tg_readout = readout_function(h, readout_scheme)
                 tg_embedding = torch.cat((tg_readout,
                                           torch.from_numpy(self.t_graph_feat[t_eval_idx]).to(
                                               args.device)))
@@ -384,6 +355,10 @@ class Runner():
                 tg_preds.append(
                     self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid().cpu().numpy())
 
+                self.model.update_hiddens_all_with(h)
+
+
+
         auc, ap = roc_auc_score(tg_labels, tg_preds), average_precision_score(tg_labels, tg_preds)
         return epoch, auc, ap
 
@@ -392,61 +367,71 @@ class Runner():
         optimizer = torch.optim.Adam(
             set(self.model.parameters()) | set(self.tgc_decoder.parameters()), lr=self.tgc_lr)
         criterion = torch.nn.MSELoss()
-
+        train_avg_epoch_loss_dict = {}
+        t_total_start = timeit.default_timer()
+        min_loss = 10
         train_avg_epoch_loss_dict = {}
 
         best_model = self.model.state_dict()
         best_MLP = self.tgc_decoder.state_dict()
 
-        # For eval model to choose the best model
         best_epoch = -1
         patience = 0
         best_eval_auc = -1  # Set previous evaluation result to very small number
         best_test_auc = -1
         best_test_ap = -1
 
-
+        for param in self.model.parameters():
+            param.retain_grad()
         t_total_start = timeit.default_timer()
+        # for epoch in range(20):
         for epoch in range(1, args.max_epoch + 1):
             t_epoch_start = timeit.default_timer()
-            self.init_hidden()
+            self.model.init_hiddens()
             optimizer.zero_grad()
-            self.train()
-
+            total_loss = []
+            self.model.train()
+            self.tgc_decoder.train()
+            h = None
             tg_labels = []
             tg_preds = []
             epoch_losses = []
+
             for snapshot_idx in self.train_shots_mask:
+
                 optimizer.zero_grad()
 
-                #Get edge list and edge attributes
                 edge_idx = self.edge_idx_list[snapshot_idx].to(args.device)
                 edge_att = self.edge_att_list[snapshot_idx].float().to(args.device)
 
-                self.h, self.h_0, self.c_0 = self.model(self.node_feat, edge_idx, edge_att, self.h_0, self.c_0)
-                tg_readout = readout_function(self.h, self.readout_scheme)
+                h = self.model(self.node_feat, edge_idx, edge_att)
+                tg_readout = readout_function(h, "mean")
                 tg_embedding = torch.cat((tg_readout, torch.from_numpy(self.t_graph_feat[snapshot_idx]).to(args.device)))
-
+                # print(tg_embedding)
+                #
                 # graph classification
                 tg_label = self.t_graph_labels[snapshot_idx].float().view(1, )
                 tg_pred = self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid()
 
-                t_loss = criterion(tg_pred, tg_label)
-                t_loss.backward()
-                optimizer.step()
-
                 tg_labels.append(tg_label.cpu().numpy())
                 tg_preds.append(tg_pred.cpu().detach().numpy())
+                t_loss = criterion(tg_pred, tg_label)
+                t_loss.backward(retain_graph=True)
+                optimizer.step()
                 epoch_losses.append(t_loss.item())
-                self.detach_hidden()
 
+            #     total_loss.append(t_loss)
+            #     self.model.update_hiddens_all_with(h)
+
+            # sum(total_loss).backward(retain_graph=True)
+            # optimizer.step()
             avg_epoch_loss = np.mean(epoch_losses)
             train_avg_epoch_loss_dict[epoch] = avg_epoch_loss
             train_auc, train_ap = roc_auc_score(tg_labels, tg_preds), average_precision_score(tg_labels, tg_preds)
             eval_epoch, eval_auc, eval_ap = self.tgclassification_val(epoch, self.readout_scheme)
 
+            patience = 0 #No need early stopping for now
             # Only apply early stopping when after min_epoch of training
-            patience = 0 #Reset patience
             if best_eval_auc < eval_auc:  # Use AUC as metric to define early stoping
                 patience = 0
                 best_model = self.model.state_dict()  # Saved the best model for testing
@@ -459,7 +444,6 @@ class Runner():
                     patience = 0
                     best_eval_auc = eval_auc
                     best_model = self.model.state_dict()
-                    best_MLP = self.tgc_decoder.state_dict()
                     best_epoch, best_test_auc, best_test_ap = self.tgclassification_test(epoch, self.readout_scheme)
 
                     best_epoch = epoch
@@ -537,51 +521,44 @@ if __name__ == '__main__':
     from script.utils.data_util import loader, prepare_dir
     from script.inits import prepare
 
-    # args.seed = 710
-    # args.max_epoch = 250
-    # args.wandb = True
-    # args.min_epoch = 100
-    # args.dataset = 'unnamedtoken216620x429881672b9ae42b8eba0e26cd9c73711b891ca5'
-    # args.model = "GCLSTM"
-    # args.log_interval = 10
-    # args.lr = 0.00015
-    # set_random(args.seed)
-    # init_logger(
-    #     prepare_dir(args.output_folder) + args.model + '_' + args.dataset + '_seed_' + str(args.seed) + '_log.txt')
-    # runner = Runner()
-    # runner.run()
+
+    seeds = [720]
+    # datasets = ['unnamedtoken216350xe53ec727dbdeb9e2d5456c3be40cff031ab40a55','unnamedtoken216360xfca59cd816ab1ead66534d82bc21e7515ce441cf',
+    #             'unnamedtoken216390x1ceb5cb57c4d4e2b2433641b95dd330a33185a44']
 
     datasets = [
         # "unnamedtoken18980x00a8b738e453ffd858a7edf03bccfe20412f0eb0",
         # "unnamedtoken216240x83e6f1e41cdd28eaceb20cb649155049fac3d5aa",
-        # "unnamedtoken216300xcc4304a31d09258b0029ea7fe63d032f52e44efe",
+        "unnamedtoken216300xcc4304a31d09258b0029ea7fe63d032f52e44efe",
         # "unnamedtoken216350xe53ec727dbdeb9e2d5456c3be40cff031ab40a55",
         # "unnamedtoken216360xfca59cd816ab1ead66534d82bc21e7515ce441cf",
         # "unnamedtoken216390x1ceb5cb57c4d4e2b2433641b95dd330a33185a44",
         # "unnamedtoken216540x09a3ecafa817268f77be1283176b946c4ff2e608",
         # "unnamedtoken216550xbcca60bb61934080951369a648fb03df4f96263c",
         # "unnamedtoken216580x5f98805a4e8be255a32880fdec7f6728c6568ba0",
-        "unnamedtoken216620x429881672b9ae42b8eba0e26cd9c73711b891ca5"
+        # "unnamedtoken216620x429881672b9ae42b8eba0e26cd9c73711b891ca5"
     ]
-    seed = [720,800]
 
     for dataset in datasets:
-        for seed in seed:
-            args.seed = seed
-            args.max_epoch = 250
-            args.wandb = True
-            args.min_epoch = 100
-            args.dataset = dataset
-            args.model = "GCLSTM"
-            args.log_interval = 10
-            args.lr = 0.00015
-            set_random(args.seed)
-            init_logger(
-                prepare_dir(args.output_folder) + args.model + '_' + args.dataset + '_seed_' + str(
-                    args.seed) + '_log.txt')
-            runner = Runner()
-            runner.run()
+        for seed in seeds:
             try:
-                wandb.finish()
+                args.seed = seed
+                args.max_epoch = 400
+                args.wandb = True
+                args.min_epoch = 200
+                args.dataset = dataset
+                args.model = "EGCN"
+                args.log_interval = 10
+                args.lr = 0.0005
+                set_random(args.seed)
+                init_logger(
+                    prepare_dir(args.output_folder) + args.model + '_' + args.dataset + '_seed_' + str(args.seed) + '_log.txt')
+                runner = Runner()
+                runner.run()
+                try:
+                    wandb.finish()
+                except Exception as e:
+                    print("Can't finish run with wandb: {}".format(e))
             except Exception as e:
-                print("Can't finish run with wandb: {}".format(e))
+                print(e)
+                print("Can't process dataset: {}-{}".format(dataset,seed))

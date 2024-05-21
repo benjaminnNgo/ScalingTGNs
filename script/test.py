@@ -1,9 +1,12 @@
+from seaborn import kdeplot
+
 from script.bao_util import compute_reocurrence_surprise_from_datasets, plot_hist
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import statistics as stat
 # TGS_available_dataset = pd.read_csv('../data/data_package/datasets_package_64.txt').iloc[:,0].tolist()
 # reoccurrence_list, surprise_list = compute_reocurrence_surprise_from_datasets(TGS_available_dataset)
 #
@@ -74,16 +77,29 @@ novelty_list = [0.5418744898434803, 0.32207179505897277, 0.7418105777193522, 0.5
 
 # fig, ax = plt.subplots()
 
+# plt.figure(figsize=(10, 6))  # Width, height in inches
+#
+# df = pd.read_csv('TGS_stats.csv')
+# # sns.set(font_scale=2)  # You can adjust the scale as needed
+# g = sns.histplot(novelty_list,log_scale=False, bins=50,kde=True,line_kws={'linewidth':6,'color':'red'} )
+# # sns.kdeplot(df['transaction_count'].to_list(), color='red',log_scale=True,cumulative=False)
+#
+# # ax = sns.histplot(novelty_list, bin = 50, kde=False)
+# # sns.kdeplot(novelty_list, color='crimson', ax=ax)
+#
+# g.set_xlabel("Novelty score",fontsize= 20)
+# g.set_ylabel('Frequency',fontsize= 20)
+# # plt.title("Number of unique nodes distribution")
+# plt.savefig("../pic/novelty_distribution_TGS.pdf")
+#
+# plt.show()
+
 df = pd.read_csv('TGS_stats.csv')
+nodes = df['node_count'].tolist()
+transactions = df['transaction_count'].tolist()
+length = df['age'].tolist()
 
-g = sns.histplot(df['node_count'].to_list(), bins=50,log_scale=True )
-sns.kdeplot(df['node_count'].to_list(), color='red',ax=g)
-
-# ax = sns.histplot(novelty_list, bin = 50, kde=False)
-# sns.kdeplot(novelty_list, color='crimson', ax=ax)
-
-g.set_xlabel("Nodes")
-g.set_ylabel('Frequency')
-plt.title("Number of unique nodes distribution")
-plt.show()
+print("Nodes:",stat.mean(nodes),stat.stdev(nodes))
+print("Transactions:",stat.mean(transactions),stat.stdev(transactions))
+print("Length:",stat.mean(length),stat.stdev(length))
 
