@@ -465,8 +465,36 @@ if __name__ == '__main__':
     #         cant_find_dataset.append(cant_find_dataset)
     # print(invalid_data)
 
-    datadf = pd.read_csv("TGS_stats.csv")
-    plot_hist(datadf,'age','Age distribution')
+    # datadf = pd.read_csv("TGS_stats.csv")
+    # plot_hist(datadf,'age','Age distribution')
+
+    import os
+    import shutil
+
+    new_place = "D:/TGS"
+    source = "E:/TGS/"
+    counter = 0
+
+
+    for file in os.listdir(source):
+        if counter >= 5:
+            break;
+        dataname = file.replace(".csv","")
+        destination = "{}/{}/".format(new_place,dataname)
+        os.makedirs(destination, exist_ok=True)
+
+        try:
+            shutil.copy(source + file, destination)
+            print(f"File '{source}' successfully copied to '{destination}'.")
+        except FileNotFoundError:
+            print(f"The source file '{source + file}' does not exist.")
+        except PermissionError:
+            print(f"Permission denied. Could not copy '{source + file}' to '{destination}'.")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+
+        counter+=1
+        print(dataname)
 
 
 
