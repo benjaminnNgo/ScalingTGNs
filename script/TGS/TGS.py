@@ -33,7 +33,6 @@ class TGS_Handler:
 
     def create_dummy_baseline_labels_weekly(self,dataset, normalization=False):
         print("INFO: Dummy label is not yet calculating. Generating dummy labels weekly...")
-        # timeseries_file_path = "E:/token/"  # @TODO: BAO changed this to dir that we store token
 
         save_file_name = dataset.split(".")[0].replace("_", "")
         # windowSize = 7  # Day

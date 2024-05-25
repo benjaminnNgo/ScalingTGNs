@@ -286,9 +286,6 @@ def load_multiple_datasets(datasets_package_file,neg_sample):
 
     return datasets_packages
 
-def generate_edgelist_labels_from_raw_TGS():
-    #@TODO: Bao takes Kiarash function here
-    print("Generarating edge list")
 
 
 def process_data_gaps(directory,min_size = 10 ,max_size = 4000):
