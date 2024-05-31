@@ -122,40 +122,43 @@ def extra_dataset_attributes_loading(args, readout_scheme='mean'):
     return TG_labels, TG_feats
 
 
-def save_results(dataset, test_auc, test_ap,lr,train_snapshot,test_snapshot,best_epoch):
+def save_results(dataset, test_auc, test_ap, lr, train_snapshot, test_snapshot, best_epoch):
     result_path = f"../data/output/{args.results_file}"
     if not os.path.exists(result_path):
-        result_df = pd.DataFrame(columns=["dataset", "test_auc", "test_ap","lr","train_snapshot","test_snapshot","seed","best_epoch"])
+        result_df = pd.DataFrame(
+            columns=["dataset", "test_auc", "test_ap", "lr", "train_snapshot", "test_snapshot", "seed", "best_epoch"])
     else:
         result_df = pd.read_csv(result_path)
 
     result_df = result_df._append({'dataset': dataset,
                                    'test_auc': test_auc,
                                    'test_ap': test_ap,
-                                   "lr":lr,
-                                   "train_snapshot":train_snapshot,
-                                   "test_snapshot":test_snapshot,
-                                   "seed":args.seed,
-                                   "best_epoch":best_epoch}, ignore_index=True)
+                                   "lr": lr,
+                                   "train_snapshot": train_snapshot,
+                                   "test_snapshot": test_snapshot,
+                                   "seed": args.seed,
+                                   "best_epoch": best_epoch}, ignore_index=True)
     result_df.to_csv(result_path, index=False)
 
-def save_epoch_results(epoch,test_auc, test_ap,loss,train_auc,train_ap):
-    result_path = "../data/output/epoch_result/{}_{}_{}_epochResult".format(args.dataset,args.model,args.seed)
+
+def save_epoch_results(epoch, test_auc, test_ap, loss, train_auc, train_ap):
+    result_path = "../data/output/epoch_result/{}_{}_{}_epochResult".format(args.dataset, args.model, args.seed)
     if not os.path.exists(result_path):
-        result_df = pd.DataFrame(columns=["epoch", "test_auc", "test_ap","loss","train_auc","train_ap"])
+        result_df = pd.DataFrame(columns=["epoch", "test_auc", "test_ap", "loss", "train_auc", "train_ap"])
     else:
         result_df = pd.read_csv(result_path)
 
     result_df = result_df._append({'epoch': epoch,
                                    'test_auc': test_auc,
                                    'test_ap': test_ap,
-                                   "loss":loss,
-                                   "train_auc":train_auc,
-                                   "train_ap":train_ap}, ignore_index=True)
+                                   "loss": loss,
+                                   "train_auc": train_auc,
+                                   "train_ap": train_ap}, ignore_index=True)
     result_df.to_csv(result_path, index=False)
 
-def save_epoch_traing(epoch,test_auc, test_ap):
-    result_path = "../data/output/training_test/{}_{}_{}_epochResult".format(args.dataset,args.model,args.seed)
+
+def save_epoch_traing(epoch, test_auc, test_ap):
+    result_path = "../data/output/training_test/{}_{}_{}_epochResult".format(args.dataset, args.model, args.seed)
     if not os.path.exists(result_path):
         result_df = pd.DataFrame(columns=["epoch", "test_auc", "test_ap"])
     else:
@@ -165,7 +168,6 @@ def save_epoch_traing(epoch,test_auc, test_ap):
     result_df.to_csv(result_path, index=False)
 
 
-
 class Runner(object):
     def __init__(self):
         if args.wandb:
@@ -173,7 +175,7 @@ class Runner(object):
                 # set the wandb project where this run will be logged
                 project="scalingTGNs_i4",
                 # Set name of the run:
-                name="{}_{}_{}".format(args.dataset, args.model,args.seed),
+                name="{}_{}_{}".format(args.dataset, args.model, args.seed),
                 # track hyperparameters and run metadata
                 config={
                     "learning_rate": args.lr,
@@ -185,22 +187,23 @@ class Runner(object):
         self.readout_scheme = 'mean'
         self.tgc_lr = args.lr
         self.len = data['time_length']
-        args.testlength = math.floor(self.len * args.test_ratio) #Re-calculate number of test snapshots
+        args.testlength = math.floor(self.len * args.test_ratio)  # Re-calculate number of test snapshots
         self.start_train = 0
         args.evalLength = math.floor(self.len * args.eval_ratio)
 
-
         self.train_shots = list(range(self.start_train, self.len - args.testlength - args.evalLength))
-        self.eval_shots = list(range( self.len - args.testlength - args.evalLength, self.len - args.testlength))
+        self.eval_shots = list(range(self.len - args.testlength - args.evalLength, self.len - args.testlength))
         self.test_shots = list(range(self.len - args.testlength, self.len))
 
         self.load_feature()
-        logger.info('INFO: total length: {}, train length: {},eval length:{}, test length: {}'.format(self.len, len(self.train_shots),args.evalLength,
-                                                                                       args.testlength))
+        logger.info('INFO: total length: {}, train length: {},eval length:{}, test length: {}'.format(self.len,
+                                                                                                      len(self.train_shots),
+                                                                                                      args.evalLength,
+                                                                                                      args.testlength))
 
         self.model = load_model(args).to(args.device)
         self.model_path = '../saved_models/{}_{}_seed_{}.pth'.format(args.dataset,
-                                                                   args.model, args.seed)
+                                                                     args.model, args.seed)
         # logger.info("The models is going to be loaded from {}".format(self.model_path))
         # self.models.load_state_dict(torch.load(self.model_path))
 
@@ -256,7 +259,8 @@ class Runner(object):
                     self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid().cpu().numpy())
 
                 # update the models
-                self.model.update_hiddens_all_with(embeddings) #Added
+                self.model.update_hiddens_all_with(embeddings)  # Added
+
 
         auc, ap = roc_auc_score(tg_labels, tg_preds), average_precision_score(tg_labels, tg_preds)
         return epoch, auc, ap
@@ -279,11 +283,13 @@ class Runner(object):
                 # graph readout
                 tg_readout = readout_function(embeddings, readout_scheme)
                 tg_embedding = torch.cat((tg_readout,
-                                          torch.from_numpy(self.t_graph_feat[t_test_idx + len(self.train_shots) + len(self.eval_shots)]).to(
+                                          torch.from_numpy(self.t_graph_feat[t_test_idx + len(self.train_shots) + len(
+                                              self.eval_shots)]).to(
                                               args.device)))
 
                 # graph classification
-                tg_labels.append(self.t_graph_labels[t_test_idx + len(self.train_shots) + len(self.eval_shots)].cpu().numpy())
+                tg_labels.append(
+                    self.t_graph_labels[t_test_idx + len(self.train_shots) + len(self.eval_shots)].cpu().numpy())
                 tg_preds.append(
                     self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid().cpu().numpy())
 
@@ -292,6 +298,7 @@ class Runner(object):
 
         auc, ap = roc_auc_score(tg_labels, tg_preds), average_precision_score(tg_labels, tg_preds)
         return epoch, auc, ap
+
     def run(self):
         """
         Run the temporal graph classification task
@@ -321,19 +328,19 @@ class Runner(object):
         best_model = self.model.state_dict()
         best_epoch = -1
         patience = 0
-        best_eval_auc = -1 #Set previous evaluation result to very small number
+        best_eval_auc = -1  # Set previous evaluation result to very small number
         best_test_auc = -1
         best_test_ap = -1
 
         for epoch in range(1, args.max_epoch + 1):
-        # for epoch in range(1, 5):
+            # for epoch in range(1, 5):
             self.model.train()
-            self.model.init_hiddens() #Just added
+            self.model.init_hiddens()  # Just added
             self.tgc_decoder.train()
             t_epoch_start = time.time()
             epoch_losses = []
             tg_labels = []
-            tg_preds =  []
+            tg_preds = []
             for t_train_idx, t_train in enumerate(self.train_shots):
                 optimizer.zero_grad()
 
@@ -363,15 +370,15 @@ class Runner(object):
             train_auc, train_ap = roc_auc_score(tg_labels, tg_preds), average_precision_score(tg_labels, tg_preds)
             eval_epoch, eval_auc, eval_ap = self.tgclassification_eval(epoch, self.readout_scheme)
 
-            #Only apply early stopping when after min_epoch of training
-            if best_eval_auc < eval_auc : #Use AUC as metric to define early stoping
+            # Only apply early stopping when after min_epoch of training
+            if best_eval_auc < eval_auc:  # Use AUC as metric to define early stoping
                 patience = 0
-                best_model = self.model.state_dict() #Saved the best model for testing
+                best_model = self.model.state_dict()  # Saved the best model for testing
 
                 best_eval_auc = eval_auc
                 best_epoch, best_test_auc, best_test_ap = self.tgclassification_test(epoch, self.readout_scheme)
             else:
-                if epoch < args.min_epoch: #If it is less than min_epoch, reset best AUC to current AUC and save current model as best model
+                if epoch < args.min_epoch:  # If it is less than min_epoch, reset best AUC to current AUC and save current model as best model
                     patience = 0
                     best_eval_auc = eval_auc
                     best_model = self.model.state_dict()
@@ -384,7 +391,6 @@ class Runner(object):
                     print('INFO: Early Stopping...')
                     logger.info("Early stopping at epoch: {}".format(epoch))
                     break
-
 
             gpu_mem_alloc = torch.cuda.max_memory_allocated() / 1000000 if torch.cuda.is_available() else 0
 
@@ -406,10 +412,10 @@ class Runner(object):
                 wandb.log({"train_loss": avg_epoch_loss,
                            "eval AUC": eval_auc,
                            "eval AP": eval_ap,
-                           "train AUC":train_auc,
+                           "train AUC": train_auc,
                            "train AP": train_ap
                            })
-            save_epoch_results(epoch,eval_auc,eval_ap,avg_epoch_loss,train_auc,train_ap)
+            save_epoch_results(epoch, eval_auc, eval_ap, avg_epoch_loss, train_auc, train_ap)
             # save_epoch_traing(epoch,train_auc,train_ap)
 
         logger.info('>> Total time : %6.2f' % (time.time() - t_total_start))
@@ -423,7 +429,7 @@ class Runner(object):
         # save the training loss values
         partial_results_path = f'../data/output/log/{args.dataset}/{args.model}/'
         loss_log_filename = f'{partial_results_path}/{args.model}_{args.dataset}_{args.seed}_train_loss.pkl'
-        if os.path.exists(partial_results_path)==False:
+        if os.path.exists(partial_results_path) == False:
             os.makedirs(partial_results_path)
 
         with open(loss_log_filename, 'wb') as file:
@@ -431,7 +437,8 @@ class Runner(object):
 
         # Final Test
         logger.info("Best Test: Epoch:{} , AUC: {:.4f}, AP: {:.4f}".format(best_epoch, best_test_auc, best_test_ap))
-        save_results(args.dataset, best_test_auc, best_test_ap,self.tgc_lr,len(self.train_shots),len(self.test_shots),best_epoch)
+        save_results(args.dataset, best_test_auc, best_test_ap, self.tgc_lr, len(self.train_shots),
+                     len(self.test_shots), best_epoch)
 
 
 if __name__ == '__main__':
@@ -443,9 +450,8 @@ if __name__ == '__main__':
     from script.inits import prepare
 
     args.num_nodes = 10000000
-    args.dataset = "AMB"
+    args.dataset = "TRXC2"
     args.model = "HTGN"
-
 
     print("INFO: >>> Temporal Graph Classification <<<")
     print("INFO: Args: ", args)

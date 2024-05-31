@@ -90,8 +90,8 @@ def creatBaselineDatasets(file, normalization=False):
 
         # generating the label for this window
         # 1 -> Increading Transactions 0 -> Decreasing Transactions
-        label = 1 if (len(selectedNetworkInLbelingWindow) - len(
-            selectedNetworkInGraphDataWindow)) > 0 else 0
+        label = 0 if (len(selectedNetworkInLbelingWindow) - len(
+            selectedNetworkInGraphDataWindow)) > 0 else 1
 
         # Storing the new snapshot data after processing
         selectedNetworkInGraphDataWindow = selectedNetworkInGraphDataWindow.assign(snapshot=indx)
