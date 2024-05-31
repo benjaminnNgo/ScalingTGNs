@@ -229,7 +229,7 @@ def loader(dataset='enron10', neg_sample=''):
     
     # if not cached, to process and cached
     TGS_dataset_df = pd.read_csv("../data/TGS_available_datasets.csv")
-    TGS_available_dataset = [filename.replace(".csv", "") for filename in TGS_dataset_df['filename'].tolist()]
+    TGS_available_dataset = TGS_dataset_df['dataset'].tolist()
 
     print('INFO: data does not exits, processing ...')
     if dataset in ['enron10', 'dblp']:

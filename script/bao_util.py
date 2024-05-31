@@ -1,5 +1,8 @@
 import math
 import os
+import statistics
+from datetime import date
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -280,8 +283,10 @@ def get_val_test(labels,test_ratio = 0.15, val_ratio = 0.15):
 def compute_novelty_dist_from_datasets(datasets):
     novelty_list = []
     for dataset in datasets:
-        pd_df = pd.read_csv('E:/TGS/{}'.format(dataset))
+        print("Compute novelty score for {}".format(dataset))
+        pd_df = pd.read_csv('E:/TGS/{}.csv'.format(dataset))
         novelty_list.append(calc_novelty(pd_df))
+
 
 
     sns.histplot(novelty_list, bins=50, edgecolor='black')
@@ -290,6 +295,7 @@ def compute_novelty_dist_from_datasets(datasets):
     plt.ylabel('Frequency')
     plt.title('Age distribution')
     plt.show()
+    return novelty_list
 
 def compute_reocurrence_surprise_from_datasets(datasets):
     reoccurrence_list = []
@@ -468,33 +474,176 @@ if __name__ == '__main__':
     # datadf = pd.read_csv("TGS_stats.csv")
     # plot_hist(datadf,'age','Age distribution')
 
-    import os
-    import shutil
 
-    new_place = "D:/TGS"
-    source = "E:/TGS/"
-    counter = 0
+#move file in flash drive
+    # import os
+    # import shutil
+    #
+    # new_place = "D:/TGS"
+    # source = "E:/TGS/"
+    # counter = 0
+    #
+    #
+    # for file in os.listdir(source):
+    #     if counter >= 5:
+    #         break;
+    #     dataname = file.replace(".csv","")
+    #     destination = "{}/{}/".format(new_place,dataname)
+    #     os.makedirs(destination, exist_ok=True)
+    #
+    #     try:
+    #         shutil.copy(source + file, destination)
+    #         print(f"File '{source}' successfully copied to '{destination}'.")
+    #     except FileNotFoundError:
+    #         print(f"The source file '{source + file}' does not exist.")
+    #     except PermissionError:
+    #         print(f"Permission denied. Could not copy '{source + file}' to '{destination}'.")
+    #     except Exception as e:
+    #         print(f"An error occurred: {e}")
+    #
+    #     counter+=1
+    #     print(dataname)
 
 
-    for file in os.listdir(source):
-        if counter >= 5:
-            break;
-        dataname = file.replace(".csv","")
-        destination = "{}/{}/".format(new_place,dataname)
-        os.makedirs(destination, exist_ok=True)
+#Refilter TGS datasets
+    # TGS_datasets_list = pd.read_csv("../data/TGS_available_datasets.csv")
+    # TGS_stats_df = pd.read_csv("TGS_stats_old.csv")
+    # TGS_datasets_list= TGS_datasets_list['dataset'].tolist()
+    # TGS_stats_df['dataset'] = TGS_stats_df['dataset'].str.replace(".csv","",regex=False)
+    # TGS_stats_df = TGS_stats_df[TGS_stats_df['dataset'].isin(TGS_datasets_list)]
+    # TGS_stats_df.to_csv("TGS_stats.csv",index=False)
+    # print(TGS_stats_df)
 
-        try:
-            shutil.copy(source + file, destination)
-            print(f"File '{source}' successfully copied to '{destination}'.")
-        except FileNotFoundError:
-            print(f"The source file '{source + file}' does not exist.")
-        except PermissionError:
-            print(f"Permission denied. Could not copy '{source + file}' to '{destination}'.")
-        except Exception as e:
-            print(f"An error occurred: {e}")
+#Compute label rate
+    # TGS_stats_df = pd.read_csv("TGS_stats.csv")
+    # labels_rate_list = []
+    # for dataset in TGS_stats_df['dataset'].tolist():
+    #     # print(dataset)
+    #     labels_df = pd.read_csv('../data/input/raw/labels/{}_labels.csv'.format(dataset))
+    #     list_labels = labels_df.iloc[:,0].tolist()
+    #     labels_rate_list.append( sum(list_labels)/len(list_labels))
+    #
+    # TGS_stats_df['label_1_rate']= labels_rate_list
+    # TGS_stats_df.to_csv("TGS_stats.csv")
+    # print(TGS_stats_df)
+    # print(sum(labels_rate_list)/len(labels_rate_list))
 
-        counter+=1
-        print(dataname)
+#Compute novelty
+    # TGS_stats_df = pd.read_csv("TGS_stats.csv")
+    # novelty_score_list = compute_novelty_dist_from_datasets(TGS_stats_df['dataset'].tolist())
+    # print(novelty_score_list)
+    #
+    #
+    # TGS_stats_df['novelty']= novelty_score_list
+    # TGS_stats_df.to_csv("TGS_stats.csv")
+
+#Drop column
+
+    # TGS_stats_df = pd.read_csv("TGS_stats.csv")
+    # TGS_stats_df = TGS_stats_df.drop(TGS_stats_df.columns[0], axis=1)
+    # TGS_stats_df.to_csv("TGS_stats.csv",index= False)
+    #
+    # print(TGS_stats_df)
+
+#Compute suprise score
+    # TGS_stats_df = pd.read_csv("TGS_stats.csv")
+    # surprise_list = []
+    # for dataset in TGS_stats_df['dataset'].tolist():
+    #     print(dataset)
+    #     edge_df = pd.read_csv(find_edge_csv(dataset))
+    #     surprise = calc_surprise(edge_df)
+    #     surprise_list.append(surprise)
+    #     # labels_df = pd.read_csv('../data/input/raw/labels/{}_labels.csv'.format(dataset))
+    #     # list_labels = labels_df.iloc[:,0].tolist()
+    #     # labels_rate_list.append( sum(list_labels)/len(list_labels))
+    # print(surprise_list)
+    # TGS_stats_df['surprise']= surprise_list
+    # TGS_stats_df.to_csv("TGS_stats.csv")
+    # print(TGS_stats_df)
+    # print(sum(labels_rate_list)/len(labels_rate_list))
+
+#Move from TGS folder to TGS_official
+
+    # import os
+    # import shutil
+    # TGS_datalist = pd.read_csv("../data/TGS_available_datasets.csv")
+    # new_place = "E:/TGS_official/"
+    # source = "E:/TGS/"
+    # counter = 0
+    #
+    #
+    # for index,row in TGS_datalist.iterrows():
+    #     filename = row['dataset'] + ".csv"
+    #     destination = "{}/{}.csv".format(new_place,row['token_name'])
+    #     # os.makedirs(destination, exist_ok=True)
+    #
+    #     try:
+    #         shutil.copy(source + filename, destination)
+    #         print(f"File '{source}' successfully copied to '{destination}'.")
+    #     except FileNotFoundError:
+    #         print(f"The source file '{source + filename}' does not exist.")
+    #     except PermissionError:
+    #         print(f"Permission denied. Could not copy '{source + filename}' to '{destination}'.")
+    #     except Exception as e:
+    #         print(f"An error occurred: {e}")
+    #
+    #     counter+=1
+    #     # print(filename)
+    # print(len(TGS_datalist['token_name'].tolist()))
+    # unique_tokens = set()
+    # for dataset in TGS_datalist['token_name'].tolist():
+    #     if dataset not in unique_tokens:
+    #         unique_tokens.add(dataset)
+    #     else:
+    #         print(dataset)
+    #
+    #
+    # print(len(os.listdir("E:/TGS_official/")))
+    # for index,row in TGS_datalist.iterrows():
+    #     destination = "{}/{}.csv".format(new_place, row['token_name'])
+    #     if not os.path.exists(destination):
+    #         print("Can't find {}".format(destination))
+
+#Check smallest date
+    # lastest_day =date(2010, 5, 29)
+    #
+    # for filename in os.listdir("E:/TGS_official/"):
+    #     selectedNetwork = pd.read_csv("E:/TGS_official/" +filename, sep=',')
+    #     selectedNetwork['date'] = pd.to_datetime(selectedNetwork['timestamp'], unit='s').dt.date
+    #     selectedNetwork['value'] = selectedNetwork['value'].astype(float)
+    #     selectedNetwork = selectedNetwork.sort_values(by='date')
+    #     window_start_date = selectedNetwork['date'].max()
+    #     if window_start_date > lastest_day:
+    #         smallest_day = window_start_date
+    #
+    # print(smallest_day)
+
+# Generate table
+    TGS_availabe_df = pd.read_csv("../data/TGS_available_datasets.csv")
+    TGS_stats_df = pd.read_csv("TGS_stats.csv")
+
+    for index, row in TGS_stats_df.iterrows():
+        token_name_row = TGS_availabe_df[TGS_availabe_df['dataset'] == row['dataset'] ]
+
+        token_name = str(token_name_row['token_name'].values[0])
+        # print(token_name)
+        node_count = int(row['node_count'])
+        trans_count = int(row['transaction_count'])
+        age = int(row['age'])
+        label_ratio = round(row['label_1_rate'],2)
+        novelty, surprise = round(row['novelty'],2), round(row['surprise'],2)
+
+        prepare_string = "{} & {} & {} & {} & {} & {} & {}\\\\".format(token_name,
+                                                                       node_count,
+                                                                       trans_count,
+                                                                       age,
+                                                                       label_ratio,
+                                                                       novelty,
+                                                                       surprise)
+        print(prepare_string)
+
+
+
 
 
 

@@ -123,7 +123,7 @@ def extra_dataset_attributes_loading(args, readout_scheme='mean'):
 
 
 def save_results(dataset, test_auc, test_ap,lr,train_snapshot,test_snapshot,best_epoch,time):
-    partial_path =  "../data/output/single_model_test_set/"
+    partial_path = "../data/output/single_model_htgn_test/"
     if not os.path.exists(partial_path):
         os.makedirs(partial_path)
     result_path = f"{partial_path}/{args.results_file}"

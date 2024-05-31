@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 
-labels_dir = "../../data/input/raw/labels"  #Change the path to where you save all raw token networks( download from gg drive)
+labels_dir = "../../data/input/raw/labels"
 labels_stats_filename = "../../data/output/labels/"
 for filename in os.listdir(labels_dir):
     labels_df = pd.read_csv("{}/{}".format(labels_dir,filename))
