@@ -25,9 +25,10 @@ class EvolveGCN(BaseModel):
     def forward(self, A_list, Nodes_list=None):
         if Nodes_list is None:
             Nodes_list = [self.feat] * len(A_list)
+        print("Nodes lst", type(Nodes_list))
         Nodes_list = self.GRCU_layers1(A_list, Nodes_list, activation=True)
         Nodes_list = self.GRCU_layers2(A_list, Nodes_list, activation=False)
-        return Nodes_list
+        return torch.stack(Nodes_list)
 
 
 class GRCU(torch.nn.Module):
@@ -47,23 +48,49 @@ class GRCU(torch.nn.Module):
     def forward(self, A_list, node_embs_list, activation=True, mask_list=None):
         GCN_weights = self.GCN_init_weights
         out_seq = []
-        for t, edge_index in enumerate(A_list):
-            node_embs = node_embs_list[t]
-            # first evolve the weights from the initial and use the new weights with the node_embs
-            if self.egcn_type == 'EGCNO':
-                GCN_weights = self.evolve_weights(GCN_weights)
-            elif self.egcn_type == 'EGCNH':
-                if mask_list is not None:
-                    GCN_weights = self.evolve_weights(GCN_weights, node_embs, mask_list[t])
-                else:
-                    GCN_weights = self.evolve_weights(GCN_weights, node_embs)
-            else:
-                raise Exception('Unsupported EvolveGCN type!')
+        # for t, edge_index in enumerate(A_list):
+        #     node_embs = node_embs_list[t]
+        #     # first evolve the weights from the initial and use the new weights with the node_embs
+        #     if self.egcn_type == 'EGCNO':
+        #         GCN_weights = self.evolve_weights(GCN_weights)
+        #     elif self.egcn_type == 'EGCNH':
+        #         print("yes")
+        #         if mask_list is not None:
+        #             GCN_weights = self.evolve_weights(GCN_weights, node_embs, mask_list[t])
+        #         else:
+        #             GCN_weights = self.evolve_weights(GCN_weights, node_embs)
+        #     else:
+        #         raise Exception('Unsupported EvolveGCN type!')
 
-            node_embs = self.gcn(node_embs, edge_index, GCN_weights)
-            if activation:
-                node_embs = nn.functional.rrelu(node_embs)
-            out_seq.append(node_embs)
+        #     node_embs = self.gcn(node_embs, edge_index, GCN_weights)
+        #     if activation:
+        #         node_embs = nn.functional.rrelu(node_embs)
+        #     out_seq.append(node_embs)
+        print(len(node_embs_list))
+        print("yes 1")
+        print(node_embs_list)
+        # node_embs = node_embs_list.clone().detach().requires_grad_(True)
+        node_embs = node_embs_list[0]
+        print(type(node_embs))
+        print("yes 2")
+        edge_index = A_list
+        # first evolve the weights from the initial and use the new weights with the node_embs
+        if self.egcn_type == 'EGCNO':
+            GCN_weights = self.evolve_weights(GCN_weights)
+        elif self.egcn_type == 'EGCNH':
+            if mask_list is not None:
+                GCN_weights = self.evolve_weights(GCN_weights, node_embs, mask_list[t])
+            else:
+                print("63", node_embs.size())
+                print("63", GCN_weights.size())
+                GCN_weights = self.evolve_weights(GCN_weights, node_embs)
+        else:
+            raise Exception('Unsupported EvolveGCN type!')
+
+        node_embs = self.gcn(node_embs, edge_index, GCN_weights)
+        if activation:
+            node_embs = nn.functional.rrelu(node_embs)
+        out_seq.append(node_embs)
         return out_seq
 
 
@@ -89,6 +116,7 @@ class mat_GRU_cell(torch.nn.Module):
         h_cap = reset * prev_Q
         h_cap = self.htilda(z_topk, h_cap)
         new_Q = (1 - update) * prev_Q + update * h_cap
+        print("forward done")
         return new_Q
 
 
@@ -139,9 +167,13 @@ class TopK(torch.nn.Module):
     def forward(self, node_embs, mask=None):
 
         scores = node_embs.matmul(self.scorer) / self.scorer.norm()
+        print("Node embeddings size:", node_embs.size())
+        print("Size after matmul and normalization:", scores.size())
         if mask is None:
             mask = torch.zeros_like(scores) if torch.cuda.is_available() else torch.zeros_like(scores)
         scores = scores + mask
+        print("Size after applying mask:", scores.size())
+
         vals, topk_indices = scores.view(-1).topk(self.k)
         topk_indices = topk_indices[vals > -float("Inf")]
         if topk_indices.size(0) < self.k:

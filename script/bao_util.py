@@ -8,49 +8,6 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-import shutil
-
-#Temp
-# new_datas = os.listdir('./data/input/cached/')
-# print(len(new_datas))
-#
-# old_datas = os.listdir('../data/input/cached/')
-#
-# counter = 0
-# for new_data in new_datas:
-#     if new_data not in old_datas:
-#         counter += 1
-# print(counter)
-#
-# with open("../data/data_package/updated_data.txt", "w") as file:
-#     for new_data in new_datas:
-#         file.write("{}\n".format(new_data))
-
-#Move file and remove _
-
-
-
-# TGS_datasets = pd.read_csv("../data/TGS_available_datasets.csv")
-# # old_root = "E:/token/"
-# new_root = "E:/TGS/"
-# available_datasets = os.listdir(new_root)
-# # os.makedirs(new_root, exist_ok=True)
-# counter = 0
-#
-# for filename in TGS_datasets['filename'].tolist():
-#     if filename not in available_datasets:
-#         counter += 1
-#
-# print(counter)
-
-# print(len(os.listdir(new_root)))
-#
-# TGS_datasets['filename'] = TGS_datasets['filename'].str.replace("_","")
-# TGS_datasets.to_csv("TGS_available_datasets.csv",index=False)
-
-
-
-
 #=================Count number of nodes=============
 def TGS_node_counts_distribution():
     TGS_datasets = pd.read_csv("../data/TGS_available_datasets.csv")
