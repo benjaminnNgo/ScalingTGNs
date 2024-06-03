@@ -83,7 +83,7 @@ def extra_dataset_attributes_loading(args, readout_scheme='mean'):
     partial_path = "/network/scratch/r/razieh.shirzadkhani/fm/fm_data/data_lt_70/all_data/raw/"
     TG_labels_data = []
     TG_feats_data = []
-    logger.info("INFO: Extracting extra dataset attributes")
+    # logger.info("INFO: Extracting extra dataset attributes")
     for dataset in args.dataset:
         print("Loading features for {}".format(dataset))
         # load graph lables
@@ -129,28 +129,27 @@ def extra_dataset_attributes_loading(args, readout_scheme='mean'):
         TG_feats = scalar.fit_transform(TG_feats)
         TG_feats_data.append(TG_feats)
     
-    logger.info("INFO: Extracting extra dataset attributes done!")
+    # logger.info("INFO: Extracting extra dataset attributes done!")
     return TG_labels_data, TG_feats_data
   
 
 
 def save_epoch_results(epoch, test_auc, test_ap, time, dataset=None):
     if dataset is None:
-        result_path = "../data/output/{}/epoch_result/average/{}_seed_{}_{}_{}_epochResult.csv".format("nhid",
-                                                                                                    args.model,
-                                                                                                    args.seed,
-                                                                                                    len(args.dataset),
-                                                                                                    args.nhid)
+        result_folder = "../data/output/{}/epoch_result/average".format(category)
+        result_path = result_folder + "/{}_seed_{}_{}_{}_epochResult.csv".format(category,
+                                                                                args.model,
+                                                                                args.seed,
+                                                                                len(args.dataset),
+                                                                                data_number)
     else:
-        # data_name = args.data_name[args.dataset[dataset]] if args.dataset[dataset] in args.data_name else args.dataset[dataset]
-        # print(data_name)
-        result_folder = "../data/output/{}/epoch_result/data/{}".format("nhid", dataset)
+        result_folder = "../data/output/{}/epoch_result/data/{}".format(category, dataset)
         result_path = result_folder + "/{}_seed_{}_{}_{}_epochResult.csv".format(args.model,
                                                                                  args.seed,
                                                                                  len(args.dataset),
-                                                                                 args.nhid)
-        if not os.path.exists(result_folder):
-            os.makedirs(result_folder)
+                                                                                 data_number)
+    if not os.path.exists(result_folder):
+        os.makedirs(result_folder)
     
     if not os.path.exists(result_path):
         result_df = pd.DataFrame(columns=["epoch", "test_auc", "test_ap", "time"])
@@ -161,21 +160,24 @@ def save_epoch_results(epoch, test_auc, test_ap, time, dataset=None):
 
 def save_epoch_training(epoch, train_auc, train_ap, loss, time, dataset=None):
     if dataset is None:
-        result_path = "../data/output/{}/training_test/average/{}_seed_{}_{}_{}_epochResult.csv".format("nhid",
-                                                                                                     args.model,
-                                                                                                    args.seed,
-                                                                                                    len(args.dataset),
-                                                                                                    args.nhid)
+        result_folder = "../data/output/{}/training_test/average".format(category)
+        result_path = result_folder + "/{}_seed_{}_{}_{}_epochResult.csv".format(category,
+                                                                                args.model,
+                                                                                args.seed,
+                                                                                len(args.dataset),
+                                                                                data_number)
+        # if not os.path.exists(result_folder):
+        #     os.makedirs(result_folder)
     else:
         # data_name = args.data_name[args.dataset[dataset]] if args.dataset[dataset] in args.data_name else args.dataset[dataset]
         # print(data_name)
-        result_folder = "../data/output/{}/training_test/data/{}".format("nhid", dataset)
+        result_folder = "../data/output/{}/training_test/data/{}".format(category, dataset)
         result_path = result_folder + "/{}_seed_{}_{}_{}_epochResult.csv".format(args.model,
                                                                                  args.seed,
                                                                                  len(args.dataset),
-                                                                                 args.nhid)
-        if not os.path.exists(result_folder):
-            os.makedirs(result_folder)
+                                                                                 data_number)
+    if not os.path.exists(result_folder):
+        os.makedirs(result_folder)
 
     if not os.path.exists(result_path):
         result_df = pd.DataFrame(columns=["epoch", "train_loss", "train_auc", "train_ap", "time"])
@@ -185,34 +187,13 @@ def save_epoch_training(epoch, train_auc, train_ap, loss, time, dataset=None):
     result_df.to_csv(result_path, index=False)
 
 
-# def save_epoch_results_test(epoch,test_auc, test_ap):
-#     result_path = "../data/output/epoch_result/average/{}_seed_{}_{}_testResult.csv".format(args.model,
-#                                                                                             args.seed,
-#                                                                                             len(args.dataset))
-#     if not os.path.exists(result_path):
-#         result_df = pd.DataFrame(columns=["epoch", "test_auc", "test_ap"])
-#     else:
-#         result_df = pd.read_csv(result_path)
-#     result_df = result_df.append({'epoch': int(epoch), 'test_auc': test_auc, 'test_ap': test_ap}, ignore_index=True)
-#     result_df.to_csv(result_path, index=False)
-
-# def save_epoch_results_eval(epoch,test_auc, test_ap):
-#     result_path = "../data/output/bias_test/{}_seed_{}_{}_biasResult.csv".format(args.model,
-#                                                                                  args.seed,
-#                                                                                  len(args.dataset))
-#     if not os.path.exists(result_path):
-#         result_df = pd.DataFrame(columns=["epoch", "test_auc", "test_ap"])
-#     else:
-#         result_df = pd.read_csv(result_path)
-#     result_df = result_df.append({'epoch': int(epoch), 'test_auc': test_auc, 'test_ap': test_ap}, ignore_index=True)
-#     result_df.to_csv(result_path, index=False)
 
 class Runner(object):
     def __init__(self):
         if args.wandb:
             wandb.init(
                 # set the wandb project where this run will be logged
-                project="ScalingTGNs_nhid",
+                project="ScalingTGNs_nout",
                 name="{}_{}_{}_{}_{}".format(len(data), args.model, args.seed, args.nhid, args.curr_time),
                 # track hyperparameters and run metadata
                 config={
@@ -240,34 +221,23 @@ class Runner(object):
         self.load_feature()
 
         self.model = load_model(args).to(args.device)
-        self.model_path = '{}/saved_models/fm/{}/{}_{}_seed_{}_{}.pth'.format(model_file_path,
-                                                                           "nhid",
-                                                                           args.model,
-                                                                           self.num_datasets, 
-                                                                           args.seed,
-                                                                           args.nhid)
-        self.mlp_path = '{}/saved_models/fm/{}/{}_{}_seed_{}_{}_mlp.pth'.format(model_file_path,
-                                                                           "nhid",
-                                                                           args.model,
-                                                                           self.num_datasets, 
-                                                                           args.seed,
-                                                                           args.nhid)
-        self.model_chkp_path = '{}/saved_models/fm/{}/checkpoint/{}_{}_seed_{}_{}.pth'.format(model_file_path,
-                                                                           "nhid",
-                                                                           args.model,
-                                                                           self.num_datasets, 
-                                                                           args.seed,
-                                                                           args.nhid)
-        self.mlp_chkp_path = '{}/saved_models/fm/{}/checkpoint/{}_{}_seed_{}_{}_mlp.pth'.format(model_file_path,
-                                                                           "nhid",
-                                                                           args.model,
-                                                                           self.num_datasets, 
-                                                                           args.seed,
-                                                                           args.nhid)
-
+        print(self.model)
+        self.model_path = '{}/saved_models/fm/{}/{}_{}_seed_{}'.format(model_file_path, 
+                                                                        category,
+                                                                        args.model,
+                                                                        self.num_datasets,
+                                                                        args.seed)
+        
+        self.model_chkp_path = '{}/saved_models/fm/{}/checkpoint/{}_{}_seed_{}'.format(model_file_path, 
+                                                                        category,
+                                                                        args.model,
+                                                                        self.num_datasets,
+                                                                        args.seed)
+       
         # load the graph labels
         self.t_graph_labels, self.t_graph_feat = extra_dataset_attributes_loading(args)
-
+        # self.t_graph_labels = t_graph_labels
+        # self.t_graph_feat = t_graph_feat
         # define decoder: graph classifier
         num_extra_feat = 4  # = len([in-degree, weighted-in-degree, out-degree, weighted-out-degree])
         self.tgc_decoder = MLP(in_dim=args.nout+num_extra_feat, hidden_dim_1=args.nout+num_extra_feat, 
@@ -276,16 +246,16 @@ class Runner(object):
         self.optimizer = torch.optim.Adam(
             set(self.tgc_decoder.parameters()) | set(self.model.parameters()),
             lr=self.tgc_lr)
-
-        if os.path.exists(self.model_chkp_path):
+        logger.info("{}".format(self.model_chkp_path))
+        if os.path.exists("{}.pth".format(self.model_chkp_path)):
             logger.info("INFO: Model already exist and will be loaded from {}".format(self.model_chkp_path))
-            checkpoint = torch.load(self.model_chkp_path)
+            checkpoint = torch.load("{}.pth".format(self.model_chkp_path))
             self.model.load_state_dict(checkpoint['model_state_dict'])
 
-            mlp_checkpoint = torch.load(self.mlp_chkp_path)
+            mlp_checkpoint = torch.load("{}_mlp.pth".format(self.model_chkp_path))
             self.tgc_decoder.load_state_dict(mlp_checkpoint['model_state_dict'])
             self.start_epoch = checkpoint['epoch']
-            logger.info("INFO: Epochs will start from: ".format(self.start_epoch))
+            logger.info("INFO: Epochs will start from: {}".format(self.start_epoch))
             
         
     def load_feature(self):
@@ -371,7 +341,7 @@ class Runner(object):
         Run the temporal graph classification task
         """
         self.model.init_hiddens()
-        logger.info("Start training the temporal graph classification models.")
+        # logger.info("Start training the temporal graph classification models.")
 
         # make sure to have the right device setup
         self.tgc_decoder = self.tgc_decoder.to(args.device)
@@ -389,6 +359,7 @@ class Runner(object):
         train_avg_epoch_loss_dict = {} # Stores the average of epoch loss over all datasets
         epoch_losses_per_dataset = {} # Stores each dataset loss at each epoch: {"data_1" : [e_1, e_2, ..], ...}
         test_auc, test_ap = [], []
+        time_t = 0
         for epoch in range(self.start_epoch + 1, args.max_epoch + 1):
             print("Epoch: ", epoch)
             t_epoch_start = timeit.default_timer()
@@ -467,8 +438,9 @@ class Runner(object):
                 #         })
 
             avg_epoch_loss = np.mean(epoch_losses)
-            train_avg_epoch_loss_dict[epoch] = avg_epoch_loss 
+            # train_avg_epoch_loss_dict[epoch] = avg_epoch_loss 
             total_epoch_time = timeit.default_timer() - t_epoch_start
+            time_t += total_epoch_time
             avg_train_auc = np.mean(train_aucs)
             avg_train_ap = np.mean(train_aps)
             avg_eval_auc = np.mean(eval_aucs)
@@ -477,13 +449,13 @@ class Runner(object):
             # Saving model checkpoint:
             torch.save({'epoch': epoch,
                         'model_state_dict': self.model.state_dict()}, 
-                        self.model_chkp_path)
+                        "{}_{}.pth".format(self.model_chkp_path, data_number))
             
             torch.save({'epoch': epoch,
                         'model_state_dict': self.tgc_decoder.state_dict()}, 
-                        self.mlp_chkp_path)
+                        "{}_{}_mlp.pth".format(self.model_chkp_path, data_number))
             
-            # Validating
+        #     # Validating
             if best_eval_auc < avg_eval_auc or epoch <= args.min_epoch: #Use AUC as metric to define early stoping
                     patience = 0
                     best_eval_auc = avg_eval_auc
@@ -500,6 +472,7 @@ class Runner(object):
                     break
 
             gpu_mem_alloc = torch.cuda.max_memory_allocated() / 1000000 if torch.cuda.is_available() else 0
+        # logger.info("Time: {:.3f}, GPU: {:.1f}MiB".format(time_t/3, gpu_mem_alloc))
             if epoch == 1 or epoch % args.log_interval == 0:
                 logger.info('==' * 30)
                 logger.info("Epoch:{}, Loss: {:.4f}, Time: {:.3f}, GPU: {:.1f}MiB".format(epoch, avg_epoch_loss,
@@ -531,40 +504,28 @@ class Runner(object):
 
         logger.info("INFO: Saving best model from epoch {}...".format(best_epoch))
         logger.info("File name: {}_seed_{}_{}.pth".format(args.model, args.seed, self.num_datasets))
-        torch.save(best_model, self.model_path)
-        torch.save(best_mlp, self.mlp_path)
-        # logger.info("INFO: The models is saved. Done.")
+        torch.save(best_model, "{}_{}.pth".format(self.model_path, args.nout))
+        torch.save(best_mlp, "{}_{}_mlp.pth".format(self.model_path, args.nout))
         logger.info("Best test results: {}".format(best_test_results))
-        # ------------ DEBUGGING ------------
-        # save the training loss values
-        # partial_results_path = f'../data/output/log/{args.model}/'
-        # log_path = '../data/output/log/{}_seed_{}_{}_log.txt'.format(args.model, 
-        #                                                                    args.seed, 
-        #                                                                    self.num_datasets)
         
-        
-        # with open(log_path, 'wb') as file:
-        #     dump(train_avg_epoch_loss_dict, file)
-
 
 
 if __name__ == '__main__':
     from script.config import args, dataset_names
     from script.utils.util import set_random, logger, init_logger, disease_path
     from script.models.load_model import load_model
-    from script.loss import ReconLoss, VGAEloss
-    from script.utils.data_util import loader, prepare_dir, load_multiple_datasets, check_for_label_distribution
+    from script.utils.data_util import load_multiple_datasets
     from script.inits import prepare
     
     args.model = "HTGN"
     # args.model = "EGCN"
-    args.seed = 800
+    args.seed = 710
     args.max_epoch=300
     args.lr = 0.0001
     args.log_interval=10
     args.patience = 30
     args.min_epoch = 100
-    args.nhid = 64
+    # args.nhid = 2048
     # args.data_name = dataset_names
     # args.wandb = True
     print("INFO: >>> Temporal Graph Classification <<<")
@@ -578,33 +539,39 @@ if __name__ == '__main__':
     args.curr_time = time.strftime("%Y-%m-%d-%H:%M:%S", t)
     # load_multiple_datasets("")
     # check_for_label_distribution("test.txt")
-    args.dataset, data = load_multiple_datasets("dataset_package_32.txt")
+    
     # num_nodes_per_data = [data[i]['num_nodes'] for i in range(len(data))]
     # args.num_nodes = max(num_nodes_per_data)
     # print(args.num_nodes)
+    # category = "10data"
+    
+    
+    # init_logger('../data/output/{}/log/time_log_1.txt'.format(category))
+    # logger.info("INFO: Args: {}".format(args))
+    # for data_number in [6]:
+    args.dataset, data = load_multiple_datasets("dataset_package_16.txt")
+    # # for args.seed in [710, 720, 800]:
+    # init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, args.seed, len(args.dataset), data_number))
+    # set_random(args.seed)
+    # # for nhid in [16, 32, 64, 128, 256, 512, 1024, 2048]:
+    # logger.info("INFO: data: {}, seed: {}".format(data_number, args.seed))
+    # args.data_name = dataset_names
 
-    set_random(args.seed)
-    init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format("nhid", args.model, args.seed, len(args.dataset), args.nhid))
-    logger.info("INFO: Args: {}".format(args))
-    args.data_name = dataset_names
+    # runner = Runner()
+    # runner.run()
+    category = "nout"
+    for data_number in [32]:
+        # args.dataset, data = load_multiple_datasets("{}/dataset_package_8_{}.txt".format(category, data_number))
+        for args.seed in [800]:
+            
+            for nout in [32]:
+                # init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, args.seed, len(args.dataset), data_number))
+                init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, args.seed, len(args.dataset), nout))
+                set_random(args.seed)
+                args.nout = nout
+                args.nhid = nout
+                logger.info("INFO: data: {}, seed: {}".format(data_number, args.seed))
+                args.data_name = dataset_names
 
-    runner = Runner()
-    runner.run()
-
-# -------------------------------------------------------------
-
-    # dataset_df = pd.read_csv('dataset_no_gap_1_day.csv')
-    # filtered_df = dataset_df[(dataset_df['networkSize'] <=70 )]['filename']
-    # tt = 0
-    # # print(filtered_df.shape)
-    # # print(filtered_df[50:80])
-    # for i in filtered_df:
-    #     save_file_name = i.split(".")[0].replace("_", "")
-    #     print("INFO: data: {}".format(save_file_name))  
-    #     print(save_file_name)
-    #     loader(dataset=save_file_name, neg_sample=args.neg_sample)
-
-# ----------------------
-# commands to run:
-# cd script
-# python train_tgc_end_to_end.py --models=HTGN --seed=710  --dataset=dgd --max_epoch=200
+                runner = Runner()
+                runner.run()

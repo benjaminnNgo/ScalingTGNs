@@ -132,9 +132,9 @@ def extra_dataset_attributes_loading(args, readout_scheme='mean'):
 
 def save_results(model_name, mode, dataset, test_auc, test_ap, bias=False):
     if bias:
-        result_path = "../data/output/test_result/{}_results_bias.csv".format(model_name)
+        result_path = "../data/output/{}/test_result/{}_results_bias.csv".format(category, model_name)
     else:
-        result_path = "../data/output/test_result/{}_results.csv".format(model_name)
+        result_path = "../data/output/{}/test_result/{}_results.csv".format(category, model_name)
     if not os.path.exists(result_path):
         result_df = pd.DataFrame(columns=["dataset", "mode", "test_auc", "test_ap"])
     else:
@@ -162,15 +162,15 @@ class Runner(object):
         self.load_feature()
 
         self.model = load_model(args).to(args.device)
-        self.model_path = '{}/saved_models/fm/{}.pth'.format(model_file_path, model_path)
+        self.model_path = '{}/saved_models/fm/{}/{}.pth'.format(model_file_path, category, model_path)
         logger.info("The models is going to be loaded from {}".format(self.model_path))
         self.model.load_state_dict(torch.load(self.model_path))
         # load the graph labels
-        self.t_graph_labels, self.t_graph_feat = extra_dataset_attributes_loading(args)
-
+        # self.t_graph_labels, self.t_graph_feat = extra_dataset_attributes_loading(args)
+        self.t_graph_labels, self.t_graph_feat = t_graph_labels, t_graph_feat
         # define decoder: graph classifier
         num_extra_feat = 4  
-        self.mlp_path = '{}/saved_models/fm/{}_mlp.pth'.format(model_file_path, model_path)
+        self.mlp_path = '{}/saved_models/fm/{}/{}_mlp.pth'.format(model_file_path, category, model_path)
         self.tgc_decoder = MLP(in_dim=args.nout+num_extra_feat, hidden_dim_1=args.nout+num_extra_feat, 
                                hidden_dim_2=args.nout+num_extra_feat, drop=0.1)  # @NOTE: these hyperparameters may need to be changed 
         self.tgc_decoder.load_state_dict(torch.load(self.mlp_path))
@@ -205,7 +205,7 @@ class Runner(object):
         Final inference on the test set
         """
         tg_labels, tg_preds, test_loss = [], [], []
-        self.test_shots = [list(range(self.len[i] - self.testlength[i] -self.evalLength[i], self.len[i])) for i in range(self.num_datasets)]
+        # self.test_shots = [list(range(self.len[i] - self.testlength[i] -self.evalLength[i], self.len[i])) for i in range(self.num_datasets)]
         for t_test_idx, t in enumerate(self.test_shots[dataset_idx]):
             self.model.eval()
             self.tgc_decoder.eval()
@@ -225,12 +225,10 @@ class Runner(object):
                 tg_preds.append(
                     self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid().cpu().numpy())
                 self.model.update_hiddens_all_with(embeddings)
-                print(tg_labels)
-                print(tg_preds)
-                test_loss.append(self.criterion(tg_preds[-1], tg_labels[-1]))
-        total_test_loss = np.men(test_loss)
+                # test_loss.append(self.criterion(tg_preds[-1], tg_labels[-1]))
+        # total_test_loss = np.men(test_loss)
         auc, ap = roc_auc_score(tg_labels, tg_preds), average_precision_score(tg_labels, tg_preds)
-        return auc, ap, total_test_loss
+        return auc, ap
 
     def tgclassification_val(self, readout_scheme, dataset_idx):
         """
@@ -310,16 +308,16 @@ class Runner(object):
                         embeddings = self.model(edge_index, self.x)
                         self.model.update_hiddens_all_with(embeddings)
                 
-                val_auc, val_ap = self.tgclassification_val(self.readout_scheme, dataset_idx_i)
-                logger.info("Final Val Data {}: AUC: {:.4f}, AP: {:.4f}".format(
-                    args.data_name[args.dataset[dataset_idx_i]], 
-                    val_auc, val_ap))
-                save_results(model_path, 
-                             "Val", 
-                             args.data_name[args.dataset[dataset_idx_i]], 
-                             val_auc, 
-                             val_ap,
-                             bias=True)
+                # val_auc, val_ap = self.tgclassification_val(self.readout_scheme, dataset_idx_i)
+                # logger.info("Final Val Data {}: AUC: {:.4f}, AP: {:.4f}".format(
+                #     args.data_name[args.dataset[dataset_idx_i]], 
+                #     val_auc, val_ap))
+                # save_results(model_path, 
+                #              "Val", 
+                #              args.data_name[args.dataset[dataset_idx_i]], 
+                #              val_auc, 
+                #              val_ap,
+                #              bias=True)
 
                 for t_val in self.val_shots[dataset_idx_i]:
                     with torch.no_grad():
@@ -373,14 +371,14 @@ class Runner(object):
                 #              val_ap)
                 
                 # Passing through validation set to get the embeddings
-                # for t_train in self.val_shots[dataset_idx]:
-                #     with torch.no_grad():
-                #         edge_index, _, _, _, _, _, _ = prepare(data[dataset_idx], t_train)
-                #         embeddings = self.model(edge_index, self.x)
-                #         self.model.update_hiddens_all_with(embeddings)
+                for t_train in self.val_shots[dataset_idx]:
+                    with torch.no_grad():
+                        edge_index, _, _, _, _, _, _ = prepare(data[dataset_idx], t_train)
+                        embeddings = self.model(edge_index, self.x)
+                        self.model.update_hiddens_all_with(embeddings)
 
                 
-                test_auc, test_ap, test_loss = self.tgclassification_test(self.readout_scheme, dataset_idx)
+                test_auc, test_ap = self.tgclassification_test(self.readout_scheme, dataset_idx)
                 logger.info("Final Test Data {}: AUC: {:.4f}, AP: {:.4f}".format(
                     data_name, 
                     test_auc, test_ap))
@@ -404,23 +402,49 @@ if __name__ == '__main__':
 
     args.data_name = dataset_names
     args.test_bias = False
-
+    
     print("INFO: >>> Temporal Graph Classification <<<")
     print("INFO: Args: ", args)
     print("======================================")
     print("INFO: Dataset: {}".format(args.dataset))
     print("INFO: Model: {}".format(args.model))
-    args.dataset, data = load_multiple_datasets("dataset_package_1.txt")
+    args.dataset, data = load_multiple_datasets("dataset_package_test.txt")
+    t_graph_labels, t_graph_feat = extra_dataset_attributes_loading(args)
     # num_nodes_per_data = [data[i]['num_nodes'] for i in range(len(data))]
     # args.num_nodes = 183714#max(num_nodes_per_data)
     # args.max_node_id = 183713
     # args.num_nodes = args.max_node_id + 1
-    for n_data in [2]:
+    category = "nout"
+    
+    for n_data in [1]:
+        for seed in [710, 720]:
+            for nout in [32, 64]:
+                args.nhid = nout
+                args.nout = nout
+                # model_path = "rand_data/rr/{}".format(n_data)
+                # model_path = "rand_data/rr/{}_{}_seed_{}_{}".format(args.model, n_data, seed, nr)
+                model_path = "HTGN_16_seed_{}_{}".format(seed, nout)
+                # model_path = "node_id/HTGN_seed_{}_{}".format(seed, n_data)
+                # result_path = "../data/output/{}/test_result/{}_results.csv".format(category, model_path)
+                # print(result_path)
+                runner = Runner()
+                runner.run()
+
         for seed in [800]:
-            model_path = "{}_{}_seed_{}".format(args.model, n_data, seed)
-            # model_path = "node_id/HTGN_seed_{}_{}".format(seed, n_data)
-            runner = Runner()
-            runner.run()
+            for nout in [64]:
+                args.nhid = nout
+                args.nout = nout
+                model_path = "HTGN_16_seed_{}_{}".format(seed, nout)
+                runner = Runner()
+                runner.run()
+
+        for seed in [710]:
+            for nout in [128]:
+                args.nhid = nout
+                args.nout = nout
+                model_path = "HTGN_16_seed_{}_{}".format(seed, nout)
+                runner = Runner()
+                runner.run()
 
 
     # average_results(result_path)
