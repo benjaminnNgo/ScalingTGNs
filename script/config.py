@@ -8,13 +8,16 @@ parser.add_argument('--dataset', type=str, default='enron10', help='datasets')
 parser.add_argument('--data_pt_path', type=str, default='', help='need to be modified')
 parser.add_argument('--num_nodes', type=int, default=-1, help='num of nodes')
 parser.add_argument('--nfeat', type=int, default=128, help='dim of input feature')
-parser.add_argument('--nhid', type=int, default=16, help='dim of hidden embedding')
+parser.add_argument('--nhid', type=int, default=16, help='dim of hidden embedding')#32-64
 parser.add_argument('--nout', type=int, default=16, help='dim of output embedding')
 parser.add_argument('--neg_sample', type=str, default='rnd', help='negative sampling strategy')
+parser.add_argument("--wandb", action="store_true", default=False, help="now using wandb")
+parser.add_argument('--results_file', type=str, default='results.csv', help='Name of file to store evaluation of all models')
 
 # 2.experiments
 parser.add_argument('--max_epoch', type=int, default=500, help='number of epochs to train.')
 parser.add_argument('--testlength', type=int, default=3, help='length for test, default:3')
+parser.add_argument('--evalLength', type=int, default=3, help='length for eval, default:3')
 parser.add_argument('--device', type=str, default='cpu', help='training device')
 parser.add_argument('--device_id', type=str, default='0', help='device id for gpu')
 parser.add_argument('--seed', type=int, default=1024, help='random seed')
@@ -32,6 +35,12 @@ parser.add_argument('--pre_defined_feature', default=None, help='pre-defined nod
 parser.add_argument('--save_embeddings', type=int, default=0, help='save or not, default:0')
 parser.add_argument('--debug_mode', type=int, default=0, help='debug_mode, 0: normal running; 1: debugging mode')
 parser.add_argument('--min_epoch', type=int, default=100, help='min epoch')
+parser.add_argument('--test_ratio', type=int, default=0.15, help='ratio for testing, default:0.15')
+parser.add_argument('--eval_ratio', type=int, default=0.15, help='ratio for evaluation, default:0.15')
+parser.add_argument('--curr_time', type=str, default='0', help='local time for run to be used for saved models')
+#For testing model only
+parser.add_argument('--test_dataset', type=str, default=None, help='define dataset for testing')
+parser.add_argument('--test_snapshot', type=str, default=5, help='define test snapshot for testing')
 
 # 3.models
 parser.add_argument('--model', type=str, default='HTGN', help='models name')
@@ -160,3 +169,18 @@ if args.dataset in ['mathoverflow']:
 if args.dataset in ['RedditB']:
     args.testlength = 80  # Total number of snapshots = 399
     args.trainable_feat = 1
+
+if args.dataset in ['AMB']:
+    args.testlength = 10  # Total number of snapshots = 399
+    args.trainable_feat = 1
+
+dataset_names = {'unnamedtoken18980x00a8b738e453ffd858a7edf03bccfe20412f0eb0' : 'ALBT',
+                 'unnamedtoken216240x83e6f1e41cdd28eaceb20cb649155049fac3d5aa' : 'POLS',
+                 'unnamedtoken216300xcc4304a31d09258b0029ea7fe63d032f52e44efe' : 'SWAP',
+                 'unnamedtoken216350xe53ec727dbdeb9e2d5456c3be40cff031ab40a55' : 'SUPER',
+                 'unnamedtoken216360xfca59cd816ab1ead66534d82bc21e7515ce441cf' : 'RARI',
+                 'unnamedtoken216390x1ceb5cb57c4d4e2b2433641b95dd330a33185a44' : 'KP3R',
+                 'unnamedtoken216540x09a3ecafa817268f77be1283176b946c4ff2e608' : 'MIR',
+                 'unnamedtoken216550xbcca60bb61934080951369a648fb03df4f96263c' : 'AUSDC',
+                 'unnamedtoken216580x5f98805a4e8be255a32880fdec7f6728c6568ba0' : 'LUSD',
+                 'unnamedtoken216620x429881672b9ae42b8eba0e26cd9c73711b891ca5' : 'PICKLE'}

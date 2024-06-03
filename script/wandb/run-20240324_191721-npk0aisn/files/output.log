@@ -1,0 +1,12 @@
+[2024-03-24 19:17:40,090 INFO] INFO: Using trainable feature, feature dim: 128
+[2024-03-24 19:17:40,091 INFO] INFO: total length: 190, train length: 152, test length: 38
+[2024-03-24 19:17:40,236 INFO] using models HTGN
+[2024-03-24 19:17:46,184 INFO] Start training the temporal graph classification models.
+D:\Research\ScalingTGN\UTG\script\hgcn\manifolds\poincare.py:108: UserWarning: where received a uint8 condition tensor. This behavior is deprecated and will be removed in a future version of PyTorch. Use a boolean condition instead. (Triggered internally at ..\aten\src\ATen\native\TensorCompare.cpp:519.)
+  res = torch.where(cond, res_0, res_c)
+[2024-03-24 19:17:57,109 INFO] ============================================================
+[2024-03-24 19:17:57,110 INFO] Epoch:1, Loss: 0.6992, Time: 10.923, GPU: 54.7MiB
+[2024-03-24 19:17:57,111 INFO] Test: Epoch:1, AUC: 0.6499, AP: 0.7487
+[2024-03-24 19:17:57,112 INFO] >> Total time :  10.93
+[2024-03-24 19:17:57,113 INFO] >> Parameters: lr:0.0100 |Dim:16 |Window:5 |
+[2024-03-24 19:20:37,672 INFO] Final Test: Epoch:1 , AUC: 0.6499, AP: 0.7487

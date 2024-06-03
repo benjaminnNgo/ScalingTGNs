@@ -184,7 +184,9 @@ class Runner(object):
 
 if __name__ == '__main__':
     random.seed(args.seed)  # random seed
-    data = loader(dataset=args.dataset)  # enron10, fb, dblp
+    args.model = "EGCN"
+    args.datase = "aion"
+    data = loader(dataset="aion")  # enron10, fb, dblp
     args.num_nodes = data['num_nodes']
     log_folder = prepare_dir(args.output_folder)  # 2.create folder
     init_logger(log_folder + args.dataset + '_seed_' + str(args.seed) + '.txt')

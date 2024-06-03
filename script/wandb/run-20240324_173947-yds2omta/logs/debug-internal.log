@@ -1,0 +1,222 @@
+2024-03-24 17:39:47,924 INFO    StreamThr :4128 [internal.py:wandb_internal():86] W&B internal server running at pid: 4128, started at: 2024-03-24 17:39:47.923684
+2024-03-24 17:39:47,926 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status
+2024-03-24 17:39:47,956 INFO    WriterThread:4128 [datastore.py:open_for_write():87] open: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_173947-yds2omta\run-yds2omta.wandb
+2024-03-24 17:39:47,957 DEBUG   SenderThread:4128 [sender.py:send():378] send: header
+2024-03-24 17:39:47,996 DEBUG   SenderThread:4128 [sender.py:send():378] send: run
+2024-03-24 17:39:48,696 INFO    SenderThread:4128 [dir_watcher.py:__init__():211] watching files in: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_173947-yds2omta\files
+2024-03-24 17:39:48,696 INFO    SenderThread:4128 [sender.py:_start_run_threads():1099] run started: yds2omta with start time 1711319987.953314
+2024-03-24 17:39:48,704 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: check_version
+2024-03-24 17:39:48,705 DEBUG   SenderThread:4128 [sender.py:send_request():405] send_request: check_version
+2024-03-24 17:39:49,413 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: run_start
+2024-03-24 17:39:49,464 DEBUG   HandlerThread:4128 [system_info.py:__init__():26] System info init
+2024-03-24 17:39:49,464 DEBUG   HandlerThread:4128 [system_info.py:__init__():41] System info init done
+2024-03-24 17:39:49,464 INFO    HandlerThread:4128 [system_monitor.py:start():194] Starting system monitor
+2024-03-24 17:39:49,465 INFO    SystemMonitor:4128 [system_monitor.py:_start():158] Starting system asset monitoring threads
+2024-03-24 17:39:49,465 INFO    HandlerThread:4128 [system_monitor.py:probe():214] Collecting system info
+2024-03-24 17:39:49,469 INFO    SystemMonitor:4128 [interfaces.py:start():190] Started cpu monitoring
+2024-03-24 17:39:49,470 INFO    SystemMonitor:4128 [interfaces.py:start():190] Started disk monitoring
+2024-03-24 17:39:49,471 INFO    SystemMonitor:4128 [interfaces.py:start():190] Started gpu monitoring
+2024-03-24 17:39:49,472 INFO    SystemMonitor:4128 [interfaces.py:start():190] Started memory monitoring
+2024-03-24 17:39:49,486 INFO    SystemMonitor:4128 [interfaces.py:start():190] Started network monitoring
+2024-03-24 17:39:49,486 DEBUG   HandlerThread:4128 [system_info.py:probe():150] Probing system
+2024-03-24 17:39:49,488 DEBUG   HandlerThread:4128 [system_info.py:_probe_git():135] Probing git
+2024-03-24 17:39:49,586 DEBUG   HandlerThread:4128 [system_info.py:_probe_git():143] Probing git done
+2024-03-24 17:39:49,586 DEBUG   HandlerThread:4128 [system_info.py:probe():198] Probing system done
+2024-03-24 17:39:49,586 DEBUG   HandlerThread:4128 [system_monitor.py:probe():223] {'os': 'Windows-10-10.0.22631-SP0', 'python': '3.11.5', 'heartbeatAt': '2024-03-24T22:39:49.487418', 'startedAt': '2024-03-24T22:39:47.894135', 'docker': None, 'cuda': None, 'args': ('--model=HTGN', '--seed=710', '--dataset=aion', '--wandb'), 'state': 'running', 'program': 'D:\\Research\\ScalingTGN\\UTG\\script\\main.py', 'codePathLocal': 'main.py', 'codePath': 'script\\main.py', 'git': {'remote': 'https://github.com/benjaminnNgo/ScalingTGNs.git', 'commit': 'd657880a42da578806966a3aa9780b919bc5277d'}, 'email': 'ngot1@myumanitoba.ca', 'root': 'D:/Research/ScalingTGN/UTG', 'host': 'DESKTOP-NBS40GC', 'username': 'ngotr', 'executable': 'D:\\anaconda\\python.exe', 'cpu_count': 4, 'cpu_count_logical': 4, 'cpu_freq': {'current': 3400.0, 'min': 0.0, 'max': 3600.0}, 'cpu_freq_per_core': [{'current': 3400.0, 'min': 0.0, 'max': 3600.0}], 'disk': {'/': {'total': 453.42773056030273, 'used': 64.3367919921875}}, 'gpu': 'NVIDIA GeForce GTX 1660', 'gpu_count': 1, 'gpu_devices': [{'name': 'NVIDIA GeForce GTX 1660', 'memory_total': 6442450944}], 'memory': {'total': 23.936920166015625}}
+2024-03-24 17:39:49,586 INFO    HandlerThread:4128 [system_monitor.py:probe():224] Finished collecting system info
+2024-03-24 17:39:49,586 INFO    HandlerThread:4128 [system_monitor.py:probe():227] Publishing system info
+2024-03-24 17:39:49,586 DEBUG   HandlerThread:4128 [system_info.py:_save_conda():207] Saving list of conda packages installed into the current environment
+2024-03-24 17:39:49,707 INFO    Thread-16 :4128 [dir_watcher.py:_on_file_created():271] file/dir created: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_173947-yds2omta\files\conda-environment.yaml
+2024-03-24 17:40:09,695 DEBUG   HandlerThread:4128 [system_info.py:_save_conda():219] Saving conda packages done
+2024-03-24 17:40:09,742 INFO    HandlerThread:4128 [system_monitor.py:probe():229] Finished publishing system info
+2024-03-24 17:40:09,792 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:40:09,792 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: keepalive
+2024-03-24 17:40:09,792 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:40:09,792 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: keepalive
+2024-03-24 17:40:09,792 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:40:09,792 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: keepalive
+2024-03-24 17:40:09,793 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:40:09,793 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: keepalive
+2024-03-24 17:40:09,793 DEBUG   SenderThread:4128 [sender.py:send():378] send: files
+2024-03-24 17:40:09,793 INFO    SenderThread:4128 [sender.py:_save_file():1365] saving file wandb-metadata.json with policy now
+2024-03-24 17:40:09,874 INFO    Thread-16 :4128 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_173947-yds2omta\files\conda-environment.yaml
+2024-03-24 17:40:09,874 INFO    Thread-16 :4128 [dir_watcher.py:_on_file_created():271] file/dir created: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_173947-yds2omta\files\wandb-metadata.json
+2024-03-24 17:40:10,764 INFO    wandb-upload_0:4128 [upload_job.py:push():131] Uploaded file C:\Users\ngotr\AppData\Local\Temp\tmp1hnc0843wandb\teylg550-wandb-metadata.json
+2024-03-24 17:40:12,877 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: python_packages
+2024-03-24 17:40:12,878 DEBUG   SenderThread:4128 [sender.py:send_request():405] send_request: python_packages
+2024-03-24 17:40:12,878 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: stop_status
+2024-03-24 17:40:12,879 DEBUG   SenderThread:4128 [sender.py:send_request():405] send_request: stop_status
+2024-03-24 17:40:12,880 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: internal_messages
+2024-03-24 17:40:12,910 INFO    Thread-16 :4128 [dir_watcher.py:_on_file_created():271] file/dir created: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_173947-yds2omta\files\requirements.txt
+2024-03-24 17:40:12,964 DEBUG   SenderThread:4128 [sender.py:send():378] send: telemetry
+2024-03-24 17:40:13,923 INFO    Thread-16 :4128 [dir_watcher.py:_on_file_created():271] file/dir created: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_173947-yds2omta\files\output.log
+2024-03-24 17:40:13,970 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:40:15,941 INFO    Thread-16 :4128 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_173947-yds2omta\files\output.log
+2024-03-24 17:40:18,971 INFO    Thread-16 :4128 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_173947-yds2omta\files\output.log
+2024-03-24 17:40:19,921 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:40:20,993 INFO    Thread-16 :4128 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_173947-yds2omta\files\config.yaml
+2024-03-24 17:40:23,007 INFO    Thread-16 :4128 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_173947-yds2omta\files\output.log
+2024-03-24 17:40:25,790 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:40:27,873 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: internal_messages
+2024-03-24 17:40:27,901 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: stop_status
+2024-03-24 17:40:27,902 DEBUG   SenderThread:4128 [sender.py:send_request():405] send_request: stop_status
+2024-03-24 17:40:31,087 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:40:35,785 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: partial_history
+2024-03-24 17:40:35,786 DEBUG   SenderThread:4128 [sender.py:send():378] send: history
+2024-03-24 17:40:35,786 DEBUG   SenderThread:4128 [sender.py:send_request():405] send_request: summary_record
+2024-03-24 17:40:35,814 INFO    SenderThread:4128 [sender.py:_save_file():1365] saving file wandb-summary.json with policy end
+2024-03-24 17:40:36,118 INFO    Thread-16 :4128 [dir_watcher.py:_on_file_created():271] file/dir created: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_173947-yds2omta\files\wandb-summary.json
+2024-03-24 17:40:36,829 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:40:37,128 INFO    Thread-16 :4128 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_173947-yds2omta\files\output.log
+2024-03-24 17:40:41,876 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:40:42,888 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: internal_messages
+2024-03-24 17:40:42,904 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: stop_status
+2024-03-24 17:40:42,904 DEBUG   SenderThread:4128 [sender.py:send_request():405] send_request: stop_status
+2024-03-24 17:40:47,037 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:40:47,320 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: partial_history
+2024-03-24 17:40:47,320 DEBUG   SenderThread:4128 [sender.py:send():378] send: history
+2024-03-24 17:40:47,321 DEBUG   SenderThread:4128 [sender.py:send_request():405] send_request: summary_record
+2024-03-24 17:40:47,322 INFO    SenderThread:4128 [sender.py:_save_file():1365] saving file wandb-summary.json with policy end
+2024-03-24 17:40:48,242 INFO    Thread-16 :4128 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_173947-yds2omta\files\wandb-summary.json
+2024-03-24 17:40:49,487 DEBUG   SystemMonitor:4128 [system_monitor.py:_start():172] Starting system metrics aggregation loop
+2024-03-24 17:40:49,489 DEBUG   SenderThread:4128 [sender.py:send():378] send: stats
+2024-03-24 17:40:52,526 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:40:57,580 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:40:57,896 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: internal_messages
+2024-03-24 17:40:57,928 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: stop_status
+2024-03-24 17:40:57,929 DEBUG   SenderThread:4128 [sender.py:send_request():405] send_request: stop_status
+2024-03-24 17:40:59,904 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: partial_history
+2024-03-24 17:40:59,905 DEBUG   SenderThread:4128 [sender.py:send():378] send: history
+2024-03-24 17:40:59,905 DEBUG   SenderThread:4128 [sender.py:send_request():405] send_request: summary_record
+2024-03-24 17:40:59,906 INFO    SenderThread:4128 [sender.py:_save_file():1365] saving file wandb-summary.json with policy end
+2024-03-24 17:41:00,366 INFO    Thread-16 :4128 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_173947-yds2omta\files\wandb-summary.json
+2024-03-24 17:41:02,934 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:41:07,996 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:41:12,894 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: internal_messages
+2024-03-24 17:41:12,941 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: stop_status
+2024-03-24 17:41:12,941 DEBUG   SenderThread:4128 [sender.py:send_request():405] send_request: stop_status
+2024-03-24 17:41:13,055 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: partial_history
+2024-03-24 17:41:13,065 DEBUG   SenderThread:4128 [sender.py:send():378] send: history
+2024-03-24 17:41:13,065 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:41:13,065 DEBUG   SenderThread:4128 [sender.py:send_request():405] send_request: summary_record
+2024-03-24 17:41:13,067 INFO    SenderThread:4128 [sender.py:_save_file():1365] saving file wandb-summary.json with policy end
+2024-03-24 17:41:13,456 INFO    Thread-16 :4128 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_173947-yds2omta\files\wandb-summary.json
+2024-03-24 17:41:18,083 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:41:19,500 DEBUG   SenderThread:4128 [sender.py:send():378] send: stats
+2024-03-24 17:41:23,527 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:41:25,790 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: partial_history
+2024-03-24 17:41:25,790 DEBUG   SenderThread:4128 [sender.py:send():378] send: history
+2024-03-24 17:41:25,791 DEBUG   SenderThread:4128 [sender.py:send_request():405] send_request: summary_record
+2024-03-24 17:41:25,793 INFO    SenderThread:4128 [sender.py:_save_file():1365] saving file wandb-summary.json with policy end
+2024-03-24 17:41:26,618 INFO    Thread-16 :4128 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_173947-yds2omta\files\wandb-summary.json
+2024-03-24 17:41:27,901 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: internal_messages
+2024-03-24 17:41:27,947 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: stop_status
+2024-03-24 17:41:27,947 DEBUG   SenderThread:4128 [sender.py:send_request():405] send_request: stop_status
+2024-03-24 17:41:29,090 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:41:34,127 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:41:38,255 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: partial_history
+2024-03-24 17:41:38,256 DEBUG   SenderThread:4128 [sender.py:send():378] send: history
+2024-03-24 17:41:38,256 DEBUG   SenderThread:4128 [sender.py:send_request():405] send_request: summary_record
+2024-03-24 17:41:38,257 INFO    SenderThread:4128 [sender.py:_save_file():1365] saving file wandb-summary.json with policy end
+2024-03-24 17:41:38,704 INFO    Thread-16 :4128 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_173947-yds2omta\files\wandb-summary.json
+2024-03-24 17:41:39,270 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:41:42,912 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: internal_messages
+2024-03-24 17:41:42,958 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: stop_status
+2024-03-24 17:41:42,958 DEBUG   SenderThread:4128 [sender.py:send_request():405] send_request: stop_status
+2024-03-24 17:41:45,105 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:41:49,502 DEBUG   SenderThread:4128 [sender.py:send():378] send: stats
+2024-03-24 17:41:50,515 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:41:50,857 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: partial_history
+2024-03-24 17:41:50,857 DEBUG   SenderThread:4128 [sender.py:send():378] send: history
+2024-03-24 17:41:50,857 DEBUG   SenderThread:4128 [sender.py:send_request():405] send_request: summary_record
+2024-03-24 17:41:50,858 INFO    SenderThread:4128 [sender.py:_save_file():1365] saving file wandb-summary.json with policy end
+2024-03-24 17:41:51,825 INFO    Thread-16 :4128 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_173947-yds2omta\files\wandb-summary.json
+2024-03-24 17:41:55,910 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:41:57,918 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: internal_messages
+2024-03-24 17:41:57,965 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: stop_status
+2024-03-24 17:41:57,965 DEBUG   SenderThread:4128 [sender.py:send_request():405] send_request: stop_status
+2024-03-24 17:42:01,108 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:42:02,048 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: partial_history
+2024-03-24 17:42:02,050 DEBUG   SenderThread:4128 [sender.py:send():378] send: history
+2024-03-24 17:42:02,050 DEBUG   SenderThread:4128 [sender.py:send_request():405] send_request: summary_record
+2024-03-24 17:42:02,051 INFO    SenderThread:4128 [sender.py:_save_file():1365] saving file wandb-summary.json with policy end
+2024-03-24 17:42:02,938 INFO    Thread-16 :4128 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_173947-yds2omta\files\wandb-summary.json
+2024-03-24 17:42:06,908 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:42:12,116 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:42:12,924 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: internal_messages
+2024-03-24 17:42:12,972 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: stop_status
+2024-03-24 17:42:12,972 DEBUG   SenderThread:4128 [sender.py:send_request():405] send_request: stop_status
+2024-03-24 17:42:17,189 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:42:17,564 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: partial_history
+2024-03-24 17:42:17,565 DEBUG   SenderThread:4128 [sender.py:send():378] send: history
+2024-03-24 17:42:17,565 DEBUG   SenderThread:4128 [sender.py:send_request():405] send_request: summary_record
+2024-03-24 17:42:17,566 INFO    SenderThread:4128 [sender.py:_save_file():1365] saving file wandb-summary.json with policy end
+2024-03-24 17:42:18,184 INFO    Thread-16 :4128 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_173947-yds2omta\files\wandb-summary.json
+2024-03-24 17:42:19,513 DEBUG   SenderThread:4128 [sender.py:send():378] send: stats
+2024-03-24 17:42:22,543 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:42:27,593 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:42:27,940 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: internal_messages
+2024-03-24 17:42:27,971 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: stop_status
+2024-03-24 17:42:27,972 DEBUG   SenderThread:4128 [sender.py:send_request():405] send_request: stop_status
+2024-03-24 17:42:28,875 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: partial_history
+2024-03-24 17:42:28,875 DEBUG   SenderThread:4128 [sender.py:send():378] send: history
+2024-03-24 17:42:28,875 DEBUG   SenderThread:4128 [sender.py:send_request():405] send_request: summary_record
+2024-03-24 17:42:28,877 INFO    SenderThread:4128 [sender.py:_save_file():1365] saving file wandb-summary.json with policy end
+2024-03-24 17:42:29,317 INFO    Thread-16 :4128 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_173947-yds2omta\files\wandb-summary.json
+2024-03-24 17:42:32,922 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:42:37,985 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:42:40,279 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: partial_history
+2024-03-24 17:42:40,280 DEBUG   SenderThread:4128 [sender.py:send():378] send: history
+2024-03-24 17:42:40,280 DEBUG   SenderThread:4128 [sender.py:send_request():405] send_request: summary_record
+2024-03-24 17:42:40,281 INFO    SenderThread:4128 [sender.py:_save_file():1365] saving file wandb-summary.json with policy end
+2024-03-24 17:42:40,451 INFO    Thread-16 :4128 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_173947-yds2omta\files\wandb-summary.json
+2024-03-24 17:42:42,947 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: internal_messages
+2024-03-24 17:42:42,978 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: stop_status
+2024-03-24 17:42:42,978 DEBUG   SenderThread:4128 [sender.py:send_request():405] send_request: stop_status
+2024-03-24 17:42:43,158 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:42:48,193 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:42:49,517 DEBUG   SenderThread:4128 [sender.py:send():378] send: stats
+2024-03-24 17:42:51,858 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: partial_history
+2024-03-24 17:42:51,859 DEBUG   SenderThread:4128 [sender.py:send():378] send: history
+2024-03-24 17:42:51,859 DEBUG   SenderThread:4128 [sender.py:send_request():405] send_request: summary_record
+2024-03-24 17:42:51,860 INFO    SenderThread:4128 [sender.py:_save_file():1365] saving file wandb-summary.json with policy end
+2024-03-24 17:42:52,646 INFO    Thread-16 :4128 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_173947-yds2omta\files\wandb-summary.json
+2024-03-24 17:42:53,883 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:42:57,950 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: internal_messages
+2024-03-24 17:42:57,997 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: stop_status
+2024-03-24 17:42:57,997 DEBUG   SenderThread:4128 [sender.py:send_request():405] send_request: stop_status
+2024-03-24 17:42:59,170 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:43:02,843 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: partial_history
+2024-03-24 17:43:02,844 DEBUG   SenderThread:4128 [sender.py:send():378] send: history
+2024-03-24 17:43:02,844 DEBUG   SenderThread:4128 [sender.py:send_request():405] send_request: summary_record
+2024-03-24 17:43:02,844 INFO    SenderThread:4128 [sender.py:_save_file():1365] saving file wandb-summary.json with policy end
+2024-03-24 17:43:03,764 INFO    Thread-16 :4128 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_173947-yds2omta\files\wandb-summary.json
+2024-03-24 17:43:04,867 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:43:09,926 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:43:12,962 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: internal_messages
+2024-03-24 17:43:13,010 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: stop_status
+2024-03-24 17:43:13,010 DEBUG   SenderThread:4128 [sender.py:send_request():405] send_request: stop_status
+2024-03-24 17:43:14,215 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: partial_history
+2024-03-24 17:43:14,216 DEBUG   SenderThread:4128 [sender.py:send():378] send: history
+2024-03-24 17:43:14,216 DEBUG   SenderThread:4128 [sender.py:send_request():405] send_request: summary_record
+2024-03-24 17:43:14,216 INFO    SenderThread:4128 [sender.py:_save_file():1365] saving file wandb-summary.json with policy end
+2024-03-24 17:43:14,881 INFO    Thread-16 :4128 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_173947-yds2omta\files\wandb-summary.json
+2024-03-24 17:43:15,231 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:43:19,523 DEBUG   SenderThread:4128 [sender.py:send():378] send: stats
+2024-03-24 17:43:20,530 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:43:25,467 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: partial_history
+2024-03-24 17:43:25,468 DEBUG   SenderThread:4128 [sender.py:send():378] send: history
+2024-03-24 17:43:25,469 DEBUG   SenderThread:4128 [sender.py:send_request():405] send_request: summary_record
+2024-03-24 17:43:25,472 INFO    SenderThread:4128 [sender.py:_save_file():1365] saving file wandb-summary.json with policy end
+2024-03-24 17:43:25,991 INFO    Thread-16 :4128 [dir_watcher.py:_on_file_modified():288] file/dir modified: D:\Research\ScalingTGN\UTG\script\wandb\run-20240324_173947-yds2omta\files\wandb-summary.json
+2024-03-24 17:43:26,478 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:43:27,964 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: internal_messages
+2024-03-24 17:43:28,028 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: stop_status
+2024-03-24 17:43:28,029 DEBUG   SenderThread:4128 [sender.py:send_request():405] send_request: stop_status
+2024-03-24 17:43:32,165 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
+2024-03-24 17:43:35,478 INFO    memory    :4128 [interfaces.py:monitor():140] Process proc.memory.rssMB has exited.
+2024-03-24 17:43:35,479 DEBUG   SystemMonitor:4128 [system_monitor.py:_start():179] Finished system metrics aggregation loop
+2024-03-24 17:43:35,494 DEBUG   SystemMonitor:4128 [system_monitor.py:_start():183] Publishing last batch of metrics
+2024-03-24 17:43:35,495 DEBUG   SenderThread:4128 [sender.py:send():378] send: stats
+2024-03-24 17:43:37,018 INFO    MainThread:4128 [internal.py:handle_exit():76] Internal process exited
+2024-03-24 17:43:37,507 DEBUG   HandlerThread:4128 [handler.py:handle_request():146] handle_request: status_report
