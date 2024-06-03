@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="200" height="200" src="https://github.com/benjaminnNgo/ScalingTGNs/tree/main/pic/TGS_Logo.png">
+  <img width="300" height="150" src="https://github.com/benjaminnNgo/ScalingTGNs/blob/main/pic/TGS_Logo.png">
 </p>
 
 # Towards Neural Scaling Laws for Foundation Models on Temporal Graphs
@@ -9,7 +9,7 @@ This repository provides the implementation of the TGS foundation model benchmar
 ## Overview
 Temporal graph learning focuses on predicting future interactions from evolving network data. Our study addresses whether it's possible to predict the evolution of an unseen network within the same domain using observed temporal graphs. We introduce the Temporal Graph Scaling (TGS) dataset, comprising 84 ERC20 token transaction networks collected from 2017 to 2023. To evaluate transferability, we pre-train Temporal Graph Neural Networks (TGNNs) on up to 64 token transaction networks and assess their performance on 20 unseen token types. Our findings reveal that the neural scaling law observed in NLP and Computer Vision also applies to temporal graph learning: pre-training on more networks with more parameters enhances downstream performance. This is the first empirical demonstration of temporal graph transferability. Notably, the largest pre-trained model surpasses fine-tuned TGNNs on unseen test networks, marking a significant step towards building foundation models for temporal graphs. The code and datasets are publicly available.
 
-![](https://github.com/benjaminnNgo/ScalingTGNs/tree/main/pic/htgn-log2-all-v3-1.png)
+![](https://github.com/benjaminnNgo/ScalingTGNs/blob/main/pic/htgn-log2-all-v3-1.png)
 *TGS foundation model performance on unseen networks*
 
 ### Dataset
@@ -31,7 +31,7 @@ The TGS dataset extraction includes:
 
  TGS transaction networks are divided randomly into train and test sets. The train set is used to train foundation models with different sizes; then, the trained models are evaluated on the test set.
 
-![](https://github.com/benjaminnNgo/ScalingTGNs/tree/main/pic/Foundation_training_v5.tiff)
+![](https://github.com/benjaminnNgo/ScalingTGNs/blob/main/pic/Foundation_training_v5.png)
 *TGS foundation model training overview*
 
 ### Prerequisites
