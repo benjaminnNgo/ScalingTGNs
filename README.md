@@ -24,7 +24,7 @@ The TGS dataset extraction includes:
 (2) Discretizing: creating weekly snapshots for the Discretized Temporal Directed Graph (DTDG) setting. 
 (3) Labeling: assigning labels based on network growth; increasing trends are labeled one, decreasing trends are labeled zero.
 
-![](https://github.com/benjaminnNgo/ScalingTGNs/blob/main/pic/Data_Processing_V1.png)
+![](https://github.com/benjaminnNgo/ScalingTGNs/tree/main/pic/Data_Processing_V1.png)
 *TGS dataset extraction*
 
 ### Benchmark Implementation
