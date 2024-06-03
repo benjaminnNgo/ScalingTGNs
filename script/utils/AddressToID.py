@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 
+
 # Specify your mapping file name
 mapping_file_name = 'Address_to_ID_Mapping.csv'
 
@@ -31,17 +32,16 @@ def replace_addresses_with_ids(df, address_columns):
 
 
 # Insert your folder paths here
-folder_path = 'ADD_INPUT_FOLDER_CONTAINS_TOKEN_FILES'
-folder_output = 'ADD_OUTPUT_FOLDER_FOR_MAPPED_FILES'
+folder_path = 'E:/token/'
+folder_output = '../data/'
 
 # List and sort all CSV files by size
-files = [f for f in os.listdir(folder_path) if f.endswith('.csv')]
-files_sorted_by_size = sorted(files, key=lambda x: os.path.getsize(os.path.join(folder_path, x)))
+files = ['unnamed_token_1898_0x00a8b738e453ffd858a7edf03bccfe20412f0eb0.csv','unnamed_token_21624_0x83e6f1e41cdd28eaceb20cb649155049fac3d5aa.csv']
 
 processing_indx = 1
 
-for file_name in files_sorted_by_size:
-    print(f"Processing {processing_indx} / {len(files_sorted_by_size)}")
+for file_name in files:
+    print(f"Processing {processing_indx} / {len(files)}")
     df = pd.read_csv(os.path.join(folder_path, file_name))
 
     # Assuming the columns are named 'to' and 'from'
@@ -51,6 +51,7 @@ for file_name in files_sorted_by_size:
     df = replace_addresses_with_ids(df, address_columns)
 
     # Save the modified DataFrame
+    print(os.path.join(folder_output, "wi_" + file_name))
     df.to_csv(os.path.join(folder_output, "wi_" + file_name), index=False)
 
     print(f"Done with file {processing_indx}")

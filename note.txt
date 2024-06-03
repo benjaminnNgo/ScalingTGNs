@@ -1,3 +1,4 @@
-the first : default
-The second: lower lr to 0.001
-The third test set 10
+i4: 5 datasets 216350,216360,216300,216240,18980 (No MLP saved) each dataset train 3 times. add update all hidden
+i5: add MLP save
+
+modifed data_util

@@ -8,7 +8,7 @@ parser.add_argument('--dataset', type=str, default='enron10', help='datasets')
 parser.add_argument('--data_pt_path', type=str, default='', help='need to be modified')
 parser.add_argument('--num_nodes', type=int, default=-1, help='num of nodes')
 parser.add_argument('--nfeat', type=int, default=128, help='dim of input feature')
-parser.add_argument('--nhid', type=int, default=16, help='dim of hidden embedding')
+parser.add_argument('--nhid', type=int, default=16, help='dim of hidden embedding')#32-64
 parser.add_argument('--nout', type=int, default=16, help='dim of output embedding')
 parser.add_argument('--neg_sample', type=str, default='rnd', help='negative sampling strategy')
 parser.add_argument("--wandb", action="store_true", default=False, help="now using wandb")
@@ -173,3 +173,14 @@ if args.dataset in ['RedditB']:
 if args.dataset in ['AMB']:
     args.testlength = 10  # Total number of snapshots = 399
     args.trainable_feat = 1
+
+dataset_names = {'unnamedtoken18980x00a8b738e453ffd858a7edf03bccfe20412f0eb0' : 'ALBT',
+                 'unnamedtoken216240x83e6f1e41cdd28eaceb20cb649155049fac3d5aa' : 'POLS',
+                 'unnamedtoken216300xcc4304a31d09258b0029ea7fe63d032f52e44efe' : 'SWAP',
+                 'unnamedtoken216350xe53ec727dbdeb9e2d5456c3be40cff031ab40a55' : 'SUPER',
+                 'unnamedtoken216360xfca59cd816ab1ead66534d82bc21e7515ce441cf' : 'RARI',
+                 'unnamedtoken216390x1ceb5cb57c4d4e2b2433641b95dd330a33185a44' : 'KP3R',
+                 'unnamedtoken216540x09a3ecafa817268f77be1283176b946c4ff2e608' : 'MIR',
+                 'unnamedtoken216550xbcca60bb61934080951369a648fb03df4f96263c' : 'AUSDC',
+                 'unnamedtoken216580x5f98805a4e8be255a32880fdec7f6728c6568ba0' : 'LUSD',
+                 'unnamedtoken216620x429881672b9ae42b8eba0e26cd9c73711b891ca5' : 'PICKLE'}

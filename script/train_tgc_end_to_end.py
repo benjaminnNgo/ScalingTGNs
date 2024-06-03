@@ -8,7 +8,6 @@ July 14, 2023
 import math
 import os
 import sys
-import time
 import torch
 import numpy as np
 import pandas as pd
@@ -20,6 +19,7 @@ from pickle import dump, load
 import matplotlib.pyplot as plt
 import wandb
 import warnings
+import timeit
 
 # Filter out a specific warning
 warnings.filterwarnings("ignore")
@@ -122,49 +122,50 @@ def extra_dataset_attributes_loading(args, readout_scheme='mean'):
     return TG_labels, TG_feats
 
 
-def save_results(dataset, test_auc, test_ap, lr, train_snapshot, test_snapshot, best_epoch):
-    result_path = f"../data/output/{args.results_file}"
+def save_results(dataset, test_auc, test_ap, lr, train_snapshot, test_snapshot, best_epoch, time):
+    partial_path = "../data/output/single_model_htgn_test/"
+    if not os.path.exists(partial_path):
+        os.makedirs(partial_path)
+    result_path = f"{partial_path}/{args.results_file}"
     if not os.path.exists(result_path):
         result_df = pd.DataFrame(
-            columns=["dataset", "test_auc", "test_ap", "lr", "train_snapshot", "test_snapshot", "seed", "best_epoch"])
+            columns=["dataset", "test_auc", "test_ap", "lr", "train_snapshot", "test_snapshot", "seed", "best_epoch",
+                     "time"])
     else:
         result_df = pd.read_csv(result_path)
 
-    result_df = result_df._append({'dataset': dataset,
-                                   'test_auc': test_auc,
-                                   'test_ap': test_ap,
-                                   "lr": lr,
-                                   "train_snapshot": train_snapshot,
-                                   "test_snapshot": test_snapshot,
-                                   "seed": args.seed,
-                                   "best_epoch": best_epoch}, ignore_index=True)
+    result_df = result_df.append({'dataset': dataset,
+                                  'test_auc': test_auc,
+                                  'test_ap': test_ap,
+                                  "lr": lr,
+                                  "train_snapshot": train_snapshot,
+                                  "test_snapshot": test_snapshot,
+                                  "seed": args.seed,
+                                  "best_epoch": best_epoch,
+                                  "time": time
+                                  }, ignore_index=True)
     result_df.to_csv(result_path, index=False)
 
 
-def save_epoch_results(epoch, test_auc, test_ap, loss, train_auc, train_ap):
-    result_path = "../data/output/epoch_result/{}_{}_{}_epochResult".format(args.dataset, args.model, args.seed)
+def save_epoch_results(epoch, test_auc, test_ap, loss, train_auc, train_ap, time):
+    partial_path = "../data/output/epoch_result/single_model_test_set/"
+    if not os.path.exists(partial_path):
+        os.makedirs(partial_path)
+
+    result_path = "{}/{}_{}_{}_epochResult".format(partial_path, args.dataset, args.model, args.seed)
     if not os.path.exists(result_path):
-        result_df = pd.DataFrame(columns=["epoch", "test_auc", "test_ap", "loss", "train_auc", "train_ap"])
+        result_df = pd.DataFrame(columns=["epoch", "test_auc", "test_ap", "loss", "train_auc", "train_ap", "time"])
     else:
         result_df = pd.read_csv(result_path)
 
-    result_df = result_df._append({'epoch': epoch,
-                                   'test_auc': test_auc,
-                                   'test_ap': test_ap,
-                                   "loss": loss,
-                                   "train_auc": train_auc,
-                                   "train_ap": train_ap}, ignore_index=True)
-    result_df.to_csv(result_path, index=False)
-
-
-def save_epoch_traing(epoch, test_auc, test_ap):
-    result_path = "../data/output/training_test/{}_{}_{}_epochResult".format(args.dataset, args.model, args.seed)
-    if not os.path.exists(result_path):
-        result_df = pd.DataFrame(columns=["epoch", "test_auc", "test_ap"])
-    else:
-        result_df = pd.read_csv(result_path)
-
-    result_df = result_df._append({'epoch': epoch, 'test_auc': test_auc, 'test_ap': test_ap}, ignore_index=True)
+    result_df = result_df.append({'epoch': epoch,
+                                  'test_auc': test_auc,
+                                  'test_ap': test_ap,
+                                  "loss": loss,
+                                  "train_auc": train_auc,
+                                  "train_ap": train_ap,
+                                  "time": time
+                                  }, ignore_index=True)
     result_df.to_csv(result_path, index=False)
 
 
@@ -173,7 +174,7 @@ class Runner(object):
         if args.wandb:
             wandb.init(
                 # set the wandb project where this run will be logged
-                project="scalingTGNs_i4",
+                project="single_models_test_set",
                 # Set name of the run:
                 name="{}_{}_{}".format(args.dataset, args.model, args.seed),
                 # track hyperparameters and run metadata
@@ -202,8 +203,8 @@ class Runner(object):
                                                                                                       args.testlength))
 
         self.model = load_model(args).to(args.device)
-        self.model_path = '../saved_models/{}_{}_seed_{}.pth'.format(args.dataset,
-                                                                     args.model, args.seed)
+        self.model_path = '../saved_models/single_model_test_set/{}_{}_seed_{}/'.format(args.dataset,
+                                                                                        args.model, args.seed)
         # logger.info("The models is going to be loaded from {}".format(self.model_path))
         # self.models.load_state_dict(torch.load(self.model_path))
 
@@ -260,7 +261,6 @@ class Runner(object):
 
                 # update the models
                 self.model.update_hiddens_all_with(embeddings)  # Added
-
 
         auc, ap = roc_auc_score(tg_labels, tg_preds), average_precision_score(tg_labels, tg_preds)
         return epoch, auc, ap
@@ -321,11 +321,13 @@ class Runner(object):
         self.model = self.model.train()
         self.tgc_decoder = self.tgc_decoder.train()
 
-        t_total_start = time.time()
+        t_total_start = timeit.default_timer()
         min_loss = 10
         train_avg_epoch_loss_dict = {}
 
         best_model = self.model.state_dict()
+        best_MLP = self.tgc_decoder.state_dict()
+
         best_epoch = -1
         patience = 0
         best_eval_auc = -1  # Set previous evaluation result to very small number
@@ -337,7 +339,7 @@ class Runner(object):
             self.model.train()
             self.model.init_hiddens()  # Just added
             self.tgc_decoder.train()
-            t_epoch_start = time.time()
+            t_epoch_start = timeit.default_timer()
             epoch_losses = []
             tg_labels = []
             tg_preds = []
@@ -374,6 +376,7 @@ class Runner(object):
             if best_eval_auc < eval_auc:  # Use AUC as metric to define early stoping
                 patience = 0
                 best_model = self.model.state_dict()  # Saved the best model for testing
+                best_MLP = self.tgc_decoder.state_dict()
 
                 best_eval_auc = eval_auc
                 best_epoch, best_test_auc, best_test_ap = self.tgclassification_test(epoch, self.readout_scheme)
@@ -393,11 +396,12 @@ class Runner(object):
                     break
 
             gpu_mem_alloc = torch.cuda.max_memory_allocated() / 1000000 if torch.cuda.is_available() else 0
+            total_epoch_time = timeit.default_timer() - t_epoch_start
 
             if epoch == 1 or epoch % args.log_interval == 0:
                 logger.info('==' * 30)
                 logger.info("Epoch:{}, Loss: {:.4f}, Time: {:.3f}, GPU: {:.1f}MiB".format(epoch, avg_epoch_loss,
-                                                                                          time.time() - t_epoch_start,
+                                                                                          total_epoch_time,
                                                                                           gpu_mem_alloc))
                 logger.info(
                     "Test: Epoch:{}, AUC: {:.4f}, AP: {:.4f}".format(eval_epoch, eval_auc, eval_ap))
@@ -415,19 +419,24 @@ class Runner(object):
                            "train AUC": train_auc,
                            "train AP": train_ap
                            })
-            save_epoch_results(epoch, eval_auc, eval_ap, avg_epoch_loss, train_auc, train_ap)
+            save_epoch_results(epoch, eval_auc, eval_ap, avg_epoch_loss, train_auc, train_ap, total_epoch_time)
             # save_epoch_traing(epoch,train_auc,train_ap)
 
-        logger.info('>> Total time : %6.2f' % (time.time() - t_total_start))
+        total_time = timeit.default_timer() - t_total_start
+        logger.info('>> Total time : %6.2f' % (total_time))
         logger.info(">> Parameters: lr:%.4f |Dim:%d |Window:%d |" % (args.lr, args.nhid, args.nb_window))
 
+        # Save the model
         logger.info("INFO: Saving the models...")
-        torch.save(best_model, self.model_path)
+        if not os.path.exists(self.model_path):
+            os.makedirs(self.model_path)
+        torch.save(best_model, "{}{}.pth".format(self.model_path, args.model))
+        torch.save(best_MLP, "{}{}_MLP.pth".format(self.model_path, args.model))
         logger.info("INFO: The models is saved. Done.")
 
         # ------------ DEBUGGING ------------
         # save the training loss values
-        partial_results_path = f'../data/output/log/{args.dataset}/{args.model}/'
+        partial_results_path = f'../data/output/log/single_model/{args.dataset}/{args.model}/'
         loss_log_filename = f'{partial_results_path}/{args.model}_{args.dataset}_{args.seed}_train_loss.pkl'
         if os.path.exists(partial_results_path) == False:
             os.makedirs(partial_results_path)
@@ -438,7 +447,7 @@ class Runner(object):
         # Final Test
         logger.info("Best Test: Epoch:{} , AUC: {:.4f}, AP: {:.4f}".format(best_epoch, best_test_auc, best_test_ap))
         save_results(args.dataset, best_test_auc, best_test_ap, self.tgc_lr, len(self.train_shots),
-                     len(self.test_shots), best_epoch)
+                     len(self.test_shots), best_epoch, total_time)
 
 
 if __name__ == '__main__':
@@ -449,25 +458,59 @@ if __name__ == '__main__':
     from script.utils.data_util import loader, prepare_dir
     from script.inits import prepare
 
-    args.num_nodes = 10000000
-    args.dataset = "TRXC2"
+    datasets = [
+        # "unnamedtoken223250xf2ec4a773ef90c58d98ea734c0ebdb538519b988",
+        # "unnamedtoken222800xa49d7499271ae71cd8ab9ac515e6694c755d400c",
+        "AMB_0x4dc3643dbc642b72c158e7f3d2ff232df61cb6ce",
+        # "unnamedtoken223030x4ad434b8cdc3aa5ac97932d6bd18b5d313ab0f6f",
+        # "unnamedtoken220850x9fa69536d1cda4a04cfb50688294de75b505a9ae",
+        # "unnamedtoken220220xade00c28244d5ce17d72e40330b1c318cd12b7c3",
+        # "unnamedtoken223090xc4ee0aa2d993ca7c9263ecfa26c6f7e13009d2b6",
+        # "unnamedtoken221090x5de8ab7e27f6e7a1fff3e5b337584aa43961beef",
+        # "unnamedtoken220240x235c8ee913d93c68d2902a8e0b5a643755705726",
+        # "unnamedtoken221150xa2cd3d43c775978a96bdbf12d733d5a1ed94fb18",
+        # "unnamedtoken218340xaa6e8127831c9de45ae56bb1b0d4d4da6e5665bd",
+        # "unnamedtoken220960x4da27a545c0c5b758a6ba100e3a049001de870f5",
+        # "unnamedtoken217780x7dd9c5cba05e151c895fde1cf355c9a1d5da6429",
+        # "unnamedtoken220250xa71d0588eaf47f12b13cf8ec750430d21df04974",
+        # "unnamedtoken218270x5026f006b85729a8b14553fae6af249ad16c9aab",
+        # "unnamedtoken221900x49642110b712c1fd7261bc074105e9e44676c68f",
+        # "unnamedtoken216900x9e32b13ce7f2e80a01932b42553652e053d6ed8e",
+        # "unnamedtoken218450x221657776846890989a759ba2973e427dff5c9bb",
+        # "TRAC0xaa7a9ca87d3694b5755f213b5d04094b8d0f0a6f",
+        # "unnamedtoken220280xcf3c8be2e2c42331da80ef210e9b1b307c03d36a",
+    ]
+
+    seeds = [710, 720, 800]
+
+    args.max_epoch = 250
+    args.wandb = True
+    args.min_epoch = 100
     args.model = "HTGN"
+    args.log_interval = 10
+    args.lr = 0.00015
+    args.patience = 20
 
-    print("INFO: >>> Temporal Graph Classification <<<")
-    print("INFO: Args: ", args)
-    print("======================================")
-    print("INFO: Dataset: {}".format(args.dataset))
-    print("INFO: Model: {}".format(args.model))
-    data = loader(dataset=args.dataset, neg_sample=args.neg_sample)
-    args.num_nodes = data['num_nodes']
-    print("INFO: Number of nodes:", args.num_nodes)
-    set_random(args.seed)
-    init_logger(
-        prepare_dir(args.output_folder) + args.model + '_' + args.dataset + '_seed_' + str(args.seed) + '_log.txt')
-    runner = Runner()
-    runner.run()
+    # args.dataset = "unnamedtoken214030x07e0edf8ce600fb51d44f51e3348d77d67f298ae"
 
-# ----------------------
-# commands to run:
-# cd script
-# python train_tgc_end_to_end.py --models=HTGN --seed=710  --dataset=dgd --max_epoch=200
+    for dataset in datasets:
+        for seed in seeds:
+            args.dataset = dataset
+            args.seed = seed
+
+            print("INFO: >>> Temporal Graph Classification <<<")
+            print("INFO: Args: ", args)
+            print("======================================")
+            print("INFO: Dataset: {}".format(args.dataset))
+            print("INFO: Model: {}".format(args.model))
+
+            data = loader(dataset=args.dataset, neg_sample=args.neg_sample)
+            args.num_nodes = data['num_nodes']
+            print("INFO: Number of nodes:", args.num_nodes)
+            set_random(args.seed)
+            init_logger(
+                prepare_dir(args.output_folder) + args.model + '_' + args.dataset + '_seed_' + str(
+                    args.seed) + '_log.txt')
+            runner = Runner()
+            runner.run()
+            wandb.finish()

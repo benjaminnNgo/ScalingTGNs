@@ -137,6 +137,7 @@ class TopK(torch.nn.Module):
         t.data.uniform_(-stdv, stdv)
 
     def forward(self, node_embs, mask=None):
+
         scores = node_embs.matmul(self.scorer) / self.scorer.norm()
         if mask is None:
             mask = torch.zeros_like(scores) if torch.cuda.is_available() else torch.zeros_like(scores)

@@ -182,15 +182,15 @@ def extra_dataset_attributes_loading(args):
     Load and process additional dataset attributes for TG-Classification
     This includes graph labels and node features for the nodes of each snapshot
     """
-    partial_path = f'../data/input/raw/{args.dataset}/'
-   
+    partial_path = f'../data/input/raw/'
+
     # load graph lables
-    label_filename = f'{partial_path}/{args.dataset}_labels.csv'
+    label_filename = f'{partial_path}/labels/{args.dataset}_labels.csv'
     label_df = pd.read_csv(label_filename, header=None, names=['label'])
     TG_labels = torch.from_numpy(np.array(label_df['label'].tolist())).to(args.device)
 
     # load and process graph-pooled (node-level) features 
-    edgelist_filename = f'{partial_path}/{args.dataset}_edgelist.txt'
+    edgelist_filename = f'{partial_path}/edgelists/{args.dataset}_edgelist.txt'
     edgelist_df = pd.read_csv(edgelist_filename)
     uniq_ts_list = np.unique(edgelist_df['snapshot'])
     TG_feats = []
