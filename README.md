@@ -31,7 +31,7 @@ The TGS dataset extraction includes:
 
  TGS transaction networks are divided randomly into train and test sets. The train set is used to train foundation models with different sizes; then, the trained models are evaluated on the test set.
 
-![](https://github.com/benjaminnNgo/ScalingTGNs/tree/main/pic/Foundation_training_v5.tiff)
+![](https://github.com/benjaminnNgo/ScalingTGNs/tree/main/pic/Foundation_training_v5.png)
 *TGS foundation model training overview*
 
 ### Prerequisites
