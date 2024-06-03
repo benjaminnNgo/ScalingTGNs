@@ -1,5 +1,5 @@
 <p align="center">
-  <img width="200" height="200" src="https://github.com/benjaminnNgo/ScalingTGNs/blob/main/pic/TGS_Logo.png">
+  <img width="300" height="150" src="https://github.com/benjaminnNgo/ScalingTGNs/blob/main/pic/TGS_Logo.png">
 </p>
 
 # Towards Neural Scaling Laws for Foundation Models on Temporal Graphs
@@ -31,7 +31,7 @@ The TGS dataset extraction includes:
 
  TGS transaction networks are divided randomly into train and test sets. The train set is used to train foundation models with different sizes; then, the trained models are evaluated on the test set.
 
-![](https://github.com/benjaminnNgo/ScalingTGNs/blob/main/pic/Foundation_training_v5.tiff)
+![](https://github.com/benjaminnNgo/ScalingTGNs/blob/main/pic/Foundation_training_v5.png)
 *TGS foundation model training overview*
 
 ### Prerequisites
