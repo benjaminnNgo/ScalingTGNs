@@ -13,11 +13,9 @@ Temporal graph learning focuses on predicting future interactions from evolving 
 *TGS foundation model performance on unseen networks*
 
 ### Dataset
-All extracted transaction networks required for foundation model training can be downloaded at:
-LINK:
+All extracted transaction networks required for foundation model training can be downloaded [here](https://zenodo.org/records/11455828).
 
-The standard ML croissant file is also available at:
-LINK:
+The standard ML croissant repository for datasets TGS's metadata is also available [here](https://huggingface.co/datasets/ntgbaoo/Temporal_Graph_Scaling_TGS_Benchmark).
 
 The TGS dataset extraction includes: 
 (1) Token Extraction: extracting the token transaction network from our P2P Ethereum live node. 
