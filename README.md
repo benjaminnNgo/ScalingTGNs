@@ -37,6 +37,34 @@ The TGS dataset extraction includes:
 - Python 3.6+
 - Libraries listed in `installed_packages.txt`
 
+# Core backbone package installation
+
+1. install torch
+
+```
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+```
+
+2. install PyG
+
+```
+pip install torch_geometric==2.4.0
+pip install pyg_lib torch_scatter torch_sparse torch_cluster torch_spline_conv -f https://data.pyg.org/whl/torch-2.2.0+cu121.html
+```
+
+3. install PyTorch Geonetric Temporal (optional)
+
+```
+pip install torch-geometric-temporal
+```
+
+# Results reproduce
+- Single models' results can be reproduced on all datasets provided by TGS by running ```train_tgc_end_to_end.py```
+- To reproduce the foundation model train and test results, please follow step:
+
+
+
+
 
 
 
