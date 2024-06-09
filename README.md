@@ -32,11 +32,6 @@ The TGS dataset extraction includes:
 ![](https://github.com/benjaminnNgo/ScalingTGNs/blob/main/pic/Foundation_training_vf.png)
 *TGS foundation model training overview*
 
-### Prerequisites
-
-- Python 3.6+
-- Libraries listed in `installed_packages.txt`
-
 # Core backbone package installation
 
 1. install torch
@@ -57,6 +52,10 @@ pip install pyg_lib torch_scatter torch_sparse torch_cluster torch_spline_conv -
 ```
 pip install torch-geometric-temporal
 ```
+### Prerequisites
+
+- Python 3.8+
+- Libraries listed in `installed_packages.txt`
 
 # Results reproduce
 1. Single models' results can be reproduced on all datasets provided by TGS by running ```train_tgc_end_to_end.py```
