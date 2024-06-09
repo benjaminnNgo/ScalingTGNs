@@ -59,8 +59,8 @@ pip install torch-geometric-temporal
 ```
 
 # Results reproduce
-- Single models' results can be reproduced on all datasets provided by TGS by running ```train_tgc_end_to_end.py```
-- To reproduce the foundation model train and test results, please follow step:
+1. Single models' results can be reproduced on all datasets provided by TGS by running ```train_tgc_end_to_end.py```
+2. To reproduce the foundation model train and test results, please follow step:
 
 
 
