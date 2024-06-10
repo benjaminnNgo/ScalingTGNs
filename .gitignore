@@ -53,6 +53,6 @@ venv.bak/
 
 
 /run_scripts
-/data
+/data_razieh
 /script/wandb
 /saved_models
