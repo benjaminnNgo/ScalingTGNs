@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from sklearn.metrics import roc_auc_score, average_precision_score
-from script.config import args
+from script.utils.config import args
 # from script.utils.util import negative_sampling
 
 from torch_geometric.utils import negative_sampling

@@ -173,7 +173,7 @@ def load_TGC_dataset(dataset):
     print("INFO: Loading a Graph from `Temporal Graph Classification (TGC)` Category: {}".format(dataset))
     data = {}
 
-    edgelist_rawfile = '/data/input/raw/edgelists/{}_edgelist.txt'.format(dataset)
+    edgelist_rawfile = '../data/input/raw/edgelists/{}_edgelist.txt'.format(dataset)
     edgelist_df = pd.read_csv(edgelist_rawfile)
     uniq_ts_list = np.unique(edgelist_df['snapshot'])
     print("INFO: Number of unique snapshots: {}".format(len(uniq_ts_list)))
@@ -230,7 +230,7 @@ def loader(dataset='enron10', neg_sample=''):
     # if not cached, to process and cached
     TGS_dataset_df = pd.read_csv("../data/TGS_available_datasets.csv")
     TGS_available_dataset = TGS_dataset_df['dataset'].tolist()
-
+    
     print('INFO: data does not exits, processing ...')
     if dataset in ['enron10', 'dblp']:
         data = load_vgrnn_dataset(dataset)
@@ -335,7 +335,7 @@ def load_multiple_datasets(datasets_package_path=""):
     else:
         print("Folder does not exist.")
     i = 0
-    text_path = "../data/{}".format(datasets_package_path)
+    text_path = "../data/input/data_list/{}".format(datasets_package_path)
 
     try:
         with open(text_path, 'r') as file:

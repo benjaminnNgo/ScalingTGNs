@@ -1,7 +1,7 @@
 import math
 import numpy as np
 import torch
-from script.config import args
+from script.utils.config import args
 
 
 def uniform(size, tensor):

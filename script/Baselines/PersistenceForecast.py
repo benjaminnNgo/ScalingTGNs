@@ -59,7 +59,7 @@ class BaseLineModel:
 
 
 if __name__ == '__main__':
-    from script.config import args
+    from script.utils.config import args
     from script.utils.data_util import loader
     # csv_lists = [
     #     "unnamedtoken216540x09a3ecafa817268f77be1283176b946c4ff2e608",

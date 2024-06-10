@@ -1,23 +1,23 @@
-import math
 import os
-
-import networkx as nx
-import torch
-import numpy as np
-import torch.nn.functional as F
-from sklearn.preprocessing import MinMaxScaler
-from torch_geometric_temporal.nn.recurrent import EvolveGCNO
-from sklearn.metrics import roc_auc_score, average_precision_score
-from torch_geometric.utils.negative_sampling import negative_sampling
-from tgb.linkproppred.evaluate import Evaluator
-from tgb.linkproppred.negative_sampler import NegativeEdgeSampler
-from tgb.linkproppred.dataset_pyg import PyGLinkPropPredDataset
-from torch_geometric.loader import TemporalDataLoader
-import wandb
+import math
+import sys
+import time
 import timeit
+import torch
+import copy
+import numpy as np
 import pandas as pd
+import networkx as nx
+from sklearn.preprocessing import MinMaxScaler
 from math import isnan
+from sklearn.metrics import roc_auc_score, average_precision_score
 from pickle import dump, load
+import random
+import wandb
+from torch_geometric_temporal import EvolveGCNO
+import torch.nn.functional as F
+
+
 def mkdirs(path):
     if not os.path.isdir(path):
         os.makedirs(path)
@@ -106,7 +106,7 @@ def data_loader_egcn(dataset):
     partial_path = f'../data/input/raw/'
 
     data_root = '../data/input/cached/{}/'.format(dataset)
-    filepath = mkdirs(data_root) + '{}_egcn.data'.format(dataset)  # the data will be saved here after generation.
+    filepath = mkdirs(data_root) + '{}_pyTorchGeoTemp.data'.format(dataset)  # the data will be saved here after generation.
     print("INFO: Dataset: {}".format(dataset))
     print("DEBUG: Look for data at {}.".format(filepath))
     if os.path.isfile(filepath):
@@ -161,7 +161,7 @@ def data_loader_egcn(dataset):
     return data
 
 def save_results(dataset, test_auc, test_ap,lr,train_snapshot,test_snapshot,best_epoch,time):
-    partial_path =  "../data/output/single_model_egcn/"
+    partial_path = "../data/output/single_model_egcn/"
     if not os.path.exists(partial_path):
         os.makedirs(partial_path)
     result_path = f"{partial_path}/{args.results_file}"
@@ -208,14 +208,25 @@ def save_epoch_results(epoch,test_auc, test_ap,loss,train_auc,train_ap,time):
 class RecurrentGCN(torch.nn.Module):
     def __init__(self, node_feat_dim, hidden_dim):
         super(RecurrentGCN, self).__init__()
+        self.num_window = args.nb_window
         self.recurrent = EvolveGCNO(node_feat_dim)
         self.linear = torch.nn.Linear(node_feat_dim, hidden_dim)
+        self.hidden_initial = torch.ones(args.num_nodes, args.nhid).to(args.device)
 
     def forward(self, x, edge_index, edge_weight):
         h = self.recurrent(x, edge_index, edge_weight)
         h = F.relu(h)
         h = self.linear(h)
         return h
+
+    def init_hiddens(self):
+        self.hiddens = [self.hidden_initial] * self.num_window
+        return self.hiddens
+
+    def update_hiddens_all_with(self, z_t):
+        self.hiddens.pop(0)  # [element0, element1, element2] remove the first element0
+        self.hiddens.append(z_t.clone().detach().requires_grad_(False))  # [element1, element2, z_t]
+        return z_t
 
 class MLP(torch.nn.Module):
     """
@@ -263,6 +274,7 @@ class Runner():
         self.edge_idx_list = self.data['edge_index']
         self.edge_att_list = self.data['edge_attribute']
         self.num_nodes = self.data['num_nodes'] + 1
+        args.num_nodes = self.data['num_nodes'] + 1
         self.readout_scheme = 'mean'
         self.tgc_lr = args.lr
         self.len = self.data['time_length']
@@ -277,6 +289,11 @@ class Runner():
 
         self.node_feat_dim = 256 #@TODO: Replace with args to config it easily
         self.node_feat = torch.randn((self.num_nodes, self.node_feat_dim)).to(args.device)
+
+        # print(self.num_nodes)
+
+        # self.node_feat = torch.eye(5351).to(args.device)
+        self.node_feat_dim = self.node_feat.size(1)  # @TODO: Replace with args to config it easily
         self.edge_feat_dim = 1 #@TODO: Replace with args to config it easily
         self.hidden_dim = args.nhid
 
@@ -310,6 +327,7 @@ class Runner():
                     self.t_graph_labels[t_test_idx].cpu().numpy())
                 tg_preds.append(
                     self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid().cpu().numpy())
+            self.model.update_hiddens_all_with(h)
 
         auc, ap = roc_auc_score(tg_labels, tg_preds), average_precision_score(tg_labels, tg_preds)
         return epoch, auc, ap
@@ -336,6 +354,8 @@ class Runner():
                 tg_labels.append(self.t_graph_labels[t_eval_idx].cpu().numpy())
                 tg_preds.append(
                     self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid().cpu().numpy())
+
+                self.model.update_hiddens_all_with(h)
 
 
 
@@ -367,8 +387,9 @@ class Runner():
         # for epoch in range(20):
         for epoch in range(1, args.max_epoch + 1):
             t_epoch_start = timeit.default_timer()
+            self.model.init_hiddens()
             optimizer.zero_grad()
-            total_loss = 0
+            total_loss = []
             self.model.train()
             self.tgc_decoder.train()
             h = None
@@ -399,11 +420,17 @@ class Runner():
                 optimizer.step()
                 epoch_losses.append(t_loss.item())
 
+            #     total_loss.append(t_loss)
+            #     self.model.update_hiddens_all_with(h)
+
+            # sum(total_loss).backward(retain_graph=True)
+            # optimizer.step()
             avg_epoch_loss = np.mean(epoch_losses)
             train_avg_epoch_loss_dict[epoch] = avg_epoch_loss
             train_auc, train_ap = roc_auc_score(tg_labels, tg_preds), average_precision_score(tg_labels, tg_preds)
             eval_epoch, eval_auc, eval_ap = self.tgclassification_val(epoch, self.readout_scheme)
 
+            patience = 0 #No need early stopping for now
             # Only apply early stopping when after min_epoch of training
             if best_eval_auc < eval_auc:  # Use AUC as metric to define early stoping
                 patience = 0
@@ -468,7 +495,7 @@ class Runner():
 
         # ------------ DEBUGGING ------------
         # save the training loss values
-        partial_results_path = f'../data/output/log/single_model/{args.dataset}/{args.model}/'
+        partial_results_path = f'../../data/output/log/single_model/{args.dataset}/{args.model}/'
         loss_log_filename = f'{partial_results_path}/{args.model}_{args.dataset}_{args.seed}_train_loss.pkl'
         if os.path.exists(partial_results_path) == False:
             os.makedirs(partial_results_path)
@@ -487,194 +514,51 @@ class Runner():
 
 
 if __name__ == '__main__':
-    from script.config import args
+    from script.utils.config import args
     from script.utils.util import set_random, logger, init_logger, disease_path
     from script.models.load_model import load_model
-    from script.loss import ReconLoss, VGAEloss
+    from script.utils.loss import ReconLoss, VGAEloss
     from script.utils.data_util import loader, prepare_dir
-    from script.inits import prepare
+    from script.utils.inits import prepare
 
-    args.seed = 710
-    args.max_epoch = 400
-    args.wandb = True
-    args.dataset = "unnamedtoken18980x00a8b738e453ffd858a7edf03bccfe20412f0eb0"
-    args.model = "EGCN"
-    args.log_interval = 10
-    args.lr = 0.0005
-    set_random(args.seed)
-    init_logger(
-        prepare_dir(args.output_folder) + args.model + '_' + args.dataset + '_seed_' + str(args.seed) + '_log.txt')
-    runner = Runner()
-    runner.run()
-    # t_graph_labels, t_graph_feat = extra_dataset_attributes_loading(args)
-    # data = data_loader_egcn(args.dataset)
-    #
-    # print(data['edge_index'][2])
-    # args.device = 'cuda'
-    # # get masks
-    #
-    # edge_idx_list = data['edge_index']
-    # edge_att_list = data['edge_attribute']
-    # num_nodes = data['num_nodes'] + 1
-    #
-    #
-    # readout_scheme = 'mean'
-    # tgc_lr = args.lr
-    # len = data['time_length']
-    # testlength = math.floor(len * args.test_ratio)  # Re-calculate number of test snapshots
-    # start_train = 0
-    # evalLength = math.floor(len * args.eval_ratio)
-    #
-    # train_shots_mask = list(range(start_train, len - testlength - evalLength))
-    # eval_shots_mask = list(range(len - testlength - evalLength, len - testlength))
-    # test_shots_mask = list(range(len - testlength, len))
-    # # train_mask = dataset.train_mask
-    # # val_mask = dataset.val_mask
-    # # test_mask = dataset.test_mask
-    # # train_edges = full_data[train_mask]
-    # # val_edges = full_data[val_mask]
-    # # test_edges = full_data[test_mask]
-    #
-    # if args.wandb:
-    #     wandb.init(
-    #         # set the wandb project where this run will be logged
-    #         project="egcn",
-    #
-    #         # track hyperparameters and run metadata
-    #         config={
-    #             "learning_rate": args.lr,
-    #             "architecture": "egcn",
-    #             "dataset": args.dataset,
-    #             "time granularity": args.time_scale,
-    #         }
-    #     )
-    # # ! set up node features
-    # node_feat_dim = 256
-    # node_feat = torch.randn((num_nodes, node_feat_dim)).to(args.device)
-    # edge_feat_dim = 1
-    # hidden_dim = 256
-    #
-    # # * load the discretized version
-    #
-    # num_epochs = args.max_epoch
-    # lr = args.lr
-    #
-    # args.seed = 710
-    # args.num_runs = 1
-    #
-    # for seed in range(args.seed, args.seed + args.num_runs):
-    #     set_random(seed)
-    #     print(f"Run {seed}")
-    #
-    #     # * initialization of the model to prep for training
-    #     model = RecurrentGCN(node_feat_dim=node_feat_dim, hidden_dim=hidden_dim).to(args.device)
-    #     node_feat = torch.randn((num_nodes, node_feat_dim)).float().to(args.device)
-    #
-    #     num_extra_feat = 4  # = len([in-degree, weighted-in-degree, out-degree, weighted-out-degree])
-    #     tgc_decoder = MLP(in_dim=hidden_dim + num_extra_feat, hidden_dim_1=hidden_dim + num_extra_feat,
-    #                            hidden_dim_2=hidden_dim + num_extra_feat,
-    #                            drop=0.1).to(args.device)  # @NOTE: these hyperparameters may need to be changed
-    #
-    #     optimizer = torch.optim.Adam(
-    #         set(model.parameters()) | set(tgc_decoder.parameters()), lr=lr)
-    #     criterion = torch.nn.MSELoss()
-    #
-    #     best_val = 0
-    #     best_test = 0
-    #     best_epoch = 0
-    #
-    #     for epoch in range(10):
-    #         print("------------------------------------------")
-    #         train_start_time = timeit.default_timer()
-    #         optimizer.zero_grad()
-    #         total_loss = 0
-    #         model.train()
-    #         tgc_decoder.train()
-    #         h = None
-    #         total_loss = 0
-    #         tg_labels = []
-    #         tg_preds = []
-    #         epoch_losses = []
-    #         for snapshot_idx in train_shots_mask:
-    #
-    #             optimizer.zero_grad()
-    #             edge_idx = edge_idx_list[snapshot_idx].to(args.device)
-    #             edge_att = edge_att_list[snapshot_idx].float().to(args.device)
-    #
-    #             h = model(node_feat, edge_idx, edge_att)
-    #             tg_readout = readout_function(h, "mean")
-    # #             #@=========================Need t_graph_feat here=====================
-    #             tg_embedding = torch.cat((tg_readout, torch.from_numpy(t_graph_feat[snapshot_idx]).to(args.device)))
-    # #
-    #             # graph classification
-    #             tg_label = t_graph_labels[snapshot_idx].float().view(1, )
-    #             tg_pred = tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid()
-    #
-    #             tg_labels.append(tg_label.cpu().numpy())
-    #             tg_preds.append(tg_pred.cpu().detach().numpy())
-    #             t_loss = criterion(tg_pred, tg_label)
-    #             t_loss.backward()
-    #             optimizer.step()
-    #             epoch_losses.append(t_loss.item())
-    # #             # update the models====================================
-    #         avg_epoch_loss = np.mean(epoch_losses)
-    #         print(avg_epoch_loss)
-    #
-    #
-    #         train_time = timeit.default_timer() - train_start_time
-    #         print(f'Epoch {epoch}/{num_epochs}, Loss: {total_loss}')
-    #         print("Train time: ", train_time)
-    #
-    #
-    #     #===================================================================
-    #     #     # ? Evaluation starts here
-    #     #     #@Change all validation step below here for as training and apply early stopping
-    #     #     val_snapshots = data['val_data']['edge_index']
-    #     #     ts_list = data['val_data']['ts_map']
-    #     #     val_loader = TemporalDataLoader(val_edges, batch_size=batch_size)
-    #     #     evaluator = Evaluator(name=args.dataset)
-    #     #     neg_sampler = dataset.negative_sampler
-    #     #     dataset.load_val_ns()
-    #     #
-    #     #     start_epoch_val = timeit.default_timer()
-    #     #     val_metrics, h = test_tgb(h, val_loader, val_snapshots, ts_list,
-    #     #                               node_feat, model, link_pred, neg_sampler, evaluator, metric, split_mode='val')
-    #     #     val_time = timeit.default_timer() - start_epoch_val
-    #     #     print(f"Val {metric}: {val_metrics}")
-    #     #     print("Val time: ", val_time)
-    #     #     if (args.wandb):
-    #     #         wandb.log({"train_loss": (total_loss),
-    #     #                    "val_" + metric: val_metrics,
-    #     #                    "train time": train_time,
-    #     #                    "val time": val_time,
-    #     #                    })
-    #     #
-    #     #     # ! report test results when validation improves
-    #     #     if (val_metrics > best_val):
-    #     #         dataset.load_test_ns()
-    #     #         test_snapshots = data['test_data']['edge_index']
-    #     #         ts_list = data['test_data']['ts_map']
-    #     #         test_loader = TemporalDataLoader(test_edges, batch_size=batch_size)
-    #     #         neg_sampler = dataset.negative_sampler
-    #     #         dataset.load_test_ns()
-    #     #
-    #     #         test_start_time = timeit.default_timer()
-    #     #         test_metrics, h = test_tgb(h, test_loader, test_snapshots, ts_list,
-    #     #                                    node_feat, model, link_pred, neg_sampler, evaluator, metric,
-    #     #                                    split_mode='test')
-    #     #         test_time = timeit.default_timer() - test_start_time
-    #     #         best_val = val_metrics
-    #     #         best_test = test_metrics
-    #     #
-    #     #         print("test metric is ", test_metrics)
-    #     #         print("test elapsed time is ", test_time)
-    #     #         print("--------------------------------")
-    #     #         if ((epoch - best_epoch) >= args.patience and epoch > 1):
-    #     #             best_epoch = epoch
-    #     #             break
-    #     #         best_epoch = epoch
-    #     # print("run finishes")
-    #     # print("best epoch is, ", best_epoch)
-    #     # print("best val performance is, ", best_val)
-    #     # print("best test performance is, ", best_test)
-    #     # print("------------------------------------------")
+
+    seeds = [720]
+    # datasets = ['unnamedtoken216350xe53ec727dbdeb9e2d5456c3be40cff031ab40a55','unnamedtoken216360xfca59cd816ab1ead66534d82bc21e7515ce441cf',
+    #             'unnamedtoken216390x1ceb5cb57c4d4e2b2433641b95dd330a33185a44']
+
+    datasets = [
+        # "unnamedtoken18980x00a8b738e453ffd858a7edf03bccfe20412f0eb0",
+        # "unnamedtoken216240x83e6f1e41cdd28eaceb20cb649155049fac3d5aa",
+        "unnamedtoken216300xcc4304a31d09258b0029ea7fe63d032f52e44efe",
+        # "unnamedtoken216350xe53ec727dbdeb9e2d5456c3be40cff031ab40a55",
+        # "unnamedtoken216360xfca59cd816ab1ead66534d82bc21e7515ce441cf",
+        # "unnamedtoken216390x1ceb5cb57c4d4e2b2433641b95dd330a33185a44",
+        # "unnamedtoken216540x09a3ecafa817268f77be1283176b946c4ff2e608",
+        # "unnamedtoken216550xbcca60bb61934080951369a648fb03df4f96263c",
+        # "unnamedtoken216580x5f98805a4e8be255a32880fdec7f6728c6568ba0",
+        # "unnamedtoken216620x429881672b9ae42b8eba0e26cd9c73711b891ca5"
+    ]
+
+    for dataset in datasets:
+        for seed in seeds:
+            try:
+                args.seed = seed
+                args.max_epoch = 400
+                args.wandb = True
+                args.min_epoch = 200
+                args.dataset = dataset
+                args.model = "EGCN"
+                args.log_interval = 10
+                args.lr = 0.0005
+                set_random(args.seed)
+                init_logger(
+                    prepare_dir(args.output_folder) + args.model + '_' + args.dataset + '_seed_' + str(args.seed) + '_log.txt')
+                runner = Runner()
+                runner.run()
+                try:
+                    wandb.finish()
+                except Exception as e:
+                    print("Can't finish run with wandb: {}".format(e))
+            except Exception as e:
+                print(e)
+                print("Can't process dataset: {}-{}".format(dataset,seed))

@@ -23,7 +23,6 @@ from pickle import dump, load
 import random
 import wandb
 
-wandb.login(key="29968c684c2e412ed650ce0b5b52db584d572b86")
 model_file_path = '/network/scratch/r/razieh.shirzadkhani/fm'
 data_file_path = '/network/scratch/r/razieh.shirzadkhani/fm/fm_data/data_lt_70/all_data/raw/'
 # model_file_path = '..'
@@ -221,7 +220,7 @@ class Runner(object):
         self.load_feature()
 
         self.model = load_model(args).to(args.device)
-        print(self.model)
+        
         self.model_path = '{}/saved_models/fm/{}/{}_{}_seed_{}'.format(model_file_path, 
                                                                         category,
                                                                         args.model,
@@ -511,11 +510,12 @@ class Runner(object):
 
 
 if __name__ == '__main__':
-    from script.config import args, dataset_names
+    from script.utils.config import args, dataset_names
     from script.utils.util import set_random, logger, init_logger, disease_path
     from script.models.load_model import load_model
     from script.utils.data_util import load_multiple_datasets
-    from script.inits import prepare
+    from script.utils.inits import prepare
+    from script.utils.data_util import prepare_dir
     
     args.model = "HTGN"
     # args.model = "EGCN"
@@ -549,7 +549,7 @@ if __name__ == '__main__':
     # init_logger('../data/output/{}/log/time_log_1.txt'.format(category))
     # logger.info("INFO: Args: {}".format(args))
     # for data_number in [6]:
-    args.dataset, data = load_multiple_datasets("dataset_package_16.txt")
+    args.dataset, data = load_multiple_datasets("dataset_package_2.txt")
     # # for args.seed in [710, 720, 800]:
     # init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, args.seed, len(args.dataset), data_number))
     # set_random(args.seed)
@@ -559,14 +559,15 @@ if __name__ == '__main__':
 
     # runner = Runner()
     # runner.run()
-    category = "nout"
+    category = ""
     for data_number in [32]:
         # args.dataset, data = load_multiple_datasets("{}/dataset_package_8_{}.txt".format(category, data_number))
         for args.seed in [800]:
             
             for nout in [32]:
                 # init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, args.seed, len(args.dataset), data_number))
-                init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, args.seed, len(args.dataset), nout))
+                init_logger(
+                    '../data/output/{}_{}_seed_{}_{}_log.txt'.format(args.model, args.seed, len(args.dataset), nout))
                 set_random(args.seed)
                 args.nout = nout
                 args.nhid = nout

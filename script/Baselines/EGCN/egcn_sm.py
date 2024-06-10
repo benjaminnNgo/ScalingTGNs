@@ -1,23 +1,23 @@
-import os
 import math
-import sys
-import time
-import timeit
-import torch
-import copy
-import numpy as np
-import pandas as pd
+import os
+
 import networkx as nx
-from sklearn.preprocessing import MinMaxScaler
-from math import isnan
-from sklearn.metrics import roc_auc_score, average_precision_score
-from pickle import dump, load
-import random
-import wandb
-from torch_geometric_temporal import EvolveGCNO, GCLSTM
+import torch
+import numpy as np
 import torch.nn.functional as F
-
-
+from sklearn.preprocessing import MinMaxScaler
+from torch_geometric_temporal.nn.recurrent import EvolveGCNO
+from sklearn.metrics import roc_auc_score, average_precision_score
+from torch_geometric.utils.negative_sampling import negative_sampling
+from tgb.linkproppred.evaluate import Evaluator
+from tgb.linkproppred.negative_sampler import NegativeEdgeSampler
+from tgb.linkproppred.dataset_pyg import PyGLinkPropPredDataset
+from torch_geometric.loader import TemporalDataLoader
+import wandb
+import timeit
+import pandas as pd
+from math import isnan
+from pickle import dump, load
 def mkdirs(path):
     if not os.path.isdir(path):
         os.makedirs(path)
@@ -41,16 +41,12 @@ def readout_function(embeddings, readout_scheme='mean'):
         raise ValueError("Readout Method Undefined!")
     return readout
 
-
 def get_node_id_int(node_id_dict,lookup_node,curr_idx):
-    """
-        Because node addresses are string, so function map string to a int
-        This function also makes 2 node have the same address have the same node id
-    """
     if lookup_node not in node_id_dict:
         node_id_dict[lookup_node] = curr_idx
         curr_idx += 1
     return node_id_dict[lookup_node],curr_idx
+
 
 
 
@@ -106,19 +102,11 @@ def extra_dataset_attributes_loading(args, readout_scheme='mean'):
 
     return TG_labels, TG_feats
 
-def data_loader_geometric_temporal(dataset):
-    """
-        Data loader for traing models with PyTorch geometric temporal
-        data is a dictionary has following attributes:
-            - edge index for each snapshot ( to get edge index for snapshot 0: data['edge_index'][0])
-            - edge attribute for each snapshot ( similar above)
-            - time length : number of snapshots
-            - number of nodes
-    """
+def data_loader_egcn(dataset):
     partial_path = f'../data/input/raw/'
 
     data_root = '../data/input/cached/{}/'.format(dataset)
-    filepath = mkdirs(data_root) + '{}_pyTorchGeoTemp.data'.format(dataset)  # the data will be saved here after generation.
+    filepath = mkdirs(data_root) + '{}_egcn.data'.format(dataset)  # the data will be saved here after generation.
     print("INFO: Dataset: {}".format(dataset))
     print("DEBUG: Look for data at {}.".format(filepath))
     if os.path.isfile(filepath):
@@ -161,16 +149,19 @@ def data_loader_geometric_temporal(dataset):
         edge_idx_list.append(torch.tensor(np.transpose(np.array(ts_edges_idx))))
         edge_att_list.append(torch.tensor(np.array(ts_edges_atts),dtype=torch.long))
 
+    # print(node_id_dict)
     data = {}
     data['edge_index'] = edge_idx_list
     data['edge_attribute'] = edge_att_list
     data['time_length'] = len(uniq_ts_list)
     data['num_nodes'] = curr_idx
+
+
     torch.save(data, filepath)
     return data
 
 def save_results(dataset, test_auc, test_ap,lr,train_snapshot,test_snapshot,best_epoch,time):
-    partial_path = "../data/output/single_model_gclstm_test/"
+    partial_path =  "../data/output/single_model_egcn/"
     if not os.path.exists(partial_path):
         os.makedirs(partial_path)
     result_path = f"{partial_path}/{args.results_file}"
@@ -192,7 +183,7 @@ def save_results(dataset, test_auc, test_ap,lr,train_snapshot,test_snapshot,best
     result_df.to_csv(result_path, index=False)
 
 def save_epoch_results(epoch,test_auc, test_ap,loss,train_auc,train_ap,time):
-    partial_path = "../data/output/epoch_result/single_model_gclstm_test/"
+    partial_path = "../data/output/epoch_result/single_model_egcn/"
     if not os.path.exists(partial_path):
         os.makedirs(partial_path)
 
@@ -214,23 +205,17 @@ def save_epoch_results(epoch,test_auc, test_ap,loss,train_auc,train_ap,time):
 
 
 
-
 class RecurrentGCN(torch.nn.Module):
-    """
-        GCLSTM model from PyTorch Geometric Temporal
-        reference:
-        https://github.com/benedekrozemberczki/pytorch_geometric_temporal/blob/master/examples/recurrent/gclstm_example.py
-    """
-    def __init__(self, node_feat_dim,hidden_dim):
+    def __init__(self, node_feat_dim, hidden_dim):
         super(RecurrentGCN, self).__init__()
-        self.recurrent = GCLSTM(node_feat_dim, hidden_dim, 1)
-        self.linear = torch.nn.Linear(hidden_dim, hidden_dim)
+        self.recurrent = EvolveGCNO(node_feat_dim)
+        self.linear = torch.nn.Linear(node_feat_dim, hidden_dim)
 
-    def forward(self, x, edge_index, edge_weight, h, c):
-        h_0, c_0 = self.recurrent(x, edge_index, edge_weight, h, c)
-        h = F.relu(h_0)
+    def forward(self, x, edge_index, edge_weight):
+        h = self.recurrent(x, edge_index, edge_weight)
+        h = F.relu(h)
         h = self.linear(h)
-        return h, h_0, c_0
+        return h
 
 class MLP(torch.nn.Module):
     """
@@ -259,7 +244,7 @@ class Runner():
         if args.wandb:
             wandb.init(
                 # set the wandb project where this run will be logged
-                project="gclstm_test_set",
+                project="egcn",
                 # Set name of the run:
                 name="{}_{}_{}".format(args.dataset, args.model, args.seed),
                 # track hyperparameters and run metadata
@@ -271,14 +256,13 @@ class Runner():
                 }
             )
 
-        self.model_path = '../saved_models/single_model_gclstm_test/{}_{}_seed_{}/'.format(args.dataset,
+        self.model_path = '../saved_models/single_model/{}_{}_seed_{}/'.format(args.dataset,
                                                                                args.model, args.seed)
         self.t_graph_labels, self.t_graph_feat = extra_dataset_attributes_loading(args)
-        self.data = data_loader_geometric_temporal(args.dataset)
+        self.data = data_loader_egcn(args.dataset)
         self.edge_idx_list = self.data['edge_index']
         self.edge_att_list = self.data['edge_attribute']
         self.num_nodes = self.data['num_nodes'] + 1
-        args.num_nodes = self.data['num_nodes'] + 1
         self.readout_scheme = 'mean'
         self.tgc_lr = args.lr
         self.len = self.data['time_length']
@@ -293,11 +277,6 @@ class Runner():
 
         self.node_feat_dim = 256 #@TODO: Replace with args to config it easily
         self.node_feat = torch.randn((self.num_nodes, self.node_feat_dim)).to(args.device)
-
-
-
-        # self.node_feat = torch.eye(5351).to(args.device)
-        self.node_feat_dim = self.node_feat.size(1)  # @TODO: Replace with args to config it easily
         self.edge_feat_dim = 1 #@TODO: Replace with args to config it easily
         self.hidden_dim = args.nhid
 
@@ -309,43 +288,18 @@ class Runner():
                           hidden_dim_2=self.hidden_dim + num_extra_feat,
                           drop=0.1).to(args.device)  # @NOTE: these hyperparameters may need to be changed
 
-        #Hidden for gclstm
-        self.h = None
-        self.h_0 = None
-        self.c_0 = None
-
-    # Hidden for gclstm
-    def init_hidden(self):
-        self.h = None
-        self.h_0 = None
-        self.c_0 = None
-
-    # Detach gradient
-    def detach_hidden(self):
-        self.h =  self.h.detach()
-        self.h_0 =  self.h_0.detach()
-        self.c_0 = self.c_0.detach()
-
-    def train(self):
-        self.model.train()
-        self.tgc_decoder.train()
-
-    def eval(self):
-        self.model.eval()
-        self.tgc_decoder.eval()
-
     def tgclassification_test(self,epoch,readout_scheme):
-        self.detach_hidden()
         tg_labels, tg_preds = [], []
 
         for t_test_idx in self.test_shots_mask:
-            self.eval()
+            self.model.eval()
+            self.tgc_decoder.eval()
             with torch.no_grad():
                 edge_idx = self.edge_idx_list[t_test_idx].to(args.device)
                 edge_att = self.edge_att_list[t_test_idx].float().to(args.device)
 
-                self.h, self.h_0, self.c_0 = self.model(self.node_feat, edge_idx, edge_att, self.h_0, self.c_0)
-                tg_readout = readout_function(self.h, readout_scheme)
+                h = self.model(self.node_feat, edge_idx, edge_att)
+                tg_readout = readout_function(h, readout_scheme)
 
                 tg_embedding = torch.cat((tg_readout,
                                           torch.from_numpy(self.t_graph_feat[t_test_idx]).to(
@@ -361,20 +315,19 @@ class Runner():
         return epoch, auc, ap
 
     def tgclassification_val(self,epoch,readout_scheme):
-        self.detach_hidden()
 
         tg_labels, tg_preds = [], []
         for t_eval_idx in self.eval_shots_mask:
-            self.eval()
+            self.model.eval()
+            self.tgc_decoder.eval()
             with torch.no_grad():
                 edge_idx = self.edge_idx_list[t_eval_idx].to(args.device)
                 edge_att = self.edge_att_list[t_eval_idx].float().to(args.device)
 
-                self.h, self.h_0, self.c_0 = self.model(self.node_feat, edge_idx, edge_att, self.h_0, self.c_0)
-
+                h = self.model(self.node_feat, edge_idx, edge_att)
 
                 # graph readout
-                tg_readout = readout_function(self.h, readout_scheme)
+                tg_readout = readout_function(h, readout_scheme)
                 tg_embedding = torch.cat((tg_readout,
                                           torch.from_numpy(self.t_graph_feat[t_eval_idx]).to(
                                               args.device)))
@@ -384,6 +337,8 @@ class Runner():
                 tg_preds.append(
                     self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid().cpu().numpy())
 
+
+
         auc, ap = roc_auc_score(tg_labels, tg_preds), average_precision_score(tg_labels, tg_preds)
         return epoch, auc, ap
 
@@ -392,53 +347,57 @@ class Runner():
         optimizer = torch.optim.Adam(
             set(self.model.parameters()) | set(self.tgc_decoder.parameters()), lr=self.tgc_lr)
         criterion = torch.nn.MSELoss()
-
+        train_avg_epoch_loss_dict = {}
+        t_total_start = timeit.default_timer()
+        min_loss = 10
         train_avg_epoch_loss_dict = {}
 
         best_model = self.model.state_dict()
         best_MLP = self.tgc_decoder.state_dict()
 
-        # For eval model to choose the best model
         best_epoch = -1
         patience = 0
         best_eval_auc = -1  # Set previous evaluation result to very small number
         best_test_auc = -1
         best_test_ap = -1
 
-
+        for param in self.model.parameters():
+            param.retain_grad()
         t_total_start = timeit.default_timer()
+        # for epoch in range(20):
         for epoch in range(1, args.max_epoch + 1):
             t_epoch_start = timeit.default_timer()
-            self.init_hidden()
             optimizer.zero_grad()
-            self.train()
-
+            total_loss = 0
+            self.model.train()
+            self.tgc_decoder.train()
+            h = None
             tg_labels = []
             tg_preds = []
             epoch_losses = []
+
             for snapshot_idx in self.train_shots_mask:
+
                 optimizer.zero_grad()
 
-                #Get edge list and edge attributes
                 edge_idx = self.edge_idx_list[snapshot_idx].to(args.device)
                 edge_att = self.edge_att_list[snapshot_idx].float().to(args.device)
 
-                self.h, self.h_0, self.c_0 = self.model(self.node_feat, edge_idx, edge_att, self.h_0, self.c_0)
-                tg_readout = readout_function(self.h, self.readout_scheme)
+                h = self.model(self.node_feat, edge_idx, edge_att)
+                tg_readout = readout_function(h, "mean")
                 tg_embedding = torch.cat((tg_readout, torch.from_numpy(self.t_graph_feat[snapshot_idx]).to(args.device)))
-
+                # print(tg_embedding)
+                #
                 # graph classification
                 tg_label = self.t_graph_labels[snapshot_idx].float().view(1, )
                 tg_pred = self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid()
 
-                t_loss = criterion(tg_pred, tg_label)
-                t_loss.backward()
-                optimizer.step()
-
                 tg_labels.append(tg_label.cpu().numpy())
                 tg_preds.append(tg_pred.cpu().detach().numpy())
+                t_loss = criterion(tg_pred, tg_label)
+                t_loss.backward(retain_graph=True)
+                optimizer.step()
                 epoch_losses.append(t_loss.item())
-                self.detach_hidden()
 
             avg_epoch_loss = np.mean(epoch_losses)
             train_avg_epoch_loss_dict[epoch] = avg_epoch_loss
@@ -446,7 +405,6 @@ class Runner():
             eval_epoch, eval_auc, eval_ap = self.tgclassification_val(epoch, self.readout_scheme)
 
             # Only apply early stopping when after min_epoch of training
-            patience = 0 #Reset patience
             if best_eval_auc < eval_auc:  # Use AUC as metric to define early stoping
                 patience = 0
                 best_model = self.model.state_dict()  # Saved the best model for testing
@@ -459,7 +417,6 @@ class Runner():
                     patience = 0
                     best_eval_auc = eval_auc
                     best_model = self.model.state_dict()
-                    best_MLP = self.tgc_decoder.state_dict()
                     best_epoch, best_test_auc, best_test_ap = self.tgclassification_test(epoch, self.readout_scheme)
 
                     best_epoch = epoch
@@ -511,7 +468,7 @@ class Runner():
 
         # ------------ DEBUGGING ------------
         # save the training loss values
-        partial_results_path = f'../../data/output/log/single_model_gclstm_test/{args.dataset}/{args.model}/'
+        partial_results_path = f'../data/output/log/single_model/{args.dataset}/{args.model}/'
         loss_log_filename = f'{partial_results_path}/{args.model}_{args.dataset}_{args.seed}_train_loss.pkl'
         if os.path.exists(partial_results_path) == False:
             os.makedirs(partial_results_path)
@@ -530,69 +487,194 @@ class Runner():
 
 
 if __name__ == '__main__':
-    from script.config import args
+    from script.utils.config import args
     from script.utils.util import set_random, logger, init_logger, disease_path
     from script.models.load_model import load_model
-    from script.loss import ReconLoss, VGAEloss
+    from script.utils.loss import ReconLoss, VGAEloss
     from script.utils.data_util import loader, prepare_dir
-    from script.inits import prepare
+    from script.utils.inits import prepare
 
+    args.seed = 710
+    args.max_epoch = 400
+    args.wandb = True
+    args.dataset = "unnamedtoken18980x00a8b738e453ffd858a7edf03bccfe20412f0eb0"
+    args.model = "EGCN"
+    args.log_interval = 10
+    args.lr = 0.0005
+    set_random(args.seed)
+    init_logger(
+        prepare_dir(args.output_folder) + args.model + '_' + args.dataset + '_seed_' + str(args.seed) + '_log.txt')
+    runner = Runner()
+    runner.run()
+    # t_graph_labels, t_graph_feat = extra_dataset_attributes_loading(args)
+    # data = data_loader_egcn(args.dataset)
+    #
+    # print(data['edge_index'][2])
+    # args.device = 'cuda'
+    # # get masks
+    #
+    # edge_idx_list = data['edge_index']
+    # edge_att_list = data['edge_attribute']
+    # num_nodes = data['num_nodes'] + 1
+    #
+    #
+    # readout_scheme = 'mean'
+    # tgc_lr = args.lr
+    # len = data['time_length']
+    # testlength = math.floor(len * args.test_ratio)  # Re-calculate number of test snapshots
+    # start_train = 0
+    # evalLength = math.floor(len * args.eval_ratio)
+    #
+    # train_shots_mask = list(range(start_train, len - testlength - evalLength))
+    # eval_shots_mask = list(range(len - testlength - evalLength, len - testlength))
+    # test_shots_mask = list(range(len - testlength, len))
+    # # train_mask = dataset.train_mask
+    # # val_mask = dataset.val_mask
+    # # test_mask = dataset.test_mask
+    # # train_edges = full_data[train_mask]
+    # # val_edges = full_data[val_mask]
+    # # test_edges = full_data[test_mask]
+    #
+    # if args.wandb:
+    #     wandb.init(
+    #         # set the wandb project where this run will be logged
+    #         project="egcn",
+    #
+    #         # track hyperparameters and run metadata
+    #         config={
+    #             "learning_rate": args.lr,
+    #             "architecture": "egcn",
+    #             "dataset": args.dataset,
+    #             "time granularity": args.time_scale,
+    #         }
+    #     )
+    # # ! set up node features
+    # node_feat_dim = 256
+    # node_feat = torch.randn((num_nodes, node_feat_dim)).to(args.device)
+    # edge_feat_dim = 1
+    # hidden_dim = 256
+    #
+    # # * load the discretized version
+    #
+    # num_epochs = args.max_epoch
+    # lr = args.lr
+    #
     # args.seed = 710
-    # args.max_epoch = 250
-    # args.wandb = True
-    # args.min_epoch = 100
-    # args.dataset = 'unnamedtoken216620x429881672b9ae42b8eba0e26cd9c73711b891ca5'
-    # args.model = "GCLSTM"
-    # args.log_interval = 10
-    # args.lr = 0.00015
-    # set_random(args.seed)
-    # init_logger(
-    #     prepare_dir(args.output_folder) + args.model + '_' + args.dataset + '_seed_' + str(args.seed) + '_log.txt')
-    # runner = Runner()
-    # runner.run()
-
-    datasets = [
-        # "unnamedtoken223250xf2ec4a773ef90c58d98ea734c0ebdb538519b988",
-        # "unnamedtoken222800xa49d7499271ae71cd8ab9ac515e6694c755d400c",
-        # "unnamedtoken223030x4ad434b8cdc3aa5ac97932d6bd18b5d313ab0f6f",
-        # "unnamedtoken220850x9fa69536d1cda4a04cfb50688294de75b505a9ae",
-        # "unnamedtoken220220xade00c28244d5ce17d72e40330b1c318cd12b7c3",
-        # "unnamedtoken223090xc4ee0aa2d993ca7c9263ecfa26c6f7e13009d2b6",
-        # "unnamedtoken221090x5de8ab7e27f6e7a1fff3e5b337584aa43961beef",
-        # "unnamedtoken220240x235c8ee913d93c68d2902a8e0b5a643755705726",
-        # "unnamedtoken221150xa2cd3d43c775978a96bdbf12d733d5a1ed94fb18",
-        # "unnamedtoken218340xaa6e8127831c9de45ae56bb1b0d4d4da6e5665bd",
-        # "unnamedtoken220960x4da27a545c0c5b758a6ba100e3a049001de870f5",
-        # "unnamedtoken217780x7dd9c5cba05e151c895fde1cf355c9a1d5da6429",
-        # "unnamedtoken220250xa71d0588eaf47f12b13cf8ec750430d21df04974",
-        # "unnamedtoken218270x5026f006b85729a8b14553fae6af249ad16c9aab",
-        # "unnamedtoken221900x49642110b712c1fd7261bc074105e9e44676c68f",
-        # "unnamedtoken216900x9e32b13ce7f2e80a01932b42553652e053d6ed8e",
-        # "unnamedtoken218450x221657776846890989a759ba2973e427dff5c9bb",
-        # "TRAC0xaa7a9ca87d3694b5755f213b5d04094b8d0f0a6f",
-        "unnamedtoken220280xcf3c8be2e2c42331da80ef210e9b1b307c03d36a",
-    ]
-    # datasets = ['unnamedtoken216300xcc4304a31d09258b0029ea7fe63d032f52e44efe']
-    seeds = [710,720,800]
-
-    for dataset in datasets:
-        for seed in seeds:
-            # print(dataset,seed)
-            args.seed = seed
-            args.max_epoch = 250
-            args.wandb = True
-            args.min_epoch = 100
-            args.dataset = dataset
-            args.model = "GCLSTM"
-            args.log_interval = 10
-            args.lr = 0.00015
-            set_random(args.seed)
-            init_logger(
-                prepare_dir(args.output_folder) + args.model + '_' + args.dataset + '_seed_' + str(
-                    args.seed) + '_log.txt')
-            runner = Runner()
-            runner.run()
-            try:
-                wandb.finish()
-            except Exception as e:
-                print("Can't finish run with wandb: {}".format(e))
+    # args.num_runs = 1
+    #
+    # for seed in range(args.seed, args.seed + args.num_runs):
+    #     set_random(seed)
+    #     print(f"Run {seed}")
+    #
+    #     # * initialization of the model to prep for training
+    #     model = RecurrentGCN(node_feat_dim=node_feat_dim, hidden_dim=hidden_dim).to(args.device)
+    #     node_feat = torch.randn((num_nodes, node_feat_dim)).float().to(args.device)
+    #
+    #     num_extra_feat = 4  # = len([in-degree, weighted-in-degree, out-degree, weighted-out-degree])
+    #     tgc_decoder = MLP(in_dim=hidden_dim + num_extra_feat, hidden_dim_1=hidden_dim + num_extra_feat,
+    #                            hidden_dim_2=hidden_dim + num_extra_feat,
+    #                            drop=0.1).to(args.device)  # @NOTE: these hyperparameters may need to be changed
+    #
+    #     optimizer = torch.optim.Adam(
+    #         set(model.parameters()) | set(tgc_decoder.parameters()), lr=lr)
+    #     criterion = torch.nn.MSELoss()
+    #
+    #     best_val = 0
+    #     best_test = 0
+    #     best_epoch = 0
+    #
+    #     for epoch in range(10):
+    #         print("------------------------------------------")
+    #         train_start_time = timeit.default_timer()
+    #         optimizer.zero_grad()
+    #         total_loss = 0
+    #         model.train()
+    #         tgc_decoder.train()
+    #         h = None
+    #         total_loss = 0
+    #         tg_labels = []
+    #         tg_preds = []
+    #         epoch_losses = []
+    #         for snapshot_idx in train_shots_mask:
+    #
+    #             optimizer.zero_grad()
+    #             edge_idx = edge_idx_list[snapshot_idx].to(args.device)
+    #             edge_att = edge_att_list[snapshot_idx].float().to(args.device)
+    #
+    #             h = model(node_feat, edge_idx, edge_att)
+    #             tg_readout = readout_function(h, "mean")
+    # #             #@=========================Need t_graph_feat here=====================
+    #             tg_embedding = torch.cat((tg_readout, torch.from_numpy(t_graph_feat[snapshot_idx]).to(args.device)))
+    # #
+    #             # graph classification
+    #             tg_label = t_graph_labels[snapshot_idx].float().view(1, )
+    #             tg_pred = tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid()
+    #
+    #             tg_labels.append(tg_label.cpu().numpy())
+    #             tg_preds.append(tg_pred.cpu().detach().numpy())
+    #             t_loss = criterion(tg_pred, tg_label)
+    #             t_loss.backward()
+    #             optimizer.step()
+    #             epoch_losses.append(t_loss.item())
+    # #             # update the models====================================
+    #         avg_epoch_loss = np.mean(epoch_losses)
+    #         print(avg_epoch_loss)
+    #
+    #
+    #         train_time = timeit.default_timer() - train_start_time
+    #         print(f'Epoch {epoch}/{num_epochs}, Loss: {total_loss}')
+    #         print("Train time: ", train_time)
+    #
+    #
+    #     #===================================================================
+    #     #     # ? Evaluation starts here
+    #     #     #@Change all validation step below here for as training and apply early stopping
+    #     #     val_snapshots = data['val_data']['edge_index']
+    #     #     ts_list = data['val_data']['ts_map']
+    #     #     val_loader = TemporalDataLoader(val_edges, batch_size=batch_size)
+    #     #     evaluator = Evaluator(name=args.dataset)
+    #     #     neg_sampler = dataset.negative_sampler
+    #     #     dataset.load_val_ns()
+    #     #
+    #     #     start_epoch_val = timeit.default_timer()
+    #     #     val_metrics, h = test_tgb(h, val_loader, val_snapshots, ts_list,
+    #     #                               node_feat, model, link_pred, neg_sampler, evaluator, metric, split_mode='val')
+    #     #     val_time = timeit.default_timer() - start_epoch_val
+    #     #     print(f"Val {metric}: {val_metrics}")
+    #     #     print("Val time: ", val_time)
+    #     #     if (args.wandb):
+    #     #         wandb.log({"train_loss": (total_loss),
+    #     #                    "val_" + metric: val_metrics,
+    #     #                    "train time": train_time,
+    #     #                    "val time": val_time,
+    #     #                    })
+    #     #
+    #     #     # ! report test results when validation improves
+    #     #     if (val_metrics > best_val):
+    #     #         dataset.load_test_ns()
+    #     #         test_snapshots = data['test_data']['edge_index']
+    #     #         ts_list = data['test_data']['ts_map']
+    #     #         test_loader = TemporalDataLoader(test_edges, batch_size=batch_size)
+    #     #         neg_sampler = dataset.negative_sampler
+    #     #         dataset.load_test_ns()
+    #     #
+    #     #         test_start_time = timeit.default_timer()
+    #     #         test_metrics, h = test_tgb(h, test_loader, test_snapshots, ts_list,
+    #     #                                    node_feat, model, link_pred, neg_sampler, evaluator, metric,
+    #     #                                    split_mode='test')
+    #     #         test_time = timeit.default_timer() - test_start_time
+    #     #         best_val = val_metrics
+    #     #         best_test = test_metrics
+    #     #
+    #     #         print("test metric is ", test_metrics)
+    #     #         print("test elapsed time is ", test_time)
+    #     #         print("--------------------------------")
+    #     #         if ((epoch - best_epoch) >= args.patience and epoch > 1):
+    #     #             best_epoch = epoch
+    #     #             break
+    #     #         best_epoch = epoch
+    #     # print("run finishes")
+    #     # print("best epoch is, ", best_epoch)
+    #     # print("best val performance is, ", best_val)
+    #     # print("best test performance is, ", best_test)
+    #     # print("------------------------------------------")

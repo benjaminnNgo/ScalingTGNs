@@ -393,12 +393,12 @@ class Runner(object):
 
 
 if __name__ == '__main__':
-    from script.config import args, dataset_names
+    from script.utils.config import args, dataset_names
     from script.utils.util import set_random, logger, init_logger, disease_path
     from script.models.load_model import load_model
-    from script.loss import ReconLoss, VGAEloss
+    from script.utils.loss import ReconLoss, VGAEloss
     from script.utils.data_util import loader, prepare_dir, load_multiple_datasets
-    from script.inits import prepare
+    from script.utils.inits import prepare
 
     args.data_name = dataset_names
     args.test_bias = False

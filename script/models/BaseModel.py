@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.nn import Parameter
-from script.config import args
+from script.utils.config import args
 import torch.nn.functional as F
 from torch_geometric.nn.inits import glorot
 

@@ -451,17 +451,17 @@ class Runner(object):
 
 
 if __name__ == '__main__':
-    from script.config import args
+    from script.utils.config import args
     from script.utils.util import set_random, logger, init_logger, disease_path
     from script.models.load_model import load_model
-    from script.loss import ReconLoss, VGAEloss
+    from script.utils.loss import ReconLoss, VGAEloss
     from script.utils.data_util import loader, prepare_dir
-    from script.inits import prepare
+    from script.utils.inits import prepare
 
     datasets = [
         # "unnamedtoken223250xf2ec4a773ef90c58d98ea734c0ebdb538519b988",
         # "unnamedtoken222800xa49d7499271ae71cd8ab9ac515e6694c755d400c",
-        "AMB_0x4dc3643dbc642b72c158e7f3d2ff232df61cb6ce",
+        "IOTX0x6fb3e0a217407efff7ca062d46c26e5d60a14d69",
         # "unnamedtoken223030x4ad434b8cdc3aa5ac97932d6bd18b5d313ab0f6f",
         # "unnamedtoken220850x9fa69536d1cda4a04cfb50688294de75b505a9ae",
         # "unnamedtoken220220xade00c28244d5ce17d72e40330b1c318cd12b7c3",
@@ -484,7 +484,7 @@ if __name__ == '__main__':
     seeds = [710, 720, 800]
 
     args.max_epoch = 250
-    args.wandb = True
+    # args.wandb = True
     args.min_epoch = 100
     args.model = "HTGN"
     args.log_interval = 10

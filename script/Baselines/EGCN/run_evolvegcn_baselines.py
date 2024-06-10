@@ -10,10 +10,10 @@ import torch.optim as optim
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(BASE_DIR)
-from script.inits import prepare
+from script.utils.inits import prepare
 from script.models.load_model import load_model
-from script.loss import ReconLoss, VGAEloss
-from script.config import args
+from script.utils.loss import ReconLoss, VGAEloss
+from script.utils.config import args
 from script.utils.util import init_logger, logger
 from script.utils.data_util import loader,prepare_dir
 

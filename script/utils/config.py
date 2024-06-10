@@ -6,7 +6,7 @@ parser = argparse.ArgumentParser(description='HTGN')
 # 1.dataset
 parser.add_argument('--dataset', type=str, default='enron10', help='datasets')
 parser.add_argument('--data_pt_path', type=str, default='', help='need to be modified')
-parser.add_argument('--num_nodes', type=int, default=-1, help='num of nodes')
+parser.add_argument('--num_nodes', type=int, default=33190, help='num of nodes')
 parser.add_argument('--nfeat', type=int, default=128, help='dim of input feature')
 parser.add_argument('--nhid', type=int, default=16, help='dim of hidden embedding')#32-64
 parser.add_argument('--nout', type=int, default=16, help='dim of output embedding')
