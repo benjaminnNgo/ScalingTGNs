@@ -12,15 +12,9 @@ from script.utils.make_edges_orign import mask_edges_det, mask_edges_prd, mask_e
 from script.utils.make_edges_new import get_edges, get_prediction_edges, get_prediction_edges_modified, get_new_prediction_edges, get_new_prediction_edges_modified
 import shutil
 import datetime as dt
-
-# root_path = "../data/all_network/"
-# timeseries_file_path = "../data/all_network/TimeSeries/"
-# timeseries_file_path = "/network/scratch/r/razieh.shirzadkhani/fm_data/selected/"
-# root_path = "/network/scratch/r/razieh.shirzadkhani/fm/fm_data/data_lt_70/"
-# folder = "all_data"
-
-root_path = "../data/input"
-folder=""
+# 
+root_path = "/network/scratch/r/razieh.shirzadkhani/fm/fm_data/data_lt_70/all_data"
+# root_path = "../data/input"
 
 
 def mkdirs(path):
@@ -184,7 +178,7 @@ def load_TGC_dataset(dataset):
     data = {}
     ###############
     # nodes = {}
-    edgelist_rawfile = '{}/raw/edgelists/{}_edgelist.txt'.format(root_path+folder, dataset)
+    edgelist_rawfile = '{}/raw/edgelists/{}_edgelist.txt'.format(root_path, dataset)
     edgelist_df = pd.read_csv(edgelist_rawfile)
     uniq_ts_list = np.unique(edgelist_df['snapshot'])
     print("INFO: Number of unique snapshots: {}".format(len(uniq_ts_list)))
@@ -232,7 +226,7 @@ def load_TGC_dataset(dataset):
 
 def loader(dataset='enron10', neg_sample=''):
     # if cached, load directly
-    data_root = '{}/cached/{}/'.format(root_path+folder, dataset)
+    data_root = '{}/cached/{}/'.format(root_path, dataset)
     filepath = mkdirs(data_root) + '{}.data'.format(dataset)  # the data will be saved here after generation.
     print("INFO: Dataset: {}".format(dataset))
     print("DEBUG: Look for data at {}.".format(filepath))
@@ -269,34 +263,10 @@ def loader(dataset='enron10', neg_sample=''):
 def load_multiple_datasets(datasets_package_path=""):
     datasets_packages = []
     dataset_names = []
-
-    # datasets_package_path = '{}/raw/edgelists/{}'.format(root_path+folder, datasets_package_path)
-    print(datasets_package_path)
-    if os.path.exists(datasets_package_path):
-        print("Folder exists.")
-    else:
+    text_path = "../data/input/data_list/{}".format(datasets_package_path)
+    if not os.path.exists(text_path):
         print("Folder does not exist.")
-    i = 0
-    text_path = "../data/{}".format(datasets_package_path)
 
-
-
-    # for dataset in os.listdir(datasets_package_path):
-    #     print(dataset)
-    #     data_name, ext = os.path.splitext(dataset)
-    #     # i += 1
-
-    #     if ext == '.txt':
-    #         i+= 1
-            # raw_data_name = data_name.split("_")
-            # a = loader(raw_data_name[0])
-            # print(a)
-            # loader(raw_data_name[0])
-            # datasets_packages.append(loader(raw_data_name[0]))
-            
-            # dataset_names.append(raw_data_name[0])
-        
-    # print(i)
     try:
         with open(text_path, 'r') as file:
             for line in file:
@@ -304,13 +274,50 @@ def load_multiple_datasets(datasets_package_path=""):
                 datasets_packages.append(loader(dataset=line.strip()))
                 dataset_names.append(line.strip())
                 
+                
     except Exception as e:
         print("ERROR: error in processing data pack {}".format(datasets_package_path))
         print(e)
 
-    print("Number of dataset{}".format(len(datasets_packages)))
+    print("Number of dataset: {}".format(len(datasets_packages)))
     return dataset_names, datasets_packages
 
+def check_for_label_distribution(datasets_package_path=""):
+    datasets_packages = []
+    dataset_names = []
+    text_path = "../data/{}".format(datasets_package_path)
+    # datasets_package_path = '{}/raw/edgelists/{}'.format(root_path+folder, datasets_package_path)
+    print(datasets_package_path)
+    if os.path.exists(text_path):
+        print("Folder exists.")
+    else:
+        print("Folder does not exist.")
+    i = 0
+
+
+    try:
+        with open(text_path, 'r') as file:
+            for line in file:
+                print("INFO: Dataset: {}".format(line))
+                # datasets_packages = loader(dataset=line.strip())
+                # print(datasets_packages[-1]['time_length'])
+                # dataset_names.append(line.strip())
+                label_filename = f'{root_path}/raw/labels/{line.strip()}_labels.csv'
+                label_df = pd.read_csv(label_filename, header=None, names=['label'])
+                length = label_df.shape
+                train = list(map(int, label_df['label'][1:int(length[0] * 0.7)]))
+                val = list(map(int, label_df['label'][int(length[0] * 0.7): int(length[0] * 0.85)]))
+                test = list(map(int, label_df['label'][int(length[0] * 0.85):]))
+                x = True if 0 in train and 1 in train else False
+                y = True if 0 in val and 1 in val else False
+                z = True if 0 in test and 1 in test else False
+                print(x, y, z)
+
+    except Exception as e:
+        print("ERROR: error in processing data pack {}".format(datasets_package_path))
+        print(e)
+        
+    print("Number of dataset: {}".format(len(datasets_packages)))
 
 
 def process_data_gaps(directory):
@@ -333,7 +340,6 @@ def process_data_gaps(directory):
             gaps = max(set([(unique_timestamps[i+1] - unique_timestamps[i]).days for i in range(tot_len-1)]))
             file1.writelines([filename, ",", str(start), ",", str(end), ",",str(time_difference),",", str(gaps) ,"\n"])
     file1.close()
-
 
 # if __name__ == '__main__':
     

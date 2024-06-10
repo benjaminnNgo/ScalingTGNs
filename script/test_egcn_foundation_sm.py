@@ -178,10 +178,7 @@ def data_loader_egcn(dataset):
 
 
 def save_results(model_name, mode, dataset, test_auc, test_ap, bias=False):
-    if bias:
-        result_path = "../data/output/test_result/{}/{}_results_bias.csv".format(args.model, model_name)
-    else:
-        result_path = "../data/output/test_result/{}/{}_results.csv".format(args.model, model_name)
+    result_path = "../data/output/test_result/{}/{}_results.csv".format(args.model, model_name)
     if not os.path.exists(result_path):
         result_df = pd.DataFrame(columns=["dataset", "mode", "test_auc", "test_ap"])
     else:

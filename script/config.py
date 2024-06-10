@@ -6,14 +6,14 @@ parser = argparse.ArgumentParser(description='HTGN')
 # 1.dataset
 parser.add_argument('--dataset', type=str, default='enron10', help='datasets')
 parser.add_argument('--data_pt_path', type=str, default='', help='need to be modified')
-parser.add_argument('--num_nodes', type=int, default=-1, help='num of nodes')
+parser.add_argument('--num_nodes', type=int, default=33190, help='num of nodes')
 parser.add_argument('--nfeat', type=int, default=128, help='dim of input feature')
 parser.add_argument('--nhid', type=int, default=16, help='dim of hidden embedding')
 parser.add_argument('--nout', type=int, default=16, help='dim of output embedding')
 parser.add_argument('--neg_sample', type=str, default='rnd', help='negative sampling strategy')
 parser.add_argument("--wandb", action="store_true", default=False, help="now using wandb")
 parser.add_argument('--results_file', type=str, default='results.csv', help='Name of file to store evaluation of all models')
-
+parser.add_argument('--data_name', type=dict, default={}, help='Token name of each dataset')
 # 2.experiments
 parser.add_argument('--max_epoch', type=int, default=500, help='number of epochs to train.')
 parser.add_argument('--testlength', type=int, default=3, help='length for test, default:3')
@@ -58,7 +58,7 @@ parser.add_argument('--egcn_type', type=str, default='EGCNH', help='Type of EGCN
 parser.add_argument('--curvature', type=float, default=1.0, help='curvature value')
 parser.add_argument('--fixed_curvature', type=int, default=1, help='fixed (1) curvature or not (0)')
 parser.add_argument('--aggregation', type=str, default='deg', help='aggregation method: [deg, att]')
-
+parser.add_argument('--test_bias', type=bool, default=False)
 args = parser.parse_args()
 
 # set the running device
@@ -81,95 +81,13 @@ if args.debug_mode == 1:
     if not os.path.isdir(folder):
         os.makedirs(folder)
 
-# update the parameters for different datasets
-if args.dataset in ['enron10', 'dblp', 'uci']:
-    args.testlength = 3  # using one-hot feature as input
-
-if args.dataset in ['fbw']:  # length: 36
-    args.testlength = 3
-    args.trainable_feat = 1  # using trainable feature as input
-
-if args.dataset in ['HepPh30', 'HepPh60']:  # length: 36
-    args.testlength = 6
-    args.trainable_feat = 1  # using trainable feature as input
-
-if args.dataset in ['as733']:
-    args.testlength = 10
-    args.trainable_feat = 1  # using trainable feature as input
-
-if args.dataset in ['wiki']:
-    args.testlength = 15
-    args.trainable_feat = 1  # using trainable feature as input
-
-if args.dataset in ['disease']:
-    args.testlength = 3
-    args.pre_defined_feature = 1  # using pre_defined_feature as input
-
-if args.dataset in ['disease_mc']:
-    args.testlength = 3
-    args.pre_defined_feature = 1  # using pre_defined_feature as input
-
-if args.dataset in ['canVote']:
-    args.testlength = 1
-
-if args.dataset in ['LegisEdgelist']:
-    args.testlength = 1
-
-if args.dataset in ['UNtrade']:
-    args.testlength = 2
-
-if args.dataset in ['aion']:
-    args.testlength = 38  # train-test split: 80-20; Total number of snapshots = 190
-    args.trainable_feat = 1
-
-if args.dataset in ['dgd']:
-    args.testlength = 144  # train-test split: 80-20; Total number of snapshots = 720
-    args.trainable_feat = 1
-
-if args.dataset in ['adex']:
-    args.testlength = 59  # train-test split: 80-20; Total number of snapshots = 293
-    args.trainable_feat = 1
-
-if args.dataset in ['aragon']:
-    args.testlength = 67  # train-test split: 80-20; Total number of snapshots = 337
-    args.trainable_feat = 1
-
-if args.dataset in ['coindash']:
-    args.testlength = 54  # train-test split: 80-20; Total number of snapshots = 268
-    args.trainable_feat = 1
-
-if args.dataset in ['iconomi']:
-    args.testlength = 108  # train-test split: 80-20; Total number of snapshots = 542
-    args.trainable_feat = 1
-
-if args.dataset in ['aeternity']:
-    args.testlength = 46  # Total number of snapshots = 229
-    args.trainable_feat = 1
-
-if args.dataset in ['bancor']:
-    args.testlength = 66  # Total number of snapshots = 331
-    args.trainable_feat = 1
-
-if args.dataset in ['centra']:
-    args.testlength = 52  # Total number of snapshots = 261
-    args.trainable_feat = 1
-
-if args.dataset in ['cindicator']:
-    args.testlength = 44  # Total number of snapshots = 221
-    args.trainable_feat = 1
-
-if args.dataset in ['CollegeMsg']:
-    args.testlength = 35  # Total number of snapshots = 177
-    args.trainable_feat = 1
-
-if args.dataset in ['mathoverflow']:
-    args.testlength = 37  # Total number of snapshots = 183
-    args.trainable_feat = 1
-
-if args.dataset in ['RedditB']:
-    args.testlength = 80  # Total number of snapshots = 399
-    args.trainable_feat = 1
-
-if args.dataset in ['AMB']:
-    args.testlength = 10  # Total number of snapshots = 399
-    args.trainable_feat = 1
+dataset_names = {'unnamedtoken18980x00a8b738e453ffd858a7edf03bccfe20412f0eb0' : 'ALBT',
+                 'unnamedtoken216240x83e6f1e41cdd28eaceb20cb649155049fac3d5aa' : 'POLS',
+                 'unnamedtoken216300xcc4304a31d09258b0029ea7fe63d032f52e44efe' : 'SWAP',
+                 'unnamedtoken216350xe53ec727dbdeb9e2d5456c3be40cff031ab40a55' : 'SUPER',
+                 'unnamedtoken216360xfca59cd816ab1ead66534d82bc21e7515ce441cf' : 'RARI',
+                 'unnamedtoken216390x1ceb5cb57c4d4e2b2433641b95dd330a33185a44' : 'KP3R',
+                 'unnamedtoken216540x09a3ecafa817268f77be1283176b946c4ff2e608' : 'MIR',
+                 'unnamedtoken216550xbcca60bb61934080951369a648fb03df4f96263c' : 'AUSDC',
+                 'unnamedtoken216580x5f98805a4e8be255a32880fdec7f6728c6568ba0' : 'LUSD',
+                 'unnamedtoken216620x429881672b9ae42b8eba0e26cd9c73711b891ca5' : 'PICKLE'}

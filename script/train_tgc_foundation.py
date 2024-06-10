@@ -341,7 +341,7 @@ class Runner(object):
         Run the temporal graph classification task
         """
         self.model.init_hiddens()
-        # logger.info("Start training the temporal graph classification models.")
+        logger.info("Start training the temporal graph classification models.")
 
         # make sure to have the right device setup
         self.tgc_decoder = self.tgc_decoder.to(args.device)
@@ -350,15 +350,14 @@ class Runner(object):
         self.model = self.model.train()
         self.tgc_decoder = self.tgc_decoder.train()
         t_total_start = timeit.default_timer()
-        # t_total_start = time.time()
-        # min_loss = 10
+        
 
         best_model = self.model.state_dict()
         patience = 0
         best_eval_auc = -1
         train_avg_epoch_loss_dict = {} # Stores the average of epoch loss over all datasets
-        epoch_losses_per_dataset = {} # Stores each dataset loss at each epoch: {"data_1" : [e_1, e_2, ..], ...}
-        test_auc, test_ap = [], []
+        # epoch_losses_per_dataset = {} # Stores each dataset loss at each epoch: {"data_1" : [e_1, e_2, ..], ...}
+        # test_auc, test_ap = [], []
         time_t = 0
         for epoch in range(self.start_epoch + 1, args.max_epoch + 1):
             print("Epoch: ", epoch)
@@ -367,24 +366,20 @@ class Runner(object):
             train_aucs, train_aps, eval_aucs, eval_aps = [], [], [], []
             test_aucs, test_aps = [], []
             dataset_rnd = random.sample(range(self.num_datasets), self.num_datasets)
-            # print(dataset_rnd)
             for dataset_idx in dataset_rnd:
                 
-                # print(dataset_idx, args.data_name[args.dataset[dataset_idx]])
                 tg_labels, tg_preds = [], []
-                data_name = args.data_name[args.dataset[dataset_idx]] if args.dataset[dataset_idx] in args.data_name else args.dataset[dataset_idx]
+                # data_name = args.data_name[args.dataset[dataset_idx]] if args.dataset[dataset_idx] in args.data_name else args.dataset[dataset_idx]
                 # initialize a list to save the dataset losses for each epoch
-                if epoch == 1:
-                    epoch_losses_per_dataset[dataset_idx] = []
+                # if epoch == 1:
+                #     epoch_losses_per_dataset[dataset_idx] = []
                 self.model.train()
                 self.tgc_decoder.train()
                 self.model.init_hiddens()
                 dataset_losses = []
                 for t_train_idx, t_train in enumerate(self.train_shots[dataset_idx]):
                     self.optimizer.zero_grad()
-                    edge_index, pos_index, neg_index, activate_nodes, edge_weight, _, _ = prepare(data[dataset_idx], t_train)
-                    # print(edge_index.size())
-                    # print(self.x.size())
+                    edge_index, _, _, _, _, _, _ = prepare(data[dataset_idx], t_train)
                     embeddings = self.model(edge_index, self.x)
                     
                     # graph readout
@@ -504,8 +499,8 @@ class Runner(object):
 
         logger.info("INFO: Saving best model from epoch {}...".format(best_epoch))
         logger.info("File name: {}_seed_{}_{}.pth".format(args.model, args.seed, self.num_datasets))
-        torch.save(best_model, "{}_{}.pth".format(self.model_path, args.nout))
-        torch.save(best_mlp, "{}_{}_mlp.pth".format(self.model_path, args.nout))
+        torch.save(best_model, "{}_{}.pth".format(self.model_path, data_number))
+        torch.save(best_mlp, "{}_{}_mlp.pth".format(self.model_path, data_number))
         logger.info("Best test results: {}".format(best_test_results))
         
 
@@ -549,7 +544,7 @@ if __name__ == '__main__':
     # init_logger('../data/output/{}/log/time_log_1.txt'.format(category))
     # logger.info("INFO: Args: {}".format(args))
     # for data_number in [6]:
-    args.dataset, data = load_multiple_datasets("dataset_package_16.txt")
+    # args.dataset, data = load_multiple_datasets("dataset_package_16.txt")
     # # for args.seed in [710, 720, 800]:
     # init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, args.seed, len(args.dataset), data_number))
     # set_random(args.seed)
@@ -559,17 +554,17 @@ if __name__ == '__main__':
 
     # runner = Runner()
     # runner.run()
-    category = "nout"
-    for data_number in [32]:
-        # args.dataset, data = load_multiple_datasets("{}/dataset_package_8_{}.txt".format(category, data_number))
+    category = "rand_data"
+    for data_number in [3]:
+        args.dataset, data = load_multiple_datasets("{}/dataset_package_16_{}.txt".format(category, data_number))
         for args.seed in [800]:
             
-            for nout in [32]:
-                # init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, args.seed, len(args.dataset), data_number))
-                init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, args.seed, len(args.dataset), nout))
+            # for nout in [32]:
+                init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, len(args.dataset), args.seed, data_number))
+                # init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, args.seed, len(args.dataset), nout))
                 set_random(args.seed)
-                args.nout = nout
-                args.nhid = nout
+                # args.nout = nout
+                # args.nhid = nout
                 logger.info("INFO: data: {}, seed: {}".format(data_number, args.seed))
                 args.data_name = dataset_names
 

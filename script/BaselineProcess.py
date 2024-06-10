@@ -3,9 +3,13 @@ import shutil
 import datetime as dt
 import pandas as pd
 
-root_path = "../data/input/tokens/raw/"
-timeseries_file_path = "../data/input/tokens/raw/"
-timeseries_file_path = '/network/scratch/r/razieh.shirzadkhani/fm_data/'
+# root_path = "../data/input/tokens/raw/"
+# root_path = "../data/input/raw"
+root_path = "/network/scratch/r/razieh.shirzadkhani/fm/fm_data/data_lt_70"
+folder = "data_bw_25_and_40"
+
+# timeseries_file_path = "../data/input/tokens/raw/"
+timeseries_file_path = '/network/scratch/r/razieh.shirzadkhani/fm/fm_data/data_lt_70/'
 
 def creatBaselineDatasets(file, normalization=False):
     save_file_name = file.split(".")[0].replace("_", "")
@@ -18,10 +22,10 @@ def creatBaselineDatasets(file, normalization=False):
     batch_size = 20
     batch_lables = []
 
-    if os.path.exists("../data/input/raw/labels/{}.csv".format(save_file_name) ):
-        os.remove("../data/input/raw/labels/{}.csv".format(save_file_name))
+    if os.path.exists("{}/labels/{}.csv".format(root_path, save_file_name) ):
+        os.remove("{}/labels/{}.csv".format(root_path, save_file_name))
 
-    csv_edgelist_file_path = "../data/input/raw/edgeLists/" +save_file_name + "_edgelist.txt"
+    csv_edgelist_file_path = "{}/edgeLists/{}_edgelist.txt".format(root_path, save_file_name)
     if os.path.exists(csv_edgelist_file_path):
         appended_edgelist_df = pd.read_csv(csv_edgelist_file_path)
     else:
@@ -121,7 +125,12 @@ def creatBaselineDatasets(file, normalization=False):
     print(f"f{file} Process completed! 100%")
 
 
-
+if __name__ == '__main__':
+    dataset_df = pd.read_csv(timeseries_file_path+'dataset_no_gap_1_day.csv')
+    
+    filtered_df = dataset_df[(dataset_df['networkSize'] <=70 )]['filename']
+    for filename in filtered_df:
+        creatBaselineDatasets(filename)
 # ["unnamed_token_15_0x0000000000095413afc295d19edeb1ad7b71c952.csv",
 # "unnamed_token_21662_0x429881672b9ae42b8eba0e26cd9c73711b891ca5.csv",
 # "unnamed_token_21658_0x5f98805a4e8be255a32880fdec7f6728c6568ba0.csv",
@@ -132,4 +141,4 @@ def creatBaselineDatasets(file, normalization=False):
 # "unnamed_token_1898_0x00a8b738e453ffd858a7edf03bccfe20412f0eb0.csv",
 # "unnamed_token_21630_0xcc4304a31d09258b0029ea7fe63d032f52e44efe.csv",
 # "unnamed_token_21636_0xfca59cd816ab1ead66534d82bc21e7515ce441cf.csv"]
-creatBaselineDatasets("unnamed_token_21635_0xe53ec727dbdeb9e2d5456c3be40cff031ab40a55.csv")
+# creatBaselineDatasets("unnamed_token_21635_0xe53ec727dbdeb9e2d5456c3be40cff031ab40a55.csv")

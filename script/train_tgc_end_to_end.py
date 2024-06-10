@@ -409,7 +409,7 @@ if __name__ == '__main__':
     from script.utils.data_util import loader, prepare_dir
     from script.inits import prepare
 
-
+    args.dataset = "IOTX0x6fb3e0a217407efff7ca062d46c26e5d60a14d69"
     print("INFO: >>> Temporal Graph Classification <<<")
     print("INFO: Args: ", args)
     print("======================================")

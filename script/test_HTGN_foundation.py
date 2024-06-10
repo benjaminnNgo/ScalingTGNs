@@ -360,15 +360,15 @@ class Runner(object):
                         embeddings = self.model(edge_index, self.x)
                         self.model.update_hiddens_all_with(embeddings)
                 
-                # val_auc, val_ap = self.tgclassification_val(self.readout_scheme, dataset_idx)
-                # logger.info("Final Val Data {}: AUC: {:.4f}, AP: {:.4f}".format(
-                #     data_name, 
-                #     val_auc, val_ap))
-                # save_results(model_path, 
-                #              "Val", 
-                #              data_name, 
-                #              val_auc, 
-                #              val_ap)
+                val_auc, val_ap = self.tgclassification_val(self.readout_scheme, dataset_idx)
+                logger.info("Final Val Data {}: AUC: {:.4f}, AP: {:.4f}".format(
+                    data_name, 
+                    val_auc, val_ap))
+                save_results(model_path, 
+                             "Val", 
+                             data_name, 
+                             val_auc, 
+                             val_ap)
                 
                 # Passing through validation set to get the embeddings
                 for t_train in self.val_shots[dataset_idx]:
@@ -414,37 +414,38 @@ if __name__ == '__main__':
     # args.num_nodes = 183714#max(num_nodes_per_data)
     # args.max_node_id = 183713
     # args.num_nodes = args.max_node_id + 1
-    category = "nout"
+    category = "rand_data/rr"
     
-    for n_data in [1]:
-        for seed in [710, 720]:
-            for nout in [32, 64]:
-                args.nhid = nout
-                args.nout = nout
+    for n_data in [2]:
+        for seed in [710, 720, 800]:
+            # for nout in [256]:
+            #     args.nhid = nout
+            #     args.nout = nout
+            # model_path = "HTGN_16_seed_{}".format(seed)
                 # model_path = "rand_data/rr/{}".format(n_data)
-                # model_path = "rand_data/rr/{}_{}_seed_{}_{}".format(args.model, n_data, seed, nr)
-                model_path = "HTGN_16_seed_{}_{}".format(seed, nout)
+            model_path = "{}_32_seed_{}_{}".format(args.model,  seed, n_data)
+                # model_path = "HTGN_16_seed_{}_{}".format(seed, nout)
                 # model_path = "node_id/HTGN_seed_{}_{}".format(seed, n_data)
                 # result_path = "../data/output/{}/test_result/{}_results.csv".format(category, model_path)
                 # print(result_path)
-                runner = Runner()
-                runner.run()
+            runner = Runner()
+            runner.run()
 
-        for seed in [800]:
-            for nout in [64]:
-                args.nhid = nout
-                args.nout = nout
-                model_path = "HTGN_16_seed_{}_{}".format(seed, nout)
-                runner = Runner()
-                runner.run()
+        # for seed in [800]:
+        #     for nout in [32]:
+        #         args.nhid = nout
+        #         args.nout = nout
+        #         model_path = "HTGN_16_seed_{}_{}".format(seed, nout)
+        #         runner = Runner()
+        #         runner.run()
 
-        for seed in [710]:
-            for nout in [128]:
-                args.nhid = nout
-                args.nout = nout
-                model_path = "HTGN_16_seed_{}_{}".format(seed, nout)
-                runner = Runner()
-                runner.run()
+        # for seed in [720, 800]:
+        #     for nout in [128]:
+        #         args.nhid = nout
+        #         args.nout = nout
+        #         model_path = "HTGN_16_seed_{}_{}".format(seed, nout)
+        #         runner = Runner()
+        #         runner.run()
 
 
     # average_results(result_path)
