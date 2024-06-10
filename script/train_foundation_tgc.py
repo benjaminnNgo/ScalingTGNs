@@ -135,18 +135,15 @@ def extra_dataset_attributes_loading(args, readout_scheme='mean'):
 
 def save_epoch_results(epoch, test_auc, test_ap, time, dataset=None):
     if dataset is None:
-        result_folder = "../data/output/{}/epoch_result/average".format(category)
-        result_path = result_folder + "/{}_seed_{}_{}_{}_epochResult.csv".format(category,
-                                                                                args.model,
+        result_folder = "../data/output/epoch_result/average"
+        result_path = result_folder + "/{}_seed_{}_{}_epochResult.csv".format(args.model,
                                                                                 args.seed,
-                                                                                len(args.dataset),
-                                                                                data_number)
+                                                                                len(args.dataset))
     else:
-        result_folder = "../data/output/{}/epoch_result/data/{}".format(category, dataset)
-        result_path = result_folder + "/{}_seed_{}_{}_{}_epochResult.csv".format(args.model,
+        result_folder = "../data/output/epoch_result/data/{}".format(dataset)
+        result_path = result_folder + "/{}_seed_{}_{}_epochResult.csv".format(args.model,
                                                                                  args.seed,
-                                                                                 len(args.dataset),
-                                                                                 data_number)
+                                                                                 len(args.dataset))
     if not os.path.exists(result_folder):
         os.makedirs(result_folder)
     
@@ -159,22 +156,19 @@ def save_epoch_results(epoch, test_auc, test_ap, time, dataset=None):
 
 def save_epoch_training(epoch, train_auc, train_ap, loss, time, dataset=None):
     if dataset is None:
-        result_folder = "../data/output/{}/training_test/average".format(category)
-        result_path = result_folder + "/{}_seed_{}_{}_{}_epochResult.csv".format(category,
-                                                                                args.model,
+        result_folder = "../data/output/training_test/average"
+        result_path = result_folder + "/{}_seed_{}_{}_epochResult.csv".format(args.model,
                                                                                 args.seed,
-                                                                                len(args.dataset),
-                                                                                data_number)
+                                                                                len(args.dataset))
         # if not os.path.exists(result_folder):
         #     os.makedirs(result_folder)
     else:
         # data_name = args.data_name[args.dataset[dataset]] if args.dataset[dataset] in args.data_name else args.dataset[dataset]
         # print(data_name)
-        result_folder = "../data/output/{}/training_test/data/{}".format(category, dataset)
-        result_path = result_folder + "/{}_seed_{}_{}_{}_epochResult.csv".format(args.model,
+        result_folder = "../data/output/training_test/data/{}".format(dataset)
+        result_path = result_folder + "/{}_seed_{}_{}_epochResult.csv".format(args.model,
                                                                                  args.seed,
-                                                                                 len(args.dataset),
-                                                                                 data_number)
+                                                                                 len(args.dataset))
     if not os.path.exists(result_folder):
         os.makedirs(result_folder)
 
@@ -221,14 +215,12 @@ class Runner(object):
 
         self.model = load_model(args).to(args.device)
         
-        self.model_path = '{}/saved_models/fm/{}/{}_{}_seed_{}'.format(model_file_path, 
-                                                                        category,
+        self.model_path = '{}/saved_models/fm/{}_{}_seed_{}'.format(model_file_path,
                                                                         args.model,
                                                                         self.num_datasets,
                                                                         args.seed)
         
-        self.model_chkp_path = '{}/saved_models/fm/{}/checkpoint/{}_{}_seed_{}'.format(model_file_path, 
-                                                                        category,
+        self.model_chkp_path = '{}/saved_models/fm/checkpoint/{}_{}_seed_{}'.format(model_file_path,
                                                                         args.model,
                                                                         self.num_datasets,
                                                                         args.seed)
@@ -448,11 +440,11 @@ class Runner(object):
             # Saving model checkpoint:
             torch.save({'epoch': epoch,
                         'model_state_dict': self.model.state_dict()}, 
-                        "{}_{}.pth".format(self.model_chkp_path, data_number))
+                        "{}.pth".format(self.model_chkp_path))
             
             torch.save({'epoch': epoch,
                         'model_state_dict': self.tgc_decoder.state_dict()}, 
-                        "{}_{}_mlp.pth".format(self.model_chkp_path, data_number))
+                        "{}_mlp.pth".format(self.model_chkp_path))
             
         #     # Validating
             if best_eval_auc < avg_eval_auc or epoch <= args.min_epoch: #Use AUC as metric to define early stoping
@@ -518,61 +510,24 @@ if __name__ == '__main__':
     from script.utils.data_util import prepare_dir
     
     args.model = "HTGN"
-    # args.model = "EGCN"
     args.seed = 710
     args.max_epoch=300
     args.lr = 0.0001
     args.log_interval=10
     args.patience = 30
     args.min_epoch = 100
-    # args.nhid = 2048
-    # args.data_name = dataset_names
     # args.wandb = True
     print("INFO: >>> Temporal Graph Classification <<<")
-    # print("INFO: Args: ", args)
     print("======================================")
-    # print("INFO: Dataset: {}".format(args.dataset))
     print("INFO: Model: {}".format(args.model))
     
     # use time of run for saving results
-    t = time.localtime()
-    args.curr_time = time.strftime("%Y-%m-%d-%H:%M:%S", t)
-    # load_multiple_datasets("")
-    # check_for_label_distribution("test.txt")
-    
-    # num_nodes_per_data = [data[i]['num_nodes'] for i in range(len(data))]
-    # args.num_nodes = max(num_nodes_per_data)
-    # print(args.num_nodes)
-    # category = "10data"
-    
-    
-    # init_logger('../data/output/{}/log/time_log_1.txt'.format(category))
-    # logger.info("INFO: Args: {}".format(args))
-    # for data_number in [6]:
-    args.dataset, data = load_multiple_datasets("dataset_package_2.txt")
-    # # for args.seed in [710, 720, 800]:
-    # init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, args.seed, len(args.dataset), data_number))
-    # set_random(args.seed)
-    # # for nhid in [16, 32, 64, 128, 256, 512, 1024, 2048]:
-    # logger.info("INFO: data: {}, seed: {}".format(data_number, args.seed))
-    # args.data_name = dataset_names
+    args.dataset, data = load_multiple_datasets("dataset_package_1.txt")
+    init_logger(
+        '../data/output/log/{}_{}_seed_{}_log.txt'.format(args.model, args.seed, len(args.dataset)))
+    set_random(args.seed)
+    logger.info("INFO: Number of data: {}, seed: {}".format(len(data), args.seed))
+    args.data_name = dataset_names
 
-    # runner = Runner()
-    # runner.run()
-    category = ""
-    for data_number in [32]:
-        # args.dataset, data = load_multiple_datasets("{}/dataset_package_8_{}.txt".format(category, data_number))
-        for args.seed in [800]:
-            
-            for nout in [32]:
-                # init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, args.seed, len(args.dataset), data_number))
-                init_logger(
-                    '../data/output/{}_{}_seed_{}_{}_log.txt'.format(args.model, args.seed, len(args.dataset), nout))
-                set_random(args.seed)
-                args.nout = nout
-                args.nhid = nout
-                logger.info("INFO: data: {}, seed: {}".format(data_number, args.seed))
-                args.data_name = dataset_names
-
-                runner = Runner()
-                runner.run()
+    runner = Runner()
+    runner.run()
