@@ -3,13 +3,14 @@ import shutil
 import datetime as dt
 import pandas as pd
 
-#===============================To be cleaned========================
+# ===============================To be cleaned========================
 root_path = "../../data/input/tokens/"
 timeseries_file_path = "../../data/input/tokens/"
 
-#Keep this class
+
+# Keep this class
 class TGS_Handler:
-    def __init__(self,TGS_storage_path,window_size = 7,gap = 3, label_window_size = 7, min_valid_duration = 3):
+    def __init__(self, TGS_storage_path, window_size=7, gap=3, label_window_size=7, min_valid_duration=3):
         self.token_root_path = TGS_storage_path
         self.label_root_path = "../data/input/raw/labels/"
         self.dummy_label_root_path = "../data/input/raw/dummy_labels/"
@@ -20,8 +21,6 @@ class TGS_Handler:
         self.label_window_size = label_window_size  # Day
         self.min_valid_duration = min_valid_duration  # Day
 
-
-
         if not os.path.exists(self.label_root_path):
             os.makedirs(self.label_root_path)
 
@@ -31,7 +30,7 @@ class TGS_Handler:
         if not os.path.exists(self.dummy_label_root_path):
             os.makedirs(self.dummy_label_root_path)
 
-    def create_dummy_baseline_labels_weekly(self,dataset, normalization=False):
+    def create_dummy_baseline_labels_weekly(self, dataset, normalization=False):
         print("INFO: Dummy label is not yet calculating. Generating dummy labels weekly...")
 
         save_file_name = dataset.split(".")[0].replace("_", "")
@@ -74,7 +73,8 @@ class TGS_Handler:
             selectedNetwork['weight'] = selectedNetwork['weight'].apply(
                 lambda x: 1 + (9 * ((float(x) - min_transfer) / (max_transfer - min_transfer))))
 
-        base_progress = (data_last_date - window_start_date).days / (self.window_size + self.gap + self.label_window_size)
+        base_progress = (data_last_date - window_start_date).days / (
+                    self.window_size + self.gap + self.label_window_size)
 
         while (data_last_date - window_start_date).days > (self.window_size + self.gap + self.label_window_size):
             indx += 1
@@ -106,7 +106,6 @@ class TGS_Handler:
             if (indx % batch_size == 0):
                 with open(label_file_path, 'a') as file_label:
                     for l in batch_lables:
-
                         file_label.write(str(l) + "\n")
                     file_label.close()
 
@@ -114,7 +113,7 @@ class TGS_Handler:
 
             window_start_date = window_start_date + dt.timedelta(days=1)
 
-    def creat_baseline_datasets(self,file,normalization=False):
+    def creat_baseline_datasets(self, file, normalization=False):
         print("INFO: Edge list and label doesn't exist yet. Generating from raw data from TGS...")
         save_file_name = file.split(".")[0].replace("_", "")
         label_file_path = "{}/{}_labels.csv".format(self.label_root_path, save_file_name)
@@ -136,7 +135,7 @@ class TGS_Handler:
 
         appended_edgelist_df = pd.DataFrame()
 
-        selectedNetwork = pd.read_csv((self.token_root_path + file+ ".csv"), sep=',')
+        selectedNetwork = pd.read_csv((self.token_root_path + file + ".csv"), sep=',')
         selectedNetwork['date'] = pd.to_datetime(selectedNetwork['timestamp'], unit='s').dt.date
         selectedNetwork['value'] = selectedNetwork['value'].astype(float)
         selectedNetwork = selectedNetwork.sort_values(by='date')
@@ -216,9 +215,10 @@ class TGS_Handler:
             window_start_date = window_start_date + dt.timedelta(days=1)
 
 
-#===============================To be cleaned========================
-def create_dummy_baseline_labels_weekly(file, normalization=False,window_size = 7,lable_window_size = 7,gap=3,min_valid_duration = 20):
-    timeseries_file_path = "E:/token/" #@TODO: BAO changed this to dir that we store token
+# ===============================To be cleaned========================
+def create_dummy_baseline_labels_weekly(file, normalization=False, window_size=7, lable_window_size=7, gap=3,
+                                        min_valid_duration=20):
+    timeseries_file_path = "E:/token/"  # @TODO: BAO changed this to dir that we store token
 
     save_file_name = file.split(".")[0].replace("_", "")
     # windowSize = 7  # Day
@@ -228,7 +228,6 @@ def create_dummy_baseline_labels_weekly(file, normalization=False,window_size = 
     indx = 0
     batch_size = 20
     batch_lables = []
-
 
     selectedNetwork = pd.read_csv((timeseries_file_path + file), sep=',')
     selectedNetwork['date'] = pd.to_datetime(selectedNetwork['timestamp'], unit='s').dt.date
@@ -245,7 +244,6 @@ def create_dummy_baseline_labels_weekly(file, normalization=False,window_size = 
 
     # rename columns
     selectedNetwork.rename(columns={'from': 'source', 'to': 'destination', 'value': 'weight'}, inplace=True)
-
 
     # check if the network has more than 20 days of data
     if ((data_last_date - window_start_date).days < min_valid_duration):
@@ -301,10 +299,11 @@ def create_dummy_baseline_labels_weekly(file, normalization=False,window_size = 
         window_start_date = window_start_date + dt.timedelta(days=1)
 
 
-def creatBaselineDatasets(file,root,save_root, normalization=False): #@TODO: this is supposed to be moved to data_util pipiline
+def creatBaselineDatasets(file, root, save_root,
+                          normalization=False):  # @TODO: this is supposed to be moved to data_util pipiline
     save_file_name = file.split(".")[0].replace("_", "")
-    label_file_path =  "{}/labels/{}_labels.csv".format(save_root,save_file_name)
-    edgelist_file_path = "{}/edgelists/{}_edgelist.txt".format(save_root,save_file_name)
+    label_file_path = "{}/labels/{}_labels.csv".format(save_root, save_file_name)
+    edgelist_file_path = "{}/edgelists/{}_edgelist.txt".format(save_root, save_file_name)
 
     print("Processing {}".format(file))
     windowSize = 7  # Day
@@ -320,7 +319,6 @@ def creatBaselineDatasets(file,root,save_root, normalization=False): #@TODO: thi
 
     if os.path.exists(edgelist_file_path):
         os.remove(edgelist_file_path)
-
 
     appended_edgelist_df = pd.DataFrame()
 
@@ -417,7 +415,6 @@ def createDummyBaselineLabelsWeekly(file, normalization=False):
     batch_size = 20
     batch_lables = []
 
-
     selectedNetwork = pd.read_csv((timeseries_file_path + file), sep=',')
     selectedNetwork['date'] = pd.to_datetime(selectedNetwork['timestamp'], unit='s').dt.date
     selectedNetwork['value'] = selectedNetwork['value'].astype(float)
@@ -474,8 +471,6 @@ def createDummyBaselineLabelsWeekly(file, normalization=False):
         selectedNetworkInLbelingWindow = selectedNetwork[
             (selectedNetwork['date'] >= label_start_date) & (selectedNetwork['date'] < label_end_date)]
 
-
-
         # generating the label for this window
         # 1 -> Increading Transactions 0 -> Decreasing Transactions
         label = 1 if (len(selectedNetworkInLbelingWindow) - len(
@@ -503,6 +498,7 @@ def createDummyBaselineLabelsWeekly(file, normalization=False):
 
     print(f"f{file} Process completed! 100%")
 
+
 def createDummyBaselineLabelsFisrtDayLastDay(file, normalization=False):
     save_file_name = file.split(".")[0].replace("_", "")
     print("Processing {}".format(file))
@@ -513,7 +509,6 @@ def createDummyBaselineLabelsFisrtDayLastDay(file, normalization=False):
     indx = 0
     batch_size = 20
     batch_lables = []
-
 
     selectedNetwork = pd.read_csv((timeseries_file_path + file), sep=',')
     selectedNetwork['date'] = pd.to_datetime(selectedNetwork['timestamp'], unit='s').dt.date
@@ -556,7 +551,7 @@ def createDummyBaselineLabelsFisrtDayLastDay(file, normalization=False):
         print("\nCompleted Process  {} % ".format(
 
             (1 - ((data_last_date - window_start_date).days / (
-                        windowSize + gap + lableWindowSize)) / base_progress) * 100))
+                    windowSize + gap + lableWindowSize)) / base_progress) * 100))
         indx += 1
 
         # select window data
@@ -596,10 +591,11 @@ def createDummyBaselineLabelsFisrtDayLastDay(file, normalization=False):
 
     print(f"f{file} Process completed! 100%")
 
-def creatBaselineDatasets(file,root,save_root, normalization=False):
+
+def creatBaselineDatasets(file, root, save_root, normalization=False):
     save_file_name = file.split(".")[0].replace("_", "")
-    label_file_path =  "{}/labels/{}_labels.csv".format(save_root,save_file_name)
-    edgelist_file_path = "{}/edgelists/{}_edgelist.txt".format(save_root,save_file_name)
+    label_file_path = "{}/labels/{}_labels.csv".format(save_root, save_file_name)
+    edgelist_file_path = "{}/edgelists/{}_edgelist.txt".format(save_root, save_file_name)
 
     print("Processing {}".format(file))
     windowSize = 7  # Day
@@ -615,7 +611,6 @@ def creatBaselineDatasets(file,root,save_root, normalization=False):
 
     if os.path.exists(edgelist_file_path):
         os.remove(edgelist_file_path)
-
 
     appended_edgelist_df = pd.DataFrame()
 
@@ -634,9 +629,6 @@ def creatBaselineDatasets(file,root,save_root, normalization=False):
 
     # rename columns
     selectedNetwork.rename(columns={'from': 'source', 'to': 'destination', 'value': 'weight'}, inplace=True)
-
-
-
 
     print(f"{file} -- {window_start_date} -- {data_last_date}")
 
@@ -709,14 +701,15 @@ def creatBaselineDatasets(file,root,save_root, normalization=False):
 
     print(f"f{file} Process completed! 100%")
 
-if __name__ == '__main__':
 
+if __name__ == '__main__':
     # datasets_list_name = [
     #     'CMT_0xf85feea2fdd81d51177f6b8f35f0e6734ce45f5f.csv',
     #     'unnamed_token_21823_0x320623b8e4ff03373931769a31fc52a4e78b5d70.csv',
     #     'unnamed_token_16917_0x06325440d014e39736583c165c2963ba99faf14e.csv'
     #     ]
     # for data in datasets_list_name:
-        # createDummyBaselineLabelsWeekly(data)
+    # createDummyBaselineLabelsWeekly(data)
 
-    TGS_Handler("E:/TGS/").create_dummy_baseline_labels_weekly("unnamedtoken214030x07e0edf8ce600fb51d44f51e3348d77d67f298ae")
+    TGS_Handler("E:/TGS/").create_dummy_baseline_labels_weekly(
+        "unnamedtoken214030x07e0edf8ce600fb51d44f51e3348d77d67f298ae")
