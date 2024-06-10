@@ -8,16 +8,14 @@ import matplotlib.pyplot as plt
 import plotly.express as px
 
 
-
-
 def draw_avg_rank():
     rank_htgn = pd.read_csv("../utils/htgn_results.csv")
     rank_gclstm = pd.read_csv("../utils/gclstm_results.csv")
 
-    htgn = rank_htgn[rank_htgn['method'] =='avg_rank']
+    htgn = rank_htgn[rank_htgn['method'] == 'avg_rank']
     gclstm = rank_gclstm[rank_gclstm['method'] == 'avg_rank']
 
-    foundation_names = ["1","2","4","8","16","32","64"]
+    foundation_names = ["1", "2", "4", "8", "16", "32", "64"]
     htgn_list = []
     gclstm_list = []
     for foundation_name in foundation_names:
@@ -26,21 +24,21 @@ def draw_avg_rank():
 
     data = pd.DataFrame({
         "method": foundation_names,
-        "htgn":htgn_list,
-        "gclstm":gclstm_list
+        "htgn": htgn_list,
+        "gclstm": gclstm_list
     })
     plt.figure(figsize=(10, 6))
 
     # Plot the first line
-    sns.lineplot(x='method', y='htgn', data=data, label='HTGN',linewidth=3)
+    sns.lineplot(x='method', y='htgn', data=data, label='HTGN', linewidth=3)
 
     # Plot the second line
-    sns.lineplot(x='method', y='gclstm', data=data, label='GCLSTM',linewidth=3)
+    sns.lineplot(x='method', y='gclstm', data=data, label='GCLSTM', linewidth=3)
 
     # Add a title and labels
-    plt.xlabel('Number of networds',fontsize= 20)
-    plt.ylabel('Average rank',fontsize= 20)
-    plt.xticks(fontsize=20 )
+    plt.xlabel('Number of networds', fontsize=20)
+    plt.ylabel('Average rank', fontsize=20)
+    plt.xticks(fontsize=20)
     plt.yticks(fontsize=20)
 
     # Show the legend
@@ -52,11 +50,12 @@ def draw_avg_rank():
     # Display the plot
     plt.show()
 
-def draw_dataset_distribution(columns= "age"):
+
+def draw_dataset_distribution(columns="age"):
     if columns == "age":
         scale = False
-        xaxis= "Days"
-        filename="day"
+        xaxis = "Days"
+        filename = "day"
     elif columns == "novelty":
         scale = False
         xaxis = "Novelty score"
@@ -73,7 +72,6 @@ def draw_dataset_distribution(columns= "age"):
     TGS_stats_df = pd.read_csv('../TGS_stats.csv')
     list = TGS_stats_df[columns].tolist()
 
-
     plt.figure(figsize=(10, 9))  # Width, height in inches
 
     g = sns.histplot(list, log_scale=scale, bins=20)
@@ -89,17 +87,19 @@ def draw_dataset_distribution(columns= "age"):
 
 plt.show()
 
+
 def file_to_array(file_path):
     with open(file_path, 'r') as file:
         # Read all lines from the file and strip the newline characters
         array = [line.strip() for line in file.readlines()]
     return array
 
-def draw_train_distribution(columns= "node_count"):
+
+def draw_train_distribution(columns="node_count"):
     if columns == "age":
         scale = False
-        xaxis= "Days"
-        filename="day"
+        xaxis = "Days"
+        filename = "day"
     elif columns == "novelty":
         scale = False
         xaxis = "Novelty score"
@@ -131,6 +131,7 @@ def draw_train_distribution(columns= "node_count"):
 
     plt.show()
 
+
 def draw_test_distribution(columns="novelty"):
     if columns == "age":
         scale = False
@@ -152,10 +153,9 @@ def draw_test_distribution(columns="novelty"):
 
     test_data = file_to_array("../../data/data_package/datasets_testing_package.txt")
 
-
     test_stats = TGS_stats_df[TGS_stats_df['dataset'].isin(test_data)][columns].tolist()
 
-        # print
+    # print
     plt.figure(figsize=(10, 9))  # Width, height in inches
 
     g = sns.histplot(test_stats, log_scale=scale, bins=20)
@@ -174,6 +174,8 @@ def draw_test_distribution(columns="novelty"):
 def random_rgb_color():
     """Generate a random RGB color."""
     return tuple(np.random.randint(0, 256, size=3) / 255)
+
+
 def draw_toper_3D(list):
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
@@ -184,19 +186,16 @@ def draw_toper_3D(list):
 
         sns.set(style="whitegrid")
 
-
-
         # Plot the points
-        scatter = ax.plot(x, y, z, c=random_rgb_color(),alpha=0.6,marker='o')
+        scatter = ax.plot(x, y, z, c=random_rgb_color(), alpha=0.6, marker='o')
 
         # Set labels
     ax.set_xlabel('X Label')
     ax.set_ylabel('Y Label')
     ax.set_zlabel('Z Label')
 
-        # Show the plot
+    # Show the plot
     plt.show()
-
 
 
 if __name__ == '__main__':
@@ -209,7 +208,7 @@ if __name__ == '__main__':
     # draw_test_distribution('node_count')
     np.random.seed(702)
     partial_path = "../toper/toper_values/TGS/"
-    counter =0
+    counter = 0
     list = []
     for data in os.listdir(partial_path):
         counter += 1
@@ -219,4 +218,3 @@ if __name__ == '__main__':
             break
 
     draw_toper_3D(list)
-

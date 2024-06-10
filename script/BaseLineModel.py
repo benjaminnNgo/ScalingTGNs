@@ -4,7 +4,7 @@ import torch
 import numpy as np
 import pandas as pd
 from sklearn.metrics import roc_auc_score, average_precision_score
-from TGS.TGS import TGS_Handler
+from script.utils.TGS import TGS_Handler
 
 def extra_dataset_attributes_loading(dataset):
 
