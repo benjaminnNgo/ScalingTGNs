@@ -11,3 +11,7 @@
 [2024-06-10 17:27:50,681 INFO] INFO: Saving the models...
 [2024-06-10 17:27:51,339 INFO] INFO: The models is saved. Done.
 [2024-06-10 17:27:51,340 INFO] Best Test: Epoch:1 , AUC: 0.6872, AP: 0.5881
+[2024-06-10 17:52:13,635 INFO] INFO: using one-hot feature
+[2024-06-10 17:52:13,635 INFO] INFO: total length: 580, train length: 406,eval length:87, test length: 87
+[2024-06-10 17:52:13,823 INFO] using models HTGN 
+[2024-06-10 17:52:19,335 INFO] Start training the temporal graph classification models.
