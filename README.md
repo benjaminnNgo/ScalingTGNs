@@ -51,8 +51,11 @@ pip install torch-geometric-temporal
 - Libraries listed in `installed_packages.txt`
 
 # Results reproduce
-1. Single models' results can be reproduced on all datasets provided by TGS by running ```train_tgc_end_to_end.py```
-2. To reproduce the foundation model train and test results, please follow step:
+To train a single or foundation model, download datasets from here [here](https://zenodo.org/doi/10.5281/zenodo.11455827).
+- All label files need to be placed in the directory `data/input/raw/labels/ `
+- All edge list files need to be placed in the directory `data/input/raw/edgelists/ `
+- All raw `.csv` files need to be placed in the directory `data/input/tokens/raw/ ` if you want to re-generate edge lists and labels.
+
 ## Foundation Models
 ### Data Loader
 Multi-network loading for  foundation model training is done through the following function which is already included in the `train_foundation_tgc.py` and `test_foundation_tgc.py` scripts.
@@ -73,3 +76,20 @@ python test_foundation_tgc.py --model=HTGGN --seed=710
 ```
 
 ## Single Model
+- To train a single model, run  `train_single_tgc.py` inside `/script/`. Hyper-parameters can easily be configured by modifying `args.{parameter_name}` inside the file.
+- It is also possible to run the code and set hyper-parameter by using the commands. Example:
+```
+python train_single_tgc.py --model=HTGN --max_epoch=300 --lr=0.0001 --seed=710 --wandb
+```
+*Make sure to comment on following chunk of code to avoid over-writing when you use the commands to run the code*
+```
+args.max_epoch = 250
+args.wandb = False #Set this to true if you want to use wandb as a training debug tool
+args.min_epoch = 100
+args.model = "HTGN"
+args.log_interval = 10
+args.lr = 0.00015
+args.patience = 20
+```
+
+
