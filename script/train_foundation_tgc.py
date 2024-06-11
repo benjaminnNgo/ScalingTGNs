@@ -2,8 +2,9 @@
 Assumption:
     Train foundation temporal graph classification task 
     without having a pre-trained models
+=======
+April 2024
 
-June 10, 2024
 """
 
 import os
@@ -23,7 +24,12 @@ from pickle import dump, load
 import random
 import wandb
 
-model_file_path = '..'
+
+model_file_path = 'PUT MODEL PATH HERE'
+data_file_path = 'PUT RAW DATA PATH HERE'
+# model_file_path = '..'
+
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
   
@@ -75,7 +81,11 @@ def extra_dataset_attributes_loading(args, readout_scheme='mean'):
     Load and process additional dataset attributes for multi-network TG-Classification
     This includes graph labels and node features for the nodes of each snapshot
     """
-    partial_path = f'../data/input/raw/'
+
+=======
+    # Example Path
+    # partial_path = f'../data/input/raw/'
+    partial_path = f'PUT RAW DATA PATH HERE'
     TG_labels_data = []
     TG_feats_data = []
     for dataset in args.dataset:

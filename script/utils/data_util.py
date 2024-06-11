@@ -228,8 +228,8 @@ def loader(dataset='enron10', neg_sample=''):
         return torch.load(filepath)
     
     # if not cached, to process and cached
-    TGS_dataset_df = pd.read_csv("../data/TGS_available_datasets.csv")
-    TGS_available_dataset = TGS_dataset_df['dataset'].tolist()
+    TGS_dataset_df = pd.read_csv("../../data/TGS_available_datasets.csv")
+    TGS_available_dataset = TGS_dataset_df['token_name'].tolist()
     
     print('INFO: data does not exits, processing ...')
     if dataset in ['enron10', 'dblp']:
@@ -253,6 +253,7 @@ def loader(dataset='enron10', neg_sample=''):
             data = load_TGC_dataset(dataset)
         else:
             TGS_Handler("../data/input/tokens/raw/").creat_baseline_datasets(dataset)
+            print("=============Done===============")
             data = load_TGC_dataset(dataset)
     else:
         try:

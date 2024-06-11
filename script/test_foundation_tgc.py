@@ -3,7 +3,7 @@ Assumption:
     Train and test temporal graph classification task 
     without having a pre-trained models
 
-July 14, 2023
+April 2024
 """
 
 import os
@@ -18,7 +18,9 @@ import networkx as nx
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import roc_auc_score, average_precision_score
 
-model_file_path = ".."
+
+model_file_path = "PUT MODEL PATH HERE"
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
   
