@@ -60,11 +60,23 @@ pip install torch-geometric-temporal
 # Results reproduce
 1. Single models' results can be reproduced on all datasets provided by TGS by running ```train_tgc_end_to_end.py```
 2. To reproduce the foundation model train and test results, please follow step:
+## Foundation Models
+### Data Loader
+Multi-network loading for  foundation model training is done through the following function which is already included in the `train_foundation_tgc.py` and `test_foundation_tgc.py` scripts.
+```
+load_multiple_datasets("dataset_package_2.txt")
+```
 
+### Model Training
+To train the foundation model `train_foundation_tgc.py` should be used. Examples include:
+```
+python train_foundation_tgc.py --model=HTGN --max_epoch=300 --lr=0.0001 --seed=710 --wandb
+```
+### Model Inference
+In order to inference testing on saved foundation models `test_foundation_tgc.py` is used:
 
+```
+python test_foundation_tgc.py --model=HTGGN --seed=710
+```
 
-
-
-
-
-
+## Single Model
