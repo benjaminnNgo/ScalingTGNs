@@ -3,7 +3,7 @@ Assumption:
     Train and test temporal graph classification task 
     without having a pre-trained models
 
-July 14, 2023
+April 2024
 """
 
 import os
@@ -22,9 +22,8 @@ from pickle import dump, load
 import matplotlib.pyplot as plt
 import random
 import wandb
-# wandb.login(key="29968c684c2e412ed650ce0b5b52db584d572b86")
-model_file_path = '/network/scratch/r/razieh.shirzadkhani/fm'
-# model_file_path = ".."
+
+model_file_path = "PUT MODEL PATH HERE"
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
   
