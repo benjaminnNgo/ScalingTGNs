@@ -3,7 +3,7 @@ Assumption:
     Train and test temporal graph classification task 
     without having a pre-trained models
 
-July 14, 2023
+April 2024
 """
 
 import os
@@ -23,8 +23,8 @@ from pickle import dump, load
 import random
 import wandb
 
-model_file_path = '/network/scratch/r/razieh.shirzadkhani/fm'
-data_file_path = '/network/scratch/r/razieh.shirzadkhani/fm/fm_data/data_lt_70/all_data/raw/'
+model_file_path = 'PUT MODEL PATH HERE'
+data_file_path = 'PUT RAW DATA PATH HERE'
 # model_file_path = '..'
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -78,8 +78,9 @@ def extra_dataset_attributes_loading(args, readout_scheme='mean'):
     Load and process additional dataset attributes for TG-Classification
     This includes graph labels and node features for the nodes of each snapshot
     """
+    # Example Path
     # partial_path = f'../data/input/raw/'
-    partial_path = "/network/scratch/r/razieh.shirzadkhani/fm/fm_data/data_lt_70/all_data/raw/"
+    partial_path = f'PUT RAW DATA PATH HERE'
     TG_labels_data = []
     TG_feats_data = []
     # logger.info("INFO: Extracting extra dataset attributes")

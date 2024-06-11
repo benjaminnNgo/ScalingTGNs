@@ -1,0 +1,17 @@
+[2024-06-10 17:27:20,099 INFO] INFO: using one-hot feature
+[2024-06-10 17:27:20,099 INFO] INFO: total length: 580, train length: 406,eval length:87, test length: 87
+[2024-06-10 17:27:20,267 INFO] using models HTGN 
+[2024-06-10 17:27:25,363 INFO] Start training the temporal graph classification models.
+[2024-06-10 17:27:50,675 INFO] ============================================================
+[2024-06-10 17:27:50,675 INFO] Epoch:1, Loss: 0.6970, Time: 25.312, GPU: 209.4MiB
+[2024-06-10 17:27:50,675 INFO] Test: Epoch:1, AUC: 0.9750, AP: 0.9738
+[2024-06-10 17:27:50,675 INFO] Train: Epoch:1, AUC: 0.4632, AP: 0.3940
+[2024-06-10 17:27:50,679 INFO] >> Total time :  25.32
+[2024-06-10 17:27:50,679 INFO] >> Parameters: lr:0.0001 |Dim:16 |Window:5 |
+[2024-06-10 17:27:50,681 INFO] INFO: Saving the models...
+[2024-06-10 17:27:51,339 INFO] INFO: The models is saved. Done.
+[2024-06-10 17:27:51,340 INFO] Best Test: Epoch:1 , AUC: 0.6872, AP: 0.5881
+[2024-06-10 17:52:13,635 INFO] INFO: using one-hot feature
+[2024-06-10 17:52:13,635 INFO] INFO: total length: 580, train length: 406,eval length:87, test length: 87
+[2024-06-10 17:52:13,823 INFO] using models HTGN 
+[2024-06-10 17:52:19,335 INFO] Start training the temporal graph classification models.

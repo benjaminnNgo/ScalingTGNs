@@ -9,28 +9,21 @@ This repository provides the implementation of the TGS foundation model benchmar
 ## Overview
 Temporal graph learning focuses on predicting future interactions from evolving network data. Our study addresses whether it's possible to predict the evolution of an unseen network within the same domain using observed temporal graphs. We introduce the Temporal Graph Scaling (TGS) dataset, comprising 84 ERC20 token transaction networks collected from 2017 to 2023. To evaluate transferability, we pre-train Temporal Graph Neural Networks (TGNNs) on up to 64 token transaction networks and assess their performance on 20 unseen token types. Our findings reveal that the neural scaling law observed in NLP and Computer Vision also applies to temporal graph learning: pre-training on more networks with more parameters enhances downstream performance. This is the first empirical demonstration of temporal graph transferability. Notably, the largest pre-trained model surpasses fine-tuned TGNNs on unseen test networks, marking a significant step towards building foundation models for temporal graphs. The code and datasets are publicly available.
 
-![](https://github.com/benjaminnNgo/ScalingTGNs/blob/main/pic/htgn-log2-all-v3-1.png)
+![](https://github.com/benjaminnNgo/ScalingTGNs/blob/main/pic/img_1.png)
 *TGS foundation model performance on unseen networks*
 
-### Dataset
+### Dataset and Benchmark Implementation 
 All extracted transaction networks required for foundation model training can be downloaded [here](https://zenodo.org/doi/10.5281/zenodo.11455827).
 
 The standard ML croissant repository for datasets TGS's metadata is also available [here](https://huggingface.co/datasets/ntgbaoo/Temporal_Graph_Scaling_TGS_Benchmark).
 
-The TGS dataset extraction includes: 
-(1) Token Extraction: extracting the token transaction network from our P2P Ethereum live node. 
-(2) Discretizing: creating weekly snapshots for the Discretized Temporal Directed Graph (DTDG) setting. 
-(3) Labeling: assigning labels based on network growth; increasing trends are labeled one, decreasing trends are labeled zero.
+The TGS dataset and benchmark includes: 
+(1) Token extraction: extracting the token transaction network from our P2P Ethereum live node. 
+(2) Discretization: creating weekly snapshots to form discrete time dynamic graphs. 
+(3) Foundation Model Training: TGS transaction networks are divided randomly into train and test sets. We train the FMs on a collection of training networks. Lastly, FMs are tested on 20 unseen test networks.
 
-![](https://github.com/benjaminnNgo/ScalingTGNs/blob/main/pic/Data_Processing_V1.png)
-*TGS dataset extraction*
-
-### Benchmark Implementation
-
- TGS transaction networks are divided randomly into train and test sets. The train set is used to train foundation models with different sizes; then, the trained models are evaluated on the test set.
-
-![](https://github.com/benjaminnNgo/ScalingTGNs/blob/main/pic/Foundation_training_vf.png)
-*TGS foundation model training overview*
+![](https://github.com/benjaminnNgo/ScalingTGNs/blob/main/pic/img_2.jpg)
+*TGS Dataset and Benchmark Overview*
 
 # Core backbone package installation
 
