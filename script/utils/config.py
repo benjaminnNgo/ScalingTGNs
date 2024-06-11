@@ -36,7 +36,7 @@ parser.add_argument('--save_embeddings', type=int, default=0, help='save or not,
 parser.add_argument('--debug_mode', type=int, default=0, help='debug_mode, 0: normal running; 1: debugging mode')
 parser.add_argument('--min_epoch', type=int, default=100, help='min epoch')
 parser.add_argument('--test_ratio', type=int, default=0.15, help='ratio for testing, default:0.15')
-parser.add_argument('--eval_ratio', type=int, default=0.15, help='ratio for evaluation, default:0.15')
+parser.add_argument('--val_ratio', type=int, default=0.15, help='ratio for evaluation, default:0.15')
 parser.add_argument('--curr_time', type=str, default='0', help='local time for run to be used for saved models')
 #For testing model only
 parser.add_argument('--test_dataset', type=str, default=None, help='define dataset for testing')
@@ -58,6 +58,7 @@ parser.add_argument('--egcn_type', type=str, default='EGCNH', help='Type of EGCN
 parser.add_argument('--curvature', type=float, default=1.0, help='curvature value')
 parser.add_argument('--fixed_curvature', type=int, default=1, help='fixed (1) curvature or not (0)')
 parser.add_argument('--aggregation', type=str, default='deg', help='aggregation method: [deg, att]')
+parser.add_argument('--test_bias', type=bool, default=False, help='Test for the bias in model testing')
 
 args = parser.parse_args()
 

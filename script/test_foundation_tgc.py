@@ -16,14 +16,11 @@ import numpy as np
 import pandas as pd
 import networkx as nx
 from sklearn.preprocessing import MinMaxScaler
-from math import isnan
 from sklearn.metrics import roc_auc_score, average_precision_score
-from pickle import dump, load
-import matplotlib.pyplot as plt
-import random
-import wandb
+
 
 model_file_path = "PUT MODEL PATH HERE"
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
   
@@ -72,14 +69,13 @@ def readout_function(embeddings, readout_scheme='mean'):
 
 def extra_dataset_attributes_loading(args, readout_scheme='mean'):
     """
-    Load and process additional dataset attributes for TG-Classification
+    Load and process additional dataset attributes for multi-network TG-Classification
     This includes graph labels and node features for the nodes of each snapshot
     """
     partial_path = f'../data/input/raw/'
     partial_path = "/network/scratch/r/razieh.shirzadkhani/fm/fm_data/data_lt_70/all_data/raw/"
     TG_labels_data = []
     TG_feats_data = []
-    logger.info("INFO: Extracting extra dataset attributes")
     for dataset in args.dataset:
         print("Loading features for {}".format(dataset))
         # load graph lables
@@ -104,16 +100,20 @@ def extra_dataset_attributes_loading(args, readout_scheme='mean'):
             weighted_outdegree_list = np.array(ts_G.out_degree(node_list, weight='weight'))
 
             if readout_scheme == 'max':
-                TG_this_ts_feat = np.array([np.max(indegree_list), np.max(weighted_indegree_list), 
-                                            np.max(outdegree_list), np.max(weighted_outdegree_list)])
+                TG_this_ts_feat = np.array([np.max(indegree_list[: , 1].astype(float)), 
+                                            np.max(weighted_indegree_list[: , 1].astype(float)), 
+                                            np.max(outdegree_list[: , 1].astype(float)), 
+                                            np.max(weighted_outdegree_list[: , 1].astype(float))])
             elif readout_scheme == 'mean':
                 TG_this_ts_feat = np.array([np.mean(indegree_list[: , 1].astype(float)), 
                                             np.mean(weighted_indegree_list[: , 1].astype(float)), 
                                             np.mean(outdegree_list[: , 1].astype(float)), 
                                             np.mean(weighted_outdegree_list[: , 1].astype(float))])
             elif readout_scheme == 'sum':
-                TG_this_ts_feat = np.array([np.sum(indegree_list), np.sum(weighted_indegree_list), 
-                                            np.sum(outdegree_list), np.sum(weighted_outdegree_list)])
+                TG_this_ts_feat = np.array([np.sum(indegree_list[: , 1].astype(float)), 
+                                            np.sum(weighted_indegree_list[: , 1].astype(float)), 
+                                            np.sum(outdegree_list[: , 1].astype(float)), 
+                                            np.sum(weighted_outdegree_list[: , 1].astype(float))])
             else:
                 TG_this_ts_feat = None
                 raise ValueError("Readout scheme is Undefined!")
@@ -124,16 +124,14 @@ def extra_dataset_attributes_loading(args, readout_scheme='mean'):
         scalar = MinMaxScaler()
         TG_feats = scalar.fit_transform(TG_feats)
         TG_feats_data.append(TG_feats)
-    
-    logger.info("INFO: Extracting extra dataset attributes done!")
-    return TG_labels_data, TG_feats_data
+        return TG_labels_data, TG_feats_data
 
 
-def save_results(model_name, mode, dataset, test_auc, test_ap, bias=False):
+def save_inference_results(model_name, mode, dataset, test_auc, test_ap, bias=False):
     if bias:
-        result_path = "../data/output/{}/test_result/{}_results_bias.csv".format(category, model_name)
+        result_path = "../data/output/test_result/{}_results_bias.csv".format(model_name)
     else:
-        result_path = "../data/output/{}/test_result/{}_results.csv".format(category, model_name)
+        result_path = "../data/output/test_result/{}_results.csv".format(model_name)
     if not os.path.exists(result_path):
         result_df = pd.DataFrame(columns=["dataset", "mode", "test_auc", "test_ap"])
     else:
@@ -149,27 +147,29 @@ class Runner(object):
         self.readout_scheme = 'mean'
         self.tgc_lr = args.lr
 
+        # Calculate the length of validation and test sets and split the datasets individually
         self.num_datasets = len(data)
         self.len = [data[i]['time_length'] for i in range(self.num_datasets)]
-        self.testlength = [math.floor(self.len[i] * args.test_ratio) for i in range(self.num_datasets)] 
-        self.evalLength = [math.floor(self.len[i] * args.eval_ratio) for i in range(self.num_datasets)]
+        self.testLength = [math.floor(self.len[i] * args.test_ratio) for i in range(self.num_datasets)] 
+        self.valLength = [math.floor(self.len[i] * args.val_ratio) for i in range(self.num_datasets)]
         self.start_train = 0
-        self.train_shots = [list(range(0, self.len[i] - self.testlength[i] - self.evalLength[i])) for i in range(self.num_datasets)] #Changed
-        self.val_shots = [list(range(self.len[i] - self.testlength[i] - self.evalLength[i], self.len[i] - self.testlength[i])) for i in range(self.num_datasets)] #Changed
-        self.test_shots = [list(range(self.len[i] - self.testlength[i] - self.evalLength[i], self.len[i])) for i in range(self.num_datasets)]
+        self.train_shots = [list(range(0, self.len[i] - self.testLength[i] - self.valLength[i])) for i in range(self.num_datasets)] 
+        self.val_shots = [list(range(self.len[i] - self.testLength[i] - self.valLength[i], self.len[i] - self.testLength[i])) for i in range(self.num_datasets)] 
+        self.test_shots = [list(range(self.len[i] - self.testLength[i] - self.valLength[i], self.len[i])) for i in range(self.num_datasets)]
         self.criterion = torch.nn.BCELoss()
         self.load_feature()
 
+        # load the TG-models
         self.model = load_model(args).to(args.device)
-        self.model_path = '{}/saved_models/fm/{}/{}.pth'.format(model_file_path, category, model_path)
-        logger.info("The models is going to be loaded from {}".format(self.model_path))
+        self.model_path = '{}/saved_models/fm/{}.pth'.format(model_file_path, model_path)
+        print("The models is going to be loaded from {}".format(self.model_path))
         self.model.load_state_dict(torch.load(self.model_path))
         # load the graph labels
-        # self.t_graph_labels, self.t_graph_feat = extra_dataset_attributes_loading(args)
-        self.t_graph_labels, self.t_graph_feat = t_graph_labels, t_graph_feat
+        self.t_graph_labels, self.t_graph_feat = extra_dataset_attributes_loading(args)
+
         # define decoder: graph classifier
         num_extra_feat = 4  
-        self.mlp_path = '{}/saved_models/fm/{}/{}_mlp.pth'.format(model_file_path, category, model_path)
+        self.mlp_path = '{}/saved_models/fm/{}_mlp.pth'.format(model_file_path, model_path)
         self.tgc_decoder = MLP(in_dim=args.nout+num_extra_feat, hidden_dim_1=args.nout+num_extra_feat, 
                                hidden_dim_2=args.nout+num_extra_feat, drop=0.1)  # @NOTE: these hyperparameters may need to be changed 
         self.tgc_decoder.load_state_dict(torch.load(self.mlp_path))
@@ -182,19 +182,15 @@ class Runner(object):
     def load_feature(self):
         if args.trainable_feat:
             self.x = None
-            logger.info("INFO: Using trainable feature, feature dim: {}".format(args.nfeat))
         else:
             if args.pre_defined_feature is not None:
                 import scipy.sparse as sp
                 if args.dataset == 'disease':
                     feature = sp.load_npz(disease_path).toarray()
                 self.x = torch.from_numpy(feature).float().to(args.device)
-                logger.info('INFO: using pre-defined feature')
             else:
-                # self.x = torch.arange(args.max_node_id + 1).float().view(args.max_node_id + 1,1).to(args.device)
-
                 self.x = torch.eye(args.num_nodes).to(args.device)
-                logger.info('INFO: using one-hot feature')
+                # self.x = torch.arange(args.max_node_id + 1).float().view(args.max_node_id + 1,1).to(args.device)
             args.nfeat = self.x.size(1)
 
 
@@ -204,7 +200,6 @@ class Runner(object):
         Final inference on the test set
         """
         tg_labels, tg_preds, test_loss = [], [], []
-        # self.test_shots = [list(range(self.len[i] - self.testlength[i] -self.evalLength[i], self.len[i])) for i in range(self.num_datasets)]
         for t_test_idx, t in enumerate(self.test_shots[dataset_idx]):
             self.model.eval()
             self.tgc_decoder.eval()
@@ -224,8 +219,7 @@ class Runner(object):
                 tg_preds.append(
                     self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid().cpu().numpy())
                 self.model.update_hiddens_all_with(embeddings)
-                # test_loss.append(self.criterion(tg_preds[-1], tg_labels[-1]))
-        # total_test_loss = np.men(test_loss)
+                
         auc, ap = roc_auc_score(tg_labels, tg_preds), average_precision_score(tg_labels, tg_preds)
         return auc, ap
 
@@ -235,7 +229,7 @@ class Runner(object):
         """
         tg_labels, tg_preds = [], []
 
-        for t_eval_idx, t in enumerate(self.val_shots[dataset_idx]):
+        for t_val_idx, t in enumerate(self.val_shots[dataset_idx]):
             self.model.eval()
             self.tgc_decoder.eval()
             with torch.no_grad():
@@ -246,11 +240,11 @@ class Runner(object):
                 # graph readout
                 tg_readout = readout_function(embeddings, readout_scheme)
                 tg_embedding = torch.cat((tg_readout,
-                                          torch.from_numpy(self.t_graph_feat[dataset_idx][t_eval_idx + 
+                                          torch.from_numpy(self.t_graph_feat[dataset_idx][t_val_idx + 
                                                                                           len(self.train_shots[dataset_idx])]).to(args.device)))
 
                 # graph classification
-                tg_labels.append(self.t_graph_labels[dataset_idx][t_eval_idx + len(self.train_shots[dataset_idx])].cpu().numpy())
+                tg_labels.append(self.t_graph_labels[dataset_idx][t_val_idx + len(self.train_shots[dataset_idx])].cpu().numpy())
                 tg_preds.append(
                     self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid().cpu().numpy())
                 self.model.update_hiddens_all_with(embeddings)
@@ -292,7 +286,7 @@ class Runner(object):
                 # update the models
                 inference_model.update_hiddens_all_with(embeddings)
 
-            save_results(model_path, 
+            save_inference_results(model_path, 
                              args.data_name[args.dataset[dataset_idx]], 
                              args.data_name[args.dataset[dataset_idx]], 
                              args.data_name[args.dataset[dataset_idx]], 
@@ -307,16 +301,13 @@ class Runner(object):
                         embeddings = self.model(edge_index, self.x)
                         self.model.update_hiddens_all_with(embeddings)
                 
-                # val_auc, val_ap = self.tgclassification_val(self.readout_scheme, dataset_idx_i)
-                # logger.info("Final Val Data {}: AUC: {:.4f}, AP: {:.4f}".format(
-                #     args.data_name[args.dataset[dataset_idx_i]], 
-                #     val_auc, val_ap))
-                # save_results(model_path, 
-                #              "Val", 
-                #              args.data_name[args.dataset[dataset_idx_i]], 
-                #              val_auc, 
-                #              val_ap,
-                #              bias=True)
+                val_auc, val_ap = self.tgclassification_val(self.readout_scheme, dataset_idx_i)
+                save_inference_results(model_path, 
+                             "Val", 
+                             args.data_name[args.dataset[dataset_idx_i]], 
+                             val_auc, 
+                             val_ap,
+                             bias=True)
 
                 for t_val in self.val_shots[dataset_idx_i]:
                     with torch.no_grad():
@@ -324,7 +315,7 @@ class Runner(object):
                         embeddings = self.model(edge_index, self.x)
                         self.model.update_hiddens_all_with(embeddings)
                 test_auc, test_ap = self.tgclassification_test(self.readout_scheme, dataset_idx_i)
-                save_results(model_path, 
+                save_inference_results(model_path, 
                              "Test", 
                              args.data_name[args.dataset[dataset_idx_i]], 
                              test_auc, 
@@ -333,17 +324,18 @@ class Runner(object):
 
     # def forward_pass(self, )
 
-    def run(self):
+    def test(self):
         """
-        Run the temporal graph classification task
+        Test the temporal graph classification task
         """
-        # load the TG-models
+        
         self.model.init_hiddens()
-        logger.info("Start testing the temporal graph classification models.")
 
         # make sure to have the right device setup
         self.tgc_decoder = self.tgc_decoder.to(args.device)
-        self.model = self.model.to(args.device)        
+        self.model = self.model.to(args.device)     
+
+        # Set model and decoder to evaluation mode   
         self.model.eval()
         self.tgc_decoder.eval()
         for dataset_idx in range(self.num_datasets):
@@ -352,36 +344,32 @@ class Runner(object):
             if args.test_bias:
                 self.test_bias(dataset_idx)
             else:
-                # Passing through train data to get the embeddings
+
+                # Forwad pass through train data to get the embeddings
                 for t_train in self.train_shots[dataset_idx]:
                     with torch.no_grad():
                         edge_index, _, _, _, _, _, _ = prepare(data[dataset_idx], t_train)
                         embeddings = self.model(edge_index, self.x)
                         self.model.update_hiddens_all_with(embeddings)
                 
-                # val_auc, val_ap = self.tgclassification_val(self.readout_scheme, dataset_idx)
-                # logger.info("Final Val Data {}: AUC: {:.4f}, AP: {:.4f}".format(
-                #     data_name, 
-                #     val_auc, val_ap))
-                # save_results(model_path, 
-                #              "Val", 
-                #              data_name, 
-                #              val_auc, 
-                #              val_ap)
+                # Inference testing on validation set
+                val_auc, val_ap = self.tgclassification_val(self.readout_scheme, dataset_idx)
+                save_inference_results(model_path, 
+                             "Val", 
+                             data_name, 
+                             val_auc, 
+                             val_ap)
                 
-                # Passing through validation set to get the embeddings
+                # Forward pass through validation set to get the embeddings
                 for t_train in self.val_shots[dataset_idx]:
                     with torch.no_grad():
                         edge_index, _, _, _, _, _, _ = prepare(data[dataset_idx], t_train)
                         embeddings = self.model(edge_index, self.x)
                         self.model.update_hiddens_all_with(embeddings)
 
-                
+                # Inference testing on test set
                 test_auc, test_ap = self.tgclassification_test(self.readout_scheme, dataset_idx)
-                logger.info("Final Test Data {}: AUC: {:.4f}, AP: {:.4f}".format(
-                    data_name, 
-                    test_auc, test_ap))
-                save_results(model_path, 
+                save_inference_results(model_path, 
                              "Test", 
                              data_name, 
                              test_auc, 
@@ -392,15 +380,11 @@ class Runner(object):
 
 
 if __name__ == '__main__':
-    from script.utils.config import args, dataset_names
-    from script.utils.util import set_random, logger, init_logger, disease_path
+    from script.utils.config import args
+    from script.utils.util import disease_path
     from script.models.load_model import load_model
-    from script.utils.loss import ReconLoss, VGAEloss
-    from script.utils.data_util import loader, prepare_dir, load_multiple_datasets
+    from script.utils.data_util import load_multiple_datasets
     from script.utils.inits import prepare
-
-    args.data_name = dataset_names
-    args.test_bias = False
     
     print("INFO: >>> Temporal Graph Classification <<<")
     print("INFO: Args: ", args)
@@ -408,42 +392,7 @@ if __name__ == '__main__':
     print("INFO: Dataset: {}".format(args.dataset))
     print("INFO: Model: {}".format(args.model))
     args.dataset, data = load_multiple_datasets("dataset_package_test.txt")
-    t_graph_labels, t_graph_feat = extra_dataset_attributes_loading(args)
-    # num_nodes_per_data = [data[i]['num_nodes'] for i in range(len(data))]
-    # args.num_nodes = 183714#max(num_nodes_per_data)
-    # args.max_node_id = 183713
-    # args.num_nodes = args.max_node_id + 1
-    category = "nout"
-    
-    for n_data in [1]:
-        for seed in [710, 720]:
-            for nout in [32, 64]:
-                args.nhid = nout
-                args.nout = nout
-                # model_path = "rand_data/rr/{}".format(n_data)
-                # model_path = "rand_data/rr/{}_{}_seed_{}_{}".format(args.model, n_data, seed, nr)
-                model_path = "HTGN_16_seed_{}_{}".format(seed, nout)
-                # model_path = "node_id/HTGN_seed_{}_{}".format(seed, n_data)
-                # result_path = "../data/output/{}/test_result/{}_results.csv".format(category, model_path)
-                # print(result_path)
-                runner = Runner()
-                runner.run()
 
-        for seed in [800]:
-            for nout in [64]:
-                args.nhid = nout
-                args.nout = nout
-                model_path = "HTGN_16_seed_{}_{}".format(seed, nout)
-                runner = Runner()
-                runner.run()
-
-        for seed in [710]:
-            for nout in [128]:
-                args.nhid = nout
-                args.nout = nout
-                model_path = "HTGN_16_seed_{}_{}".format(seed, nout)
-                runner = Runner()
-                runner.run()
-
-
-    # average_results(result_path)
+    model_path = "{}_{}_seed_{}".format(args.model, len(data), args.seed)
+    runner = Runner()
+    runner.test()
