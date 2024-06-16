@@ -174,7 +174,7 @@ class Runner(object):
         if args.wandb:
             wandb.init(
                 # set the wandb project where this run will be logged
-                project="single_models",
+                project="single_models_train_set",
                 # Set name of the run:
                 name="{}_{}_{}".format(args.dataset, args.model, args.seed),
                 # track hyperparameters and run metadata
@@ -243,8 +243,8 @@ class Runner(object):
             self.model.eval()
             self.tgc_decoder.eval()
             with torch.no_grad():
-                edge_index, pos_edge, neg_edge = prepare(data, t)[:3]
-                new_pos_edge, new_neg_edge = prepare(data, t)[-2:]
+                edge_index = prepare_TGS_for_TGC(data, t)
+
 
                 embeddings = self.model(edge_index, self.x)
 
@@ -275,8 +275,7 @@ class Runner(object):
             self.model.eval()
             self.tgc_decoder.eval()
             with torch.no_grad():
-                edge_index, pos_edge, neg_edge = prepare(data, t)[:3]
-                new_pos_edge, new_neg_edge = prepare(data, t)[-2:]
+                edge_index = prepare_TGS_for_TGC(data, t)
 
                 embeddings = self.model(edge_index, self.x)
 
@@ -346,7 +345,7 @@ class Runner(object):
             for t_train_idx, t_train in enumerate(self.train_shots):
                 optimizer.zero_grad()
 
-                edge_index, pos_index, neg_index, activate_nodes, edge_weight, _, _ = prepare(data, t_train)
+                edge_index = prepare_TGS_for_TGC(data, t_train)
 
                 embeddings = self.model(edge_index, self.x)
 
@@ -456,14 +455,14 @@ if __name__ == '__main__':
     from script.models.load_model import load_model
     from script.utils.loss import ReconLoss, VGAEloss
     from script.utils.data_util import loader, prepare_dir
-    from script.utils.inits import prepare
+    from script.utils.inits import prepare,prepare_TGS_for_TGC
 
     #This array can be replaced by a list of datasets readed from a specific file
     datasets = [
         "ARC"
     ]
 
-    seeds = [710, 720, 800]
+    seeds = [710]
 
     args.max_epoch = 250
     args.wandb = False #Set this to true if you want to use wandb as a training debug tool

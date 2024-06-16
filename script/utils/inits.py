@@ -57,3 +57,13 @@ def prepare(data, t, detection=False):
         test_pos_edge_index = data['gdata'][t].test_pos_edge_index.long().to(args.device)
         test_neg_edge_index = data['gdata'][t].test_neg_edge_index.long().to(args.device)
         return train_pos_edge_index, val_pos_edge_index, val_neg_edge_index, test_pos_edge_index, test_neg_edge_index
+
+
+def prepare_TGS_for_TGC(data, t):
+
+    # obtain adj index
+    edge_index = data['edge_index_list'][t].long().to(args.device)  # torch edge index
+
+    return edge_index
+
+

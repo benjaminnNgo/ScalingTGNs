@@ -376,6 +376,40 @@ def find_max_node_id_package(datasets_package_file):
         print("ERROR: error in processing data pack {}".format(datasets_package_file))
         print(e)
 
+def load_TGS_for_TGC(dataset):
+    print("INFO: Loading a Graph from `Temporal Graph Classification (TGC)` Category: {}".format(dataset))
+    data = {}
+
+    edgelist_rawfile = '../../data/input/raw/edgelists/{}_edgelist.txt'.format(dataset)
+    edgelist_df = pd.read_csv(edgelist_rawfile)
+    uniq_ts_list = np.unique(edgelist_df['snapshot'])
+    print("INFO: Number of unique snapshots: {}".format(len(uniq_ts_list)))
+    adj_time_list = []
+    for ts in uniq_ts_list:
+        # NOTE: this code does not use any node or edge features
+        ts_edges = edgelist_df.loc[edgelist_df['snapshot'] == ts, ['source', 'destination']]
+        ts_G = nx.from_pandas_edgelist(ts_edges, 'source', 'destination')
+        ts_A = nx.to_scipy_sparse_array(ts_G)
+        adj_time_list.append(ts_A)
+
+    edges, biedges = mask_edges_det(adj_time_list)  # list
+    assert len(edges) == len(biedges)
+    edge_index_list = []
+    for t in range(len(biedges)):
+        edge_index_list.append(torch.tensor(np.transpose(biedges[t]), dtype=torch.long))
+
+
+    data['edge_index_list'] = edge_index_list
+    data['num_nodes'] = int(np.max(np.vstack(edges))) + 1
+
+    data['time_length'] = len(edge_index_list)
+    data['weights'] = None
+    print('INFO: Data: {}'.format(dataset))
+    print('INFO: Total length:{}'.format(len(edge_index_list)))
+    print('INFO: Number nodes: {}'.format(data['num_nodes']))
+    return data
+
+
 if __name__ == '__main__':
     # process_data_gaps("E:/token/")
     # dataset_df = pd.read_csv("TGS_available_datasets.csv")
@@ -384,7 +418,10 @@ if __name__ == '__main__':
     # select_datset_no_gap("dataset_features.txt",1)
 
     # print(find_max_node_id('unnamedtoken18980x00a8b738e453ffd858a7edf03bccfe20412f0eb0'))
-    print(find_max_node_id_package("node_id_package.txt"))
+    # print(find_max_node_id_package("node_id_package.txt"))
+
+    data = load_TGS_for_TGC("ARC")
+    torch.save(data,"ARC.data")
 
 
 
