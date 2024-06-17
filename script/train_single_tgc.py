@@ -174,7 +174,7 @@ class Runner(object):
         if args.wandb:
             wandb.init(
                 # set the wandb project where this run will be logged
-                project="single_models_train_set",
+                project="single_models_train_set_missing",
                 # Set name of the run:
                 name="{}_{}_{}".format(args.dataset, args.model, args.seed),
                 # track hyperparameters and run metadata
@@ -459,13 +459,13 @@ if __name__ == '__main__':
 
     #This array can be replaced by a list of datasets readed from a specific file
     datasets = [
-        "ARC"
+        "unnamedtoken221330xc5102fe9359fd9a28f877a67e36b0f050d81a3cc"
     ]
 
-    seeds = [710]
+    seeds = [800]
 
     args.max_epoch = 250
-    args.wandb = False #Set this to true if you want to use wandb as a training debug tool
+    args.wandb = True #Set this to true if you want to use wandb as a training debug tool
     args.min_epoch = 100
     args.model = "HTGN"
     args.log_interval = 10

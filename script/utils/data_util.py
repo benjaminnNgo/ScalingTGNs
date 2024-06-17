@@ -380,7 +380,7 @@ def load_TGS_for_TGC(dataset):
     print("INFO: Loading a Graph from `Temporal Graph Classification (TGC)` Category: {}".format(dataset))
     data = {}
 
-    edgelist_rawfile = '../../data/input/raw/edgelists/{}_edgelist.txt'.format(dataset)
+    edgelist_rawfile = '../data/input/raw/edgelists/{}_edgelist.txt'.format(dataset)
     edgelist_df = pd.read_csv(edgelist_rawfile)
     uniq_ts_list = np.unique(edgelist_df['snapshot'])
     print("INFO: Number of unique snapshots: {}".format(len(uniq_ts_list)))
@@ -420,8 +420,8 @@ if __name__ == '__main__':
     # print(find_max_node_id('unnamedtoken18980x00a8b738e453ffd858a7edf03bccfe20412f0eb0'))
     # print(find_max_node_id_package("node_id_package.txt"))
 
-    data = load_TGS_for_TGC("ARC")
-    torch.save(data,"ARC.data")
+    data = load_TGS_for_TGC("unnamedtoken216800x389999216860ab8e0175387a0c90e5c52522c945")
+    torch.save(data,"unnamedtoken216800x389999216860ab8e0175387a0c90e5c52522c945.data")
 
 
 
