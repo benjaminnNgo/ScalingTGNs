@@ -222,17 +222,19 @@ class Runner(object):
 
         self.model = load_model(args).to(args.device)
         print(self.model)
-        self.model_path = '{}/saved_models/fm/{}/{}_{}_seed_{}'.format(model_file_path, 
+        self.model_path = '{}/saved_models/fm/{}/{}_{}_seed_{}_{}'.format(model_file_path, 
                                                                         category,
                                                                         args.model,
                                                                         self.num_datasets,
-                                                                        args.seed)
+                                                                        args.seed,
+                                                                        args.nhid)
         
-        self.model_chkp_path = '{}/saved_models/fm/{}/checkpoint/{}_{}_seed_{}'.format(model_file_path, 
+        self.model_chkp_path = '{}/saved_models/fm/{}/checkpoint/{}_{}_seed_{}_{}'.format(model_file_path, 
                                                                         category,
                                                                         args.model,
                                                                         self.num_datasets,
-                                                                        args.seed)
+                                                                        args.seed,
+                                                                        args.nhid)
        
         # load the graph labels
         self.t_graph_labels, self.t_graph_feat = extra_dataset_attributes_loading(args)
@@ -544,7 +546,7 @@ if __name__ == '__main__':
     # init_logger('../data/output/{}/log/time_log_1.txt'.format(category))
     # logger.info("INFO: Args: {}".format(args))
     # for data_number in [6]:
-    # args.dataset, data = load_multiple_datasets("dataset_package_16.txt")
+    args.dataset, data = load_multiple_datasets("dataset_package_16.txt")
     # # for args.seed in [710, 720, 800]:
     # init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, args.seed, len(args.dataset), data_number))
     # set_random(args.seed)
@@ -554,19 +556,19 @@ if __name__ == '__main__':
 
     # runner = Runner()
     # runner.run()
-    category = "rand_data"
+    category = "nout"
     for data_number in [3]:
-        args.dataset, data = load_multiple_datasets("{}/dataset_package_16_{}.txt".format(category, data_number))
-        for args.seed in [800]:
+        # args.dataset, data = load_multiple_datasets("{}/dataset_package_16_{}.txt".format(category, data_number))
+        for args.seed in [710]:
             
-            # for nout in [32]:
-                init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, len(args.dataset), args.seed, data_number))
-                # init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, args.seed, len(args.dataset), nout))
+            for nout in [512]:
+                # init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, len(args.dataset), args.seed, data_number))
+                init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, args.seed, len(args.dataset), nout))
                 set_random(args.seed)
-                # args.nout = nout
-                # args.nhid = nout
+                args.nout = nout
+                args.nhid = nout
                 logger.info("INFO: data: {}, seed: {}".format(data_number, args.seed))
                 args.data_name = dataset_names
 
                 runner = Runner()
-                runner.run()
+                # runner.run()
