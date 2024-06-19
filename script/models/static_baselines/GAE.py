@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from sklearn.metrics import roc_auc_score, average_precision_score
 from torch_geometric.nn import GCNConv, ChebConv  # noqa
-from script.config import args
+from script.utils.config import args
 from torch_geometric.nn.inits import glorot
 from torch_geometric.utils import negative_sampling, add_self_loops, remove_self_loops
 

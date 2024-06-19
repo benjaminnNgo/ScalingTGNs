@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 IOTX0x6fb3e0a217407efff7ca062d46c26e5d60a14d69
 unnamedtoken218520xa8c8cfb141a3bb59fea1e2ea6b79b5ecbcd7b6ca
 QSP0x99ea4db9ee77acd40b119bd1dc4e33e1c070b80d
@@ -14,3 +15,21 @@ unnamedtoken222120x397ff1542f962076d0bfe58ea045ffa2d347aca0
 unnamedtoken216350xe53ec727dbdeb9e2d5456c3be40cff031ab40a55
 unnamedtoken18980x00a8b738e453ffd858a7edf03bccfe20412f0eb0
 unnamedtoken222080x7e77dcb127f99ece88230a64db8d595f31f1b068
+=======
+IOTX
+NOIA
+QSP
+RGT
+CMT
+Yf-DAI
+Mog
+FEG
+PUSH
+HOP
+RSR
+ORN
+SLP
+SUPER
+ALBT
+sILV2
+>>>>>>> origin/bao-merge

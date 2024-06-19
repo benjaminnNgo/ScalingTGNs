@@ -14,7 +14,7 @@ __pycache__/
 *.so
 .sh
 .netrc
-
+data
 # Distribution / packaging
 .Python
 build/
@@ -53,6 +53,6 @@ venv.bak/
 
 
 /run_scripts
-/data
+/data_razieh
 /script/wandb
 /saved_models
