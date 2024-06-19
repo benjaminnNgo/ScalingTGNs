@@ -182,13 +182,8 @@ def extra_dataset_attributes_loading(args):
     Load and process additional dataset attributes for TG-Classification
     This includes graph labels and node features for the nodes of each snapshot
     """
-<<<<<<< HEAD
     partial_path = f'../data/input/raw'
    
-=======
-    partial_path = f'../data/input/raw/'
-
->>>>>>> origin/bao-merge
     # load graph lables
     label_filename = f'{partial_path}/labels/{args.dataset}_labels.csv'
     label_df = pd.read_csv(label_filename, header=None, names=['label'])

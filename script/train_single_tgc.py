@@ -175,11 +175,7 @@ class Runner(object):
         if args.wandb:
             wandb.init(
                 # set the wandb project where this run will be logged
-<<<<<<< HEAD:script/train_tgc_end_to_end.py
-                project="single_models",
-=======
                 project="single_models_train_set_missing",
->>>>>>> origin/bao-merge:script/train_single_tgc.py
                 # Set name of the run:
                 name="{}_{}_{}".format(args.dataset, args.model, args.seed),
                 # track hyperparameters and run metadata
@@ -463,7 +459,6 @@ if __name__ == '__main__':
     from script.utils.inits import prepare,prepare_TGS_for_TGC
 
     #This array can be replaced by a list of datasets readed from a specific file
-<<<<<<< HEAD:script/train_tgc_end_to_end.py
     # datasets = [
     #     "unnamedtoken216800x389999216860ab8e0175387a0c90e5c52522c945"
     # ].
@@ -514,42 +509,3 @@ if __name__ == '__main__':
     #         runner = Runner()
             # runner.run()
             # wandb.finish()
-=======
-    datasets = [
-        "unnamedtoken221330xc5102fe9359fd9a28f877a67e36b0f050d81a3cc"
-    ]
-
-    seeds = [800]
-
-    args.max_epoch = 250
-    args.wandb = True #Set this to true if you want to use wandb as a training debug tool
-    args.min_epoch = 100
-    args.model = "HTGN"
-    args.log_interval = 10
-    args.lr = 0.00015
-    args.patience = 20
-
-    for dataset in datasets:
-        for seed in seeds:
-            args.dataset = dataset
-            args.seed = seed
-
-            print("INFO: >>> Temporal Graph Classification <<<")
-            print("INFO: Args: ", args)
-            print("======================================")
-            print("INFO: Dataset: {}".format(args.dataset))
-            print("INFO: Model: {}".format(args.model))
-
-            data = loader(dataset=args.dataset, neg_sample=args.neg_sample)
-            args.num_nodes = data['num_nodes']
-            print("INFO: Number of nodes:", args.num_nodes)
-            set_random(args.seed)
-
-            args.output_folder = '../data/output/log/console_log/{}/{}/'.format(args.dataset, args.model)
-            init_logger(
-                prepare_dir(args.output_folder) + args.model + '_' + args.dataset + '_seed_' + str(
-                    args.seed) + '_log.txt')
-            runner = Runner()
-            runner.run()
-            wandb.finish()
->>>>>>> origin/bao-merge:script/train_single_tgc.py

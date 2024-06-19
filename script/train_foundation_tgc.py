@@ -214,25 +214,16 @@ class Runner(object):
         self.load_feature()
 
         self.model = load_model(args).to(args.device)
-<<<<<<< HEAD:script/train_tgc_foundation.py
         print(self.model)
         self.model_path = '{}/saved_models/fm/{}/{}_{}_seed_{}_{}'.format(model_file_path, 
                                                                         category,
-=======
-        
-        self.model_path = '{}/saved_models/fm/{}_{}_seed_{}'.format(model_file_path,
->>>>>>> origin/bao-merge:script/train_foundation_tgc.py
                                                                         args.model,
                                                                         self.num_datasets,
                                                                         args.seed,
                                                                         args.nhid)
         
-<<<<<<< HEAD:script/train_tgc_foundation.py
         self.model_chkp_path = '{}/saved_models/fm/{}/checkpoint/{}_{}_seed_{}_{}'.format(model_file_path, 
                                                                         category,
-=======
-        self.model_chkp_path = '{}/saved_models/fm/checkpoint/{}_{}_seed_{}'.format(model_file_path,
->>>>>>> origin/bao-merge:script/train_foundation_tgc.py
                                                                         args.model,
                                                                         self.num_datasets,
                                                                         args.seed,
@@ -530,7 +521,6 @@ if __name__ == '__main__':
     print("INFO: Model: {}".format(args.model))
     
     # use time of run for saving results
-<<<<<<< HEAD:script/train_tgc_foundation.py
     t = time.localtime()
     args.curr_time = time.strftime("%Y-%m-%d-%H:%M:%S", t)
     # load_multiple_datasets("")
@@ -571,14 +561,3 @@ if __name__ == '__main__':
 
                 runner = Runner()
                 runner.run()
-=======
-    args.dataset, data = load_multiple_datasets("dataset_package_1.txt")
-    init_logger(
-        '../data/output/log/{}_{}_seed_{}_log.txt'.format(args.model, args.seed, len(args.dataset)))
-    set_random(args.seed)
-    logger.info("INFO: Number of data: {}, seed: {}".format(len(data), args.seed))
-    args.data_name = dataset_names
-
-    runner = Runner()
-    runner.run()
->>>>>>> origin/bao-merge:script/train_foundation_tgc.py
