@@ -546,7 +546,7 @@ if __name__ == '__main__':
     # init_logger('../data/output/{}/log/time_log_1.txt'.format(category))
     # logger.info("INFO: Args: {}".format(args))
     # for data_number in [6]:
-    args.dataset, data = load_multiple_datasets("dataset_package_16.txt")
+    args.dataset, data = load_multiple_datasets("dataset_package_64.txt")
     # # for args.seed in [710, 720, 800]:
     # init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, args.seed, len(args.dataset), data_number))
     # set_random(args.seed)
@@ -559,9 +559,9 @@ if __name__ == '__main__':
     category = "nout"
     for data_number in [3]:
         # args.dataset, data = load_multiple_datasets("{}/dataset_package_16_{}.txt".format(category, data_number))
-        for args.seed in [710]:
+        for args.seed in [800]:
             
-            for nout in [512]:
+            for nout in [8]:
                 # init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, len(args.dataset), args.seed, data_number))
                 init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, args.seed, len(args.dataset), nout))
                 set_random(args.seed)
@@ -571,4 +571,4 @@ if __name__ == '__main__':
                 args.data_name = dataset_names
 
                 runner = Runner()
-                # runner.run()
+                runner.run()

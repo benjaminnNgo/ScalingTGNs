@@ -1,2 +1,0 @@
-[2024-06-10 14:49:46,184 INFO] INFO: Number of data: 0, seed: 710
-[2024-06-10 14:49:46,954 INFO] INFO: using one-hot feature

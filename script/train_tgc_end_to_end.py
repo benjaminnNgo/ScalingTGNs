@@ -460,40 +460,53 @@ if __name__ == '__main__':
     from script.inits import prepare
 
     #This array can be replaced by a list of datasets readed from a specific file
-    datasets = [
-        "unnamedtoken216800x389999216860ab8e0175387a0c90e5c52522c945"
-    ]
+    # datasets = [
+    #     "unnamedtoken216800x389999216860ab8e0175387a0c90e5c52522c945"
+    # ].
+    directory_path = "/network/scratch/r/razieh.shirzadkhani/fm/fm_data/data_lt_70/all_data/"
+    files = os.listdir(directory_path+"raw/edgelists")
+    files = [f for f in files if os.path.isfile(os.path.join(directory_path+"raw/edgelists", f))]
+    # existing = os.listdir(directory_path+"cached")
+    # existing = [f for f in files if os.path.isfile(os.path.join(directory_path+"cached", f))]
 
-    seeds = [710, 720, 800]
+    # all_data = pd.read_csv("/network/scratch/r/razieh.shirzadkhani/fm/fm_data/data_lt_70/dataset_no_gap_1_day.csv")
+    # used_data = pd.read_csv("/home/mila/r/razieh.shirzadkhani/ScalingTGNs/data/input/data_list/all_data.csv")
+    for data in files:
+        
+        data_name = data.split("_")[0]
+        print(data_name)
+        _ = loader(dataset=data_name, neg_sample=args.neg_sample)
 
-    args.max_epoch = 250
-    args.wandb = False #Set this to true if you want to use wandb as a training debug tool
-    args.min_epoch = 100
-    args.model = "HTGN"
-    args.log_interval = 10
-    args.lr = 0.00015
-    args.patience = 20
+    # seeds = [710]
 
-    for dataset in datasets:
-        for seed in seeds:
-            args.dataset = dataset
-            args.seed = seed
+    # args.max_epoch = 250
+    # args.wandb = False #Set this to true if you want to use wandb as a training debug tool
+    # args.min_epoch = 100
+    # args.model = "HTGN"
+    # args.log_interval = 10
+    # args.lr = 0.00015
+    # args.patience = 20
 
-            print("INFO: >>> Temporal Graph Classification <<<")
-            print("INFO: Args: ", args)
-            print("======================================")
-            print("INFO: Dataset: {}".format(args.dataset))
-            print("INFO: Model: {}".format(args.model))
+    # for dataset in datasets:
+    #     for seed in seeds:
+    #         args.dataset = dataset
+    #         args.seed = seed
 
-            data = loader(dataset=args.dataset, neg_sample=args.neg_sample)
-            args.num_nodes = data['num_nodes']
-            print("INFO: Number of nodes:", args.num_nodes)
-            set_random(args.seed)
+    #         print("INFO: >>> Temporal Graph Classification <<<")
+    #         print("INFO: Args: ", args)
+    #         print("======================================")
+    #         print("INFO: Dataset: {}".format(args.dataset))
+    #         print("INFO: Model: {}".format(args.model))
 
-            args.output_folder = '../data/output/log/console_log/{}/{}/'.format(args.dataset, args.model)
-            init_logger(
-                prepare_dir(args.output_folder) + args.model + '_' + args.dataset + '_seed_' + str(
-                    args.seed) + '_log.txt')
-            runner = Runner()
-            runner.run()
-            wandb.finish()
+    #         data = loader(dataset=args.dataset, neg_sample=args.neg_sample)
+    #         args.num_nodes = data['num_nodes']
+    #         print("INFO: Number of nodes:", args.num_nodes)
+    #         set_random(args.seed)
+
+    #         args.output_folder = '../data/output/log/console_log/{}/{}/'.format(args.dataset, args.model)
+    #         init_logger(
+    #             prepare_dir(args.output_folder) + args.model + '_' + args.dataset + '_seed_' + str(
+    #                 args.seed) + '_log.txt')
+    #         runner = Runner()
+            # runner.run()
+            # wandb.finish()

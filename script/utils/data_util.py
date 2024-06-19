@@ -12,6 +12,7 @@ from script.utils.TGS import TGS_Handler
 from script.utils.make_edges_orign import mask_edges_det, mask_edges_prd, mask_edges_prd_new_by_marlin
 from script.utils.make_edges_new import get_edges, get_prediction_edges, get_prediction_edges_modified, get_new_prediction_edges, get_new_prediction_edges_modified
 
+root_path = "/network/scratch/r/razieh.shirzadkhani/fm/fm_data/data_lt_70/all_data"
 
 def mkdirs(path):
     if not os.path.isdir(path):
@@ -173,7 +174,7 @@ def load_TGC_dataset(dataset):
     print("INFO: Loading a Graph from `Temporal Graph Classification (TGC)` Category: {}".format(dataset))
     data = {}
 
-    edgelist_rawfile = '../data/input/raw/edgelists/{}_edgelist.txt'.format(dataset)
+    edgelist_rawfile = '{}/raw/edgelists/{}_edgelist.txt'.format(root_path, dataset)
     edgelist_df = pd.read_csv(edgelist_rawfile)
     uniq_ts_list = np.unique(edgelist_df['snapshot'])
     print("INFO: Number of unique snapshots: {}".format(len(uniq_ts_list)))
@@ -219,7 +220,7 @@ def loader(dataset='enron10', neg_sample=''):
 
 
     # if cached, load directly
-    data_root = '../data/input/cached/{}/'.format(dataset)
+    data_root = '{}/cached/{}/'.format(root_path, dataset)
     filepath = mkdirs(data_root) + '{}.data'.format(dataset)  # the data will be saved here after generation.
     print("INFO: Dataset: {}".format(dataset))
     print("DEBUG: Look for data at {}.".format(filepath))
@@ -228,7 +229,7 @@ def loader(dataset='enron10', neg_sample=''):
         return torch.load(filepath)
     
     # if not cached, to process and cached
-    TGS_dataset_df = pd.read_csv("../../data/TGS_available_datasets.csv")
+    TGS_dataset_df = pd.read_csv("../data/TGS_available_datasets.csv")
     TGS_available_dataset = TGS_dataset_df['token_name'].tolist()
     
     print('INFO: data does not exits, processing ...')
