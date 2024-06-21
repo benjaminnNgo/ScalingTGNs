@@ -51,7 +51,7 @@ pip install torch-geometric-temporal
 - Libraries listed in `installed_packages.txt`
 
 # Results reproduce
-To train a single or foundation model, download datasets from here [here](https://zenodo.org/doi/10.5281/zenodo.11455827).
+To train a single or foundation model, download datasets from [here](https://zenodo.org/doi/10.5281/zenodo.11455827).
 - All label files need to be placed in the directory `data/input/raw/labels/ `
 - All edge list files need to be placed in the directory `data/input/raw/edgelists/ `
 - All raw `.csv` files need to be placed in the directory `data/input/tokens/raw/ ` if you want to re-generate edge lists and labels.
@@ -81,7 +81,7 @@ python test_foundation_tgc.py --model=HTGGN --seed=710
 ```
 python train_single_tgc.py --model=HTGN --max_epoch=300 --lr=0.0001 --seed=710 --wandb
 ```
-*Make sure to comment on following chunk of code to avoid over-writing when you use the commands to run the code*
+*Make sure to comment out following chunk of code to avoid over-writing when you use the commands to run the code*
 ```
 args.max_epoch = 250
 args.wandb = False #Set this to true if you want to use wandb as a training debug tool
