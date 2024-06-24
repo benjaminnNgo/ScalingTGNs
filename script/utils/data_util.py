@@ -11,6 +11,8 @@ import pickle
 from script.utils.TGS import TGS_Handler
 from script.utils.make_edges_orign import mask_edges_det, mask_edges_prd, mask_edges_prd_new_by_marlin
 from script.utils.make_edges_new import get_edges, get_prediction_edges, get_prediction_edges_modified, get_new_prediction_edges, get_new_prediction_edges_modified
+from sklearn.preprocessing import MinMaxScaler
+
 
 
 def mkdirs(path):
@@ -409,8 +411,93 @@ def load_TGS_for_TGC(dataset):
     print('INFO: Number nodes: {}'.format(data['num_nodes']))
     return data
 
+def extra_dataset_attributes_loading(args, readout_scheme='mean'):
+    """
+    Load and process additional dataset attributes for TG-Classification
+    This includes graph labels and node features for the nodes of each snapshot
+    """
+    print("INFO: Loading a Graph Feature and Labels for `Temporal Graph Classification (TGC)` Category: {}".format(args.dataset))
+    partial_path = f'../data/input/raw/'
+    data_root = '../data/input/cached/{}/'.format(args.dataset)
+
+    # load graph lables
+    label_filename = f'{partial_path}/labels/{args.dataset}_labels.csv'
+    label_df = pd.read_csv(label_filename, header=None, names=['label'])
+    TG_labels = torch.from_numpy(np.array(label_df['label'].tolist())).to(args.device)
+
+    cached_feature_path = "{}{}_features.npz".format(data_root, args.dataset)
+    if os.path.exists(cached_feature_path):
+        TG_feats = np.load(cached_feature_path)
+        print(TG_feats)
+        if readout_scheme not in TG_feats:
+            raise ValueError("Readout scheme is Undefined!")
+        print(
+            "INFO: Cached feature already exist. Loaded directly")
+        return TG_labels, TG_feats[readout_scheme]
+
+    print("INFO: Cached feature doesn't exist. Generate cached Graph Feature for `Temporal Graph Classification (TGC)` Category: {}".format(
+        args.dataset))
+    cached_feats = {}
+    # load and process graph-pooled (node-level) features
+    edgelist_filename = f'{partial_path}/edgelists/{args.dataset}_edgelist.txt'
+    edgelist_df = pd.read_csv(edgelist_filename)
+    uniq_ts_list = np.unique(edgelist_df['snapshot'])
+    TG_feats_max = []
+    TG_feats_mean = []
+    TG_feats_sum = []
+
+
+    for ts in uniq_ts_list:
+        ts_edges = edgelist_df.loc[edgelist_df['snapshot'] == ts, ['source', 'destination', 'weight']]
+        ts_G = nx.from_pandas_edgelist(ts_edges, source='source', target='destination', edge_attr='weight',
+                                       create_using=nx.MultiDiGraph)
+        node_list = list(ts_G.nodes)
+        indegree_list = np.array(ts_G.in_degree(node_list))
+        weighted_indegree_list = np.array(ts_G.in_degree(node_list, weight='weight'))
+        outdegree_list = np.array(ts_G.out_degree(node_list))
+        weighted_outdegree_list = np.array(ts_G.out_degree(node_list, weight='weight'))
+
+
+        TG_feats_max.append( np.array([np.max(indegree_list[:, 1].astype(float)), np.max(weighted_indegree_list[:, 1].astype(float)),
+                                        np.max(outdegree_list[:, 1].astype(float)), np.max(weighted_outdegree_list[:, 1].astype(float))]))
+
+        TG_feats_mean.append(np.array([np.mean(indegree_list[:, 1].astype(float)),
+                                        np.mean(weighted_indegree_list[:, 1].astype(float)),
+                                        np.mean(outdegree_list[:, 1].astype(float)),
+                                        np.mean(weighted_outdegree_list[:, 1].astype(float))]))
+
+        TG_feats_sum.append( np.array([np.sum(indegree_list[:, 1].astype(float)), np.sum(weighted_indegree_list[:, 1].astype(float)),
+                                        np.sum(outdegree_list[:, 1].astype(float)), np.sum(weighted_outdegree_list[:, 1].astype(float))]))
+
+    assert len(TG_feats_max) == len(uniq_ts_list),"Missing TG_feature max"
+    assert len(TG_feats_mean) == len(uniq_ts_list),"Missing TG_feature mean"
+    assert len(TG_feats_sum) == len(uniq_ts_list),"Missing TG_feature sum"
+
+    # scale the temporal graph features to have a reasonable range
+    scalar = MinMaxScaler()
+    TG_feats_max = scalar.fit_transform(TG_feats_max)
+
+    scalar = MinMaxScaler()
+    TG_feats_mean = scalar.fit_transform(TG_feats_mean)
+
+    scalar = MinMaxScaler()
+    TG_feats_sum = scalar.fit_transform(TG_feats_sum)
+
+    cached_feats['max'] = np.array(TG_feats_max)
+    cached_feats['mean'] = np.array(TG_feats_mean)
+    cached_feats['sum'] = np.array(TG_feats_sum)
+    if not os.path.exists(data_root):
+        os.makedirs(data_root)
+    np.savez(cached_feature_path, **cached_feats)
+
+    return TG_labels, cached_feats[readout_scheme]
+
+
+
 
 if __name__ == '__main__':
+    from script.utils.config import args
+
     # process_data_gaps("E:/token/")
     # dataset_df = pd.read_csv("TGS_available_datasets.csv")
     # print(sum(dataset_df['networkSize'].tolist()))
@@ -419,9 +506,11 @@ if __name__ == '__main__':
 
     # print(find_max_node_id('unnamedtoken18980x00a8b738e453ffd858a7edf03bccfe20412f0eb0'))
     # print(find_max_node_id_package("node_id_package.txt"))
-
-    data = load_TGS_for_TGC("unnamedtoken216800x389999216860ab8e0175387a0c90e5c52522c945")
-    torch.save(data,"unnamedtoken216800x389999216860ab8e0175387a0c90e5c52522c945.data")
+    args.dataset = 'unnamedtoken18980x00a8b738e453ffd858a7edf03bccfe20412f0eb0'
+    # data = load_TGS_for_TGC("unnamedtoken18980x00a8b738e453ffd858a7edf03bccfe20412f0eb0")
+    # torch.save(data,"unnamedtoken18980x00a8b738e453ffd858a7edf03bccfe20412f0eb0.data")
+    TG_labels, TG_feats = extra_dataset_attributes_loading(args)
+    print(TG_feats)
 
 
 

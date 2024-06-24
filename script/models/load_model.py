@@ -5,7 +5,7 @@ from script.models.EvolveGCN.EGCN import EvolveGCN
 from script.models.DynModels import DGCN
 from script.models.HTGN import HTGN
 # from script.models.static_baselines import VGAENet, GCNNet
-
+from torch_geometric_temporal import EvolveGCNO, GCLSTM, TGCN
 
 
 def load_model(args):
@@ -19,6 +19,10 @@ def load_model(args):
         model = GCNNet()
     elif args.model == 'VGAE':
         model = VGAENet()
+    elif args.model == "GCLSTM":
+        model = GCLSTM(in_channels=args.nfeat, out_channels=args.nhid, K=args.chebyshev_filter)
+    elif args.model == "TGCN":
+        model = TGCN(in_channels=args.nfeat, out_channels=args.nhid)
     else:
         raise Exception('pls define the models')
     logger.info('using models {} '.format(args.model))

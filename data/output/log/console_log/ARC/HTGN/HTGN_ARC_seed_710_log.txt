@@ -15,3 +15,15 @@
 [2024-06-10 17:52:13,635 INFO] INFO: total length: 580, train length: 406,eval length:87, test length: 87
 [2024-06-10 17:52:13,823 INFO] using models HTGN 
 [2024-06-10 17:52:19,335 INFO] Start training the temporal graph classification models.
+[2024-06-16 15:59:09,701 INFO] INFO: using one-hot feature
+[2024-06-16 15:59:09,701 INFO] INFO: total length: 580, train length: 406,eval length:87, test length: 87
+[2024-06-16 15:59:09,878 INFO] using models HTGN 
+[2024-06-16 15:59:16,608 INFO] Start training the temporal graph classification models.
+[2024-06-16 16:01:01,080 INFO] INFO: using one-hot feature
+[2024-06-16 16:01:01,080 INFO] INFO: total length: 580, train length: 406,eval length:87, test length: 87
+[2024-06-16 16:01:01,288 INFO] using models HTGN 
+[2024-06-16 16:01:07,450 INFO] Start training the temporal graph classification models.
+[2024-06-16 16:01:32,116 INFO] ============================================================
+[2024-06-16 16:01:32,116 INFO] Epoch:1, Loss: 0.6970, Time: 24.663, GPU: 209.3MiB
+[2024-06-16 16:01:32,116 INFO] Test: Epoch:1, AUC: 0.9750, AP: 0.9738
+[2024-06-16 16:01:32,116 INFO] Train: Epoch:1, AUC: 0.4632, AP: 0.3940

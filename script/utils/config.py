@@ -59,6 +59,9 @@ parser.add_argument('--curvature', type=float, default=1.0, help='curvature valu
 parser.add_argument('--fixed_curvature', type=int, default=1, help='fixed (1) curvature or not (0)')
 parser.add_argument('--aggregation', type=str, default='deg', help='aggregation method: [deg, att]')
 
+parser.add_argument('--chebyshev_filter', type=int, default=1, help='Chebyshev filter size for GCLSTM')
+
+
 args = parser.parse_args()
 
 # set the running device

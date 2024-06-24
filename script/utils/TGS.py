@@ -211,4 +211,8 @@ class TGS_Handler:
 
 
 if __name__ == '__main__':
-    print(os.path.exists("../../data/input/tokens/raw/ARC.csv"))
+    datasets_list = pd.read_csv("../../data/data_package/datasets_package_64.txt").iloc[:, 0].values
+
+    tgs_handler = TGS_Handler(TGS_storage_path = "E:/TGS_275/")
+    for dataset in datasets_list:
+        tgs_handler.create_dummy_baseline_labels_weekly(dataset)
