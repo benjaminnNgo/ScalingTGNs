@@ -1,3 +1,4 @@
+import json
 import os
 
 import numpy as np
@@ -197,24 +198,42 @@ def draw_toper_3D(list):
     # Show the plot
     plt.show()
 
+def draw_distribution(df_TGS_stats):
+    with open('performace_split.json', 'r') as json_file:
+        data = json.load(json_file)
+
+    single_dataset = data['single']
+    foundation_dataset = data['foundation']
+
+    single = []
+    foundation = []
+    column = 'transitivity'
+    name = 'transitivity'
+
+    for data in single_dataset:
+        data_row = df_TGS_stats[df_TGS_stats['dataset'] == data]
+        single.append(data_row[column].values[0])
+
+    for data in foundation_dataset:
+        data_row = df_TGS_stats[df_TGS_stats['dataset'] == data]
+        foundation.append(data_row[column].values[0])
+
+    plt.hist(single, bins=30, alpha=0.5, label='Single perform better')
+    plt.hist(foundation, bins=30, alpha=0.5, label='Foundation perform better')
+
+    plt.xlabel(name)
+    plt.ylabel('Frequency')
+    plt.title(f'{name} distribution of 2 packages of datasets')
+    plt.legend()
+    plt.show()
+
 
 if __name__ == '__main__':
-    # metrics = ['node_count', 'transaction_count', 'age', 'novelty']
-    # for metric in metrics:
-    #     draw_dataset_distribution(metric)
-    #     draw_train_distribution(metric)
-    #     draw_test_distribution(metric)
+    df_single = pd.read_csv("../../data/output/single_model_train_set/results.csv")
+    df_foundation = pd.read_csv("../../data/output/fm-64-results.csv")
+    datasets_list = pd.read_csv("../../data/data_package/datasets_package_64.txt").iloc[:, 0].values
+    df_TGS = pd.read_csv("../../data/TGS_available_datasets.csv")
+    df_baseline = pd.read_csv("../../data/output/baselinemodel.csv")
+    df_TGS_stats = pd.read_csv("../../data/TGS_stats.csv")
 
-    # draw_test_distribution('node_count')
-    np.random.seed(702)
-    partial_path = "../toper/toper_values/TGS/"
-    counter = 0
-    list = []
-    for data in os.listdir(partial_path):
-        counter += 1
-        df = pd.read_csv("../toper/toper_values/TGS/unnamedtoken216750x8e6cd950ad6ba651f6dd608dc70e5886b1aa6b24.csv")
-        list.append(df)
-        if counter >= 5:
-            break
-
-    draw_toper_3D(list)
+    draw_distribution(df_TGS_stats)

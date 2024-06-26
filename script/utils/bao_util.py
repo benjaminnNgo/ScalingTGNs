@@ -4,6 +4,7 @@ import statistics as stats
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
+import networkx as nx
 
 
 
@@ -71,7 +72,7 @@ def generate_table_training(df_single,df_foundation,datasets_list,df_TGS,df_base
     print(stats.stdev(diffs))
 
 
-def draw_distribution(single_dataset,foundation_dataset):
+def draw_distribution():
     with open('performace_split.json', 'r') as json_file:
         data = json.load(json_file)
 
@@ -100,6 +101,60 @@ def draw_distribution(single_dataset,foundation_dataset):
     plt.legend()
     plt.show()
 
+def new_node_per_snapshot(dataset):
+    path = "E:/TGS_edgelists/edgelists/"
+    dataset_df = pd.read_csv("{}{}_edgelist.txt".format(path,dataset))
+    exit_node = set()
+    snapshot_idxs = dataset_df['snapshot'].unique()
+    new_node_count = []
+    for i in snapshot_idxs:
+        edge_list = dataset_df[dataset_df['snapshot'] == i]
+        snapshot_nodes = set(edge_list['source'].unique().tolist() + edge_list['destination'].unique().tolist())
+        new_node_count.append(len(snapshot_nodes.difference(exit_node)))
+        exit_node.update(snapshot_nodes)
+
+    # print(new_node_count)
+    return stats.mean(new_node_count)
+
+def triangle_count(dataset):
+    path = "E:/TGS_edgelists/edgelists/"
+    dataset_df = pd.read_csv("{}{}_edgelist.txt".format(path, dataset))
+    snapshot_idxs = dataset_df['snapshot'].unique()
+    diameter_list = []
+    for i in snapshot_idxs:
+        ts_edges = dataset_df.loc[dataset_df['snapshot'] == i, ['source', 'destination', 'weight']]
+        ts_G = nx.from_pandas_edgelist(ts_edges, source='source', target='destination')
+        diameter_list.append(sum(nx.triangles(ts_G).values()) // 3)
+    return stats.mean(diameter_list)
+
+def average_clustering(dataset):
+    path = "E:/TGS_edgelists/edgelists/"
+    dataset_df = pd.read_csv("{}{}_edgelist.txt".format(path, dataset))
+    snapshot_idxs = dataset_df['snapshot'].unique()
+    average_cluster = []
+    for i in snapshot_idxs:
+        ts_edges = dataset_df.loc[dataset_df['snapshot'] == i, ['source', 'destination', 'weight']]
+        ts_G = nx.from_pandas_edgelist(ts_edges,  source='source', target='destination')
+        average_cluster.append(nx.average_clustering(ts_G))
+    return stats.mean(average_cluster)
+
+#need to compute
+def average_transitivity(dataset):
+    path = "E:/TGS_edgelists/edgelists/"
+    dataset_df = pd.read_csv("{}{}_edgelist.txt".format(path, dataset))
+    snapshot_idxs = dataset_df['snapshot'].unique()
+    average_transitivity = []
+    for i in snapshot_idxs:
+        ts_edges = dataset_df.loc[dataset_df['snapshot'] == i, ['source', 'destination', 'weight']]
+        ts_G = nx.from_pandas_edgelist(ts_edges, source='source', target='destination')
+        average_transitivity.append(nx.transitivity(ts_G))
+    return stats.mean(average_transitivity)
+
+
+
+
+
+
 
 if __name__ == "__main__":
     df_single = pd.read_csv("../../data/output/single_model_train_set/results.csv")
@@ -110,18 +165,11 @@ if __name__ == "__main__":
     df_TGS_stats = pd.read_csv("../../data/TGS_stats.csv")
 
     # generate_table_training(df_single, df_foundation, datasets_list, df_TGS, df_baseline)
+    new_metric = []
+    for dataset in df_TGS_stats['dataset'].tolist():
+        print(dataset)
+        token = df_TGS[df_TGS['dataset'] ==dataset]['token_name'].values[0]
+        new_metric.append(count_arborescences(token))
 
-    data = {
-        'array1': np.array([1, 2, 3]),
-        'array2': np.array([4, 5, 6])
-    }
-
-    # Save the dictionary to a .npz file
-    np.savez('data.npz', **data)
-    loaded_data = np.load('data.npz')
-
-    # Convert to a dictionary
-    loaded_dict = {key: loaded_data[key] for key in loaded_data.files}
-
-    # Verify the loaded data
-    print(type(loaded_dict['array1']))
+    df_TGS_stats['arborescences'] = new_metric
+    df_TGS_stats.to_csv("../../data/TGS_stats.csv",index=False)

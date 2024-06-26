@@ -269,6 +269,80 @@ def loader(dataset='enron10', neg_sample=''):
     print('INFO: Dataset is saved!')
     return data
 
+def get_node_id_int(node_id_dict,lookup_node,curr_idx):
+    """
+        Because node addresses are string, so function map string to a int
+        This function also makes 2 node have the same address have the same node id
+    """
+    if lookup_node not in node_id_dict:
+        node_id_dict[lookup_node] = curr_idx
+        curr_idx += 1
+    return node_id_dict[lookup_node],curr_idx
+
+def data_loader_geometric_temporal(dataset):
+    """
+        Data loader for traing models with PyTorch geometric temporal
+        data is a dictionary has following attributes:
+            - edge index for each snapshot ( to get edge index for snapshot 0: data['edge_index'][0])
+            - edge attribute for each snapshot ( similar above)
+            - time length : number of snapshots
+            - number of nodes
+    """
+    partial_path = f'../data/input/'
+
+    data_root = '{}/cached/{}/'.format(partial_path, dataset)
+    filepath = mkdirs(data_root) + '{}_pyTorchGeoTemp.data'.format(dataset)  # the data will be saved here after generation.
+    print("INFO: Dataset: {}".format(dataset))
+    print("DEBUG: Look for data at {}.".format(filepath))
+    if os.path.isfile(filepath):
+        print('INFO: Loading {} directly.'.format(dataset))
+        return torch.load(filepath)
+
+    print('INFO: data does not exits, processing ...')
+    edgelist_filename = f'{partial_path}/raw/edgelists/{args.dataset}_edgelist.txt'
+    edgelist_df = pd.read_csv(edgelist_filename)
+
+    max_transfer = float(edgelist_df['weight'].max())
+    min_transfer = float(edgelist_df['weight'].min())
+    if max_transfer == min_transfer:
+        max_transfer = min_transfer + 1
+
+    # Normalization is needed to solve NaN lost problem
+    edgelist_df['weight'] = edgelist_df['weight'].apply(
+            lambda x: 1 + (9 * ((float(x) - min_transfer) / (max_transfer - min_transfer))))
+
+    uniq_ts_list = np.unique(edgelist_df['snapshot'])
+    uniq_node = set()
+    uniq_node.update(edgelist_df['source'].tolist())
+    uniq_node.update(edgelist_df['destination'].tolist())
+
+    edge_idx_list = []
+    edge_att_list = []
+    node_id_dict = {}
+    curr_idx = 0
+    for ts in uniq_ts_list:
+        ts_edges_idx = []
+        ts_edges_atts = []
+        ts_edges = edgelist_df.loc[edgelist_df['snapshot'] == ts, ['source', 'destination', 'weight']]
+        for idx, row in ts_edges.iterrows():
+            source_node,curr_idx = get_node_id_int(node_id_dict,row['source'],curr_idx)
+            destination_node, curr_idx = get_node_id_int(node_id_dict, row['destination'], curr_idx)
+            ts_edges_idx.append(torch.tensor(np.array([source_node, destination_node]),dtype=torch.long))
+            ts_edges_atts.append(row['weight'])
+
+        assert len(ts_edges_atts) == len(ts_edges_idx)
+
+        edge_idx_list.append(torch.tensor(np.transpose(np.array(ts_edges_idx))))
+        edge_att_list.append(torch.tensor(np.array(ts_edges_atts),dtype=torch.long))
+
+    data = {}
+    data['edge_index'] = edge_idx_list
+    data['edge_attribute'] = edge_att_list
+    data['time_length'] = len(uniq_ts_list)
+    data['num_nodes'] = curr_idx
+    torch.save(data, filepath)
+    return data
+
 def load_multiple_datasets(datasets_package_file,neg_sample):
     datasets_packages = []
     datasets_package_path = '../data/input/{}.txt'.format(datasets_package_file)
@@ -509,8 +583,8 @@ if __name__ == '__main__':
     args.dataset = 'unnamedtoken18980x00a8b738e453ffd858a7edf03bccfe20412f0eb0'
     # data = load_TGS_for_TGC("unnamedtoken18980x00a8b738e453ffd858a7edf03bccfe20412f0eb0")
     # torch.save(data,"unnamedtoken18980x00a8b738e453ffd858a7edf03bccfe20412f0eb0.data")
-    TG_labels, TG_feats = extra_dataset_attributes_loading(args)
-    print(TG_feats)
+    data = data_loader_geometric_temporal(args.dataset)
+    print(data)
 
 
 
