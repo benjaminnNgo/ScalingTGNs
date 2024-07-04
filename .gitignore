@@ -56,3 +56,4 @@ venv.bak/
 /data
 /script/wandb
 /saved_models
+ScalingTGNs.code-workspace
