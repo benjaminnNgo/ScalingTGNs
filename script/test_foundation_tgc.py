@@ -71,7 +71,7 @@ def readout_function(embeddings, readout_scheme='mean'):
     return readout
   
 
-def extra_dataset_attributes_loading(args, readout_scheme='mean'):
+def extra_dataset_attributes_loading2(args, readout_scheme='mean'):
     """
     Load and process additional dataset attributes for TG-Classification
     This includes graph labels and node features for the nodes of each snapshot
@@ -211,7 +211,7 @@ class Runner(object):
             self.tgc_decoder.eval()
             with torch.no_grad():
                 
-                edge_index, pos_edge, neg_edge = prepare(data[dataset_idx], t)[:3]
+                edge_index = prepare(data[dataset_idx], t)[:3]
                 embeddings = self.model(edge_index, self.x)
 
                 # graph readout
@@ -241,7 +241,7 @@ class Runner(object):
             self.tgc_decoder.eval()
             with torch.no_grad():
                 
-                edge_index, pos_edge, neg_edge = prepare(data[dataset_idx], t)[:3]
+                edge_index = prepare(data[dataset_idx], t)[:3]
                 embeddings = self.model(edge_index, self.x)
 
                 # graph readout
@@ -272,7 +272,7 @@ class Runner(object):
             for t_train_idx, t_train in enumerate(self.train_shots[dataset_idx]):
                 self.optimizer.zero_grad()
 
-                edge_index, pos_index, neg_index, activate_nodes, edge_weight, _, _ = prepare(data[dataset_idx], t_train)
+                edge_index = prepare(data[dataset_idx], t_train)
                 embeddings = inference_model(edge_index, self.x)
                 
                 # graph readout
@@ -304,7 +304,7 @@ class Runner(object):
             for dataset_idx_i in range(self.num_datasets):
                 for t_train in self.train_shots[dataset_idx_i]:
                     with torch.no_grad():
-                        edge_index, _, _, _, _, _, _ = prepare(data[dataset_idx_i], t_train)
+                        edge_index = prepare(data[dataset_idx_i], t_train)
                         embeddings = self.model(edge_index, self.x)
                         self.model.update_hiddens_all_with(embeddings)
                 
@@ -321,7 +321,7 @@ class Runner(object):
 
                 for t_val in self.val_shots[dataset_idx_i]:
                     with torch.no_grad():
-                        edge_index, _, _, _, _, _, _ = prepare(data[dataset_idx_i], t_val)
+                        edge_index = prepare(data[dataset_idx_i], t_val)
                         embeddings = self.model(edge_index, self.x)
                         self.model.update_hiddens_all_with(embeddings)
                 test_auc, test_ap = self.tgclassification_test(self.readout_scheme, dataset_idx_i)
@@ -356,7 +356,7 @@ class Runner(object):
                 # Passing through train data to get the embeddings
                 for t_train in self.train_shots[dataset_idx]:
                     with torch.no_grad():
-                        edge_index, _, _, _, _, _, _ = prepare(data[dataset_idx], t_train)
+                        edge_index = prepare(data[dataset_idx], t_train)
                         embeddings = self.model(edge_index, self.x)
                         self.model.update_hiddens_all_with(embeddings)
                 
@@ -373,7 +373,7 @@ class Runner(object):
                 # Passing through validation set to get the embeddings
                 for t_train in self.val_shots[dataset_idx]:
                     with torch.no_grad():
-                        edge_index, _, _, _, _, _, _ = prepare(data[dataset_idx], t_train)
+                        edge_index = prepare(data[dataset_idx], t_train)
                         embeddings = self.model(edge_index, self.x)
                         self.model.update_hiddens_all_with(embeddings)
 
@@ -397,7 +397,7 @@ if __name__ == '__main__':
     from script.utils.util import set_random, logger, init_logger, disease_path
     from script.models.load_model import load_model
     from script.utils.loss import ReconLoss, VGAEloss
-    from script.utils.data_util import loader, prepare_dir, load_multiple_datasets
+    from script.utils.data_util import load_multiple_datasets, extra_dataset_attributes_loading
     from script.utils.inits import prepare
 
     args.data_name = dataset_names
@@ -408,28 +408,36 @@ if __name__ == '__main__':
     print("======================================")
     print("INFO: Dataset: {}".format(args.dataset))
     print("INFO: Model: {}".format(args.model))
-    args.dataset, data = load_multiple_datasets("dataset_package_64.txt")
-    t_graph_labels, t_graph_feat = extra_dataset_attributes_loading(args)
+    args.dataset, data = load_multiple_datasets("dataset_package_test.txt")
+    t_graph_labels, t_graph_feat = [], []
+    for dataset in args.dataset:
+            t_graph_label_i, t_graph_feat_i = extra_dataset_attributes_loading(args, dataset)
+            t_graph_labels.append(t_graph_label_i)
+            t_graph_feat.append(t_graph_feat_i)
+    # t_graph_labels, t_graph_feat = extra_dataset_attributes_loading(args)
     # num_nodes_per_data = [data[i]['num_nodes'] for i in range(len(data))]
     # args.num_nodes = 183714#max(num_nodes_per_data)
     # args.max_node_id = 183713
     # args.num_nodes = args.max_node_id + 1
-    category = "HTGN"
-    
-    for n_data in [2]:
-        for seed in [800]:
+    # category = "HTGN"
+    category = "nout"
+    for nout in [32]:
+        for n_data in [64]:
+            # args.dataset, data = load_multiple_datasets("{}/dataset_package_{}_{}.txt".format(category, n_data, data_number))
+            # t_graph_labels, t_graph_feat = extra_dataset_attributes_loading(args)
+            for seed in [710, 720]:
             # for nout in [256]:
-            #     args.nhid = nout
-            #     args.nout = nout
+                args.nhid = nout
+                args.nout = nout
             # model_path = "HTGN_16_seed_{}".format(seed)
                 # model_path = "rand_data/rr/{}".format(n_data)
-            model_path = "{}_64_seed_{}".format(args.model,  seed)
+                model_path = "{}_{}_seed_{}_{}".format(args.model, n_data, seed, nout)
                 # model_path = "HTGN_16_seed_{}_{}".format(seed, nout)
                 # model_path = "node_id/HTGN_seed_{}_{}".format(seed, n_data)
                 # result_path = "../data/output/{}/test_result/{}_results.csv".format(category, model_path)
                 # print(result_path)
-            runner = Runner()
-            runner.run()
+                runner = Runner()
+                runner.run()
 
 
     # average_results(result_path)

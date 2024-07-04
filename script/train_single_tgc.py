@@ -455,27 +455,14 @@ if __name__ == '__main__':
     from script.utils.util import set_random, logger, init_logger, disease_path
     from script.models.load_model import load_model
     from script.utils.loss import ReconLoss, VGAEloss
-    from script.utils.data_util import loader, prepare_dir
-    from script.utils.inits import prepare,prepare_TGS_for_TGC
+    from script.utils.data_util import loader, load_TGS_for_TGC
+    from script.utils.inits import prepare_TGS_for_TGC
 
     #This array can be replaced by a list of datasets readed from a specific file
     # datasets = [
     #     "unnamedtoken216800x389999216860ab8e0175387a0c90e5c52522c945"
     # ].
-    directory_path = "/network/scratch/r/razieh.shirzadkhani/fm/fm_data/data_lt_70/all_data/"
-    files = os.listdir(directory_path+"raw/edgelists")
-    files = [f for f in files if os.path.isfile(os.path.join(directory_path+"raw/edgelists", f))]
-    # existing = os.listdir(directory_path+"cached")
-    # existing = [f for f in files if os.path.isfile(os.path.join(directory_path+"cached", f))]
-
-    # all_data = pd.read_csv("/network/scratch/r/razieh.shirzadkhani/fm/fm_data/data_lt_70/dataset_no_gap_1_day.csv")
-    # used_data = pd.read_csv("/home/mila/r/razieh.shirzadkhani/ScalingTGNs/data/input/data_list/all_data.csv")
-    for data in files:
-        
-        data_name = data.split("_")[0]
-        print(data_name)
-        _ = loader(dataset=data_name, neg_sample=args.neg_sample)
-
+    
     # seeds = [710]
 
     # args.max_epoch = 250

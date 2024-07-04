@@ -1,7 +1,2 @@
-<<<<<<< HEAD
 IOTX0x6fb3e0a217407efff7ca062d46c26e5d60a14d69
 unnamedtoken218520xa8c8cfb141a3bb59fea1e2ea6b79b5ecbcd7b6ca
-=======
-IOTX
-NOIA
->>>>>>> origin/bao-merge

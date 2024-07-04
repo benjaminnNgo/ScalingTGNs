@@ -73,7 +73,7 @@ def readout_function(embeddings, readout_scheme='mean'):
     return readout
   
 
-def extra_dataset_attributes_loading(args, readout_scheme='mean'):
+def extra_dataset_attributes_loading2(args, readout_scheme='mean'):
     """
     Load and process additional dataset attributes for TG-Classification
     This includes graph labels and node features for the nodes of each snapshot
@@ -212,9 +212,7 @@ class Runner(object):
 
         self.criterion = torch.nn.BCELoss()
         self.load_feature()
-
         self.model = load_model(args).to(args.device)
-        print(self.model)
         self.model_path = '{}/saved_models/fm/{}/{}_{}_seed_{}_{}'.format(model_file_path, 
                                                                         category,
                                                                         args.model,
@@ -230,7 +228,15 @@ class Runner(object):
                                                                         args.nhid)
        
         # load the graph labels
-        self.t_graph_labels, self.t_graph_feat = extra_dataset_attributes_loading(args)
+        self.t_graph_labels, self.t_graph_feat = [], []
+        for dataset in args.dataset:
+            t_graph_label_i, t_graph_feat_i = extra_dataset_attributes_loading(args, dataset)
+            self.t_graph_labels.append(t_graph_label_i)
+            self.t_graph_feat.append(t_graph_feat_i)
+        # a, b = extra_dataset_attributes_loading2(args)
+        # print(b)
+        # print(self.t_graph_feat)
+        
         # self.t_graph_labels = t_graph_labels
         # self.t_graph_feat = t_graph_feat
         # define decoder: graph classifier
@@ -242,6 +248,10 @@ class Runner(object):
             set(self.tgc_decoder.parameters()) | set(self.model.parameters()),
             lr=self.tgc_lr)
         logger.info("{}".format(self.model_chkp_path))
+        # total_params = [p.numel() for p in self.tgc_decoder.parameters()]
+        # print(f"Number of parameters: {total_params}")
+        # total_params2 = [p.numel() for p in self.model.parameters()]
+        # print(f"Number of parameters2: {total_params2}")
         if os.path.exists("{}.pth".format(self.model_chkp_path)):
             logger.info("INFO: Model already exist and will be loaded from {}".format(self.model_chkp_path))
             checkpoint = torch.load("{}.pth".format(self.model_chkp_path))
@@ -265,6 +275,7 @@ class Runner(object):
                 self.x = torch.from_numpy(feature).float().to(args.device)
                 logger.info('INFO: using pre-defined feature')
             else:
+                print("here")
                 self.x = torch.eye(args.num_nodes).to(args.device)
                 # self.x = np.fill_diagonal(torch.zeros(args.num_nodes, args.num_nodes), 
                 #                           args.node_ids).to(args.device)
@@ -281,7 +292,7 @@ class Runner(object):
             self.model.eval()
             self.tgc_decoder.eval()
             with torch.no_grad():
-                edge_index, pos_edge, neg_edge = prepare(data[dataset_idx], t)[:3]
+                edge_index = prepare(data[dataset_idx], t)[:3]
                 # new_pos_edge, new_neg_edge = prepare(data, t)[-2:]
 
                 embeddings = self.model(edge_index, self.x)
@@ -310,7 +321,7 @@ class Runner(object):
             self.model.eval()
             self.tgc_decoder.eval()
             with torch.no_grad():
-                edge_index, pos_edge, neg_edge = prepare(data[dataset_idx], t)[:3]
+                edge_index = prepare(data[dataset_idx], t)[:3]
 
                 embeddings = self.model(edge_index, list(self.x))
 
@@ -374,7 +385,7 @@ class Runner(object):
                 dataset_losses = []
                 for t_train_idx, t_train in enumerate(self.train_shots[dataset_idx]):
                     self.optimizer.zero_grad()
-                    edge_index, _, _, _, _, _, _ = prepare(data[dataset_idx], t_train)
+                    edge_index = prepare(data[dataset_idx], t_train)
                     embeddings = self.model(edge_index, self.x)
                     
                     # graph readout
@@ -494,8 +505,8 @@ class Runner(object):
 
         logger.info("INFO: Saving best model from epoch {}...".format(best_epoch))
         logger.info("File name: {}_seed_{}_{}.pth".format(args.model, args.seed, self.num_datasets))
-        torch.save(best_model, "{}_{}.pth".format(self.model_path, data_number))
-        torch.save(best_mlp, "{}_{}_mlp.pth".format(self.model_path, data_number))
+        torch.save(best_model, "{}.pth".format(self.model_path))
+        torch.save(best_mlp, "{}_mlp.pth".format(self.model_path))
         logger.info("Best test results: {}".format(best_test_results))
         
 
@@ -504,12 +515,11 @@ if __name__ == '__main__':
     from script.utils.config import args, dataset_names
     from script.utils.util import set_random, logger, init_logger, disease_path
     from script.models.load_model import load_model
-    from script.utils.data_util import load_multiple_datasets
+    from script.utils.data_util import load_multiple_datasets, extra_dataset_attributes_loading, loader
     from script.utils.inits import prepare
-    from script.utils.data_util import prepare_dir
     
     args.model = "HTGN"
-    args.seed = 710
+    args.seed = 800
     args.max_epoch=300
     args.lr = 0.0001
     args.log_interval=10
@@ -523,41 +533,30 @@ if __name__ == '__main__':
     # use time of run for saving results
     t = time.localtime()
     args.curr_time = time.strftime("%Y-%m-%d-%H:%M:%S", t)
-    # load_multiple_datasets("")
-    # check_for_label_distribution("test.txt")
-    
-    # num_nodes_per_data = [data[i]['num_nodes'] for i in range(len(data))]
-    # args.num_nodes = max(num_nodes_per_data)
-    # print(args.num_nodes)
-    # category = "10data"
-    
-    
-    # init_logger('../data/output/{}/log/time_log_1.txt'.format(category))
-    # logger.info("INFO: Args: {}".format(args))
-    # for data_number in [6]:
-    args.dataset, data = load_multiple_datasets("dataset_package_64.txt")
-    # # for args.seed in [710, 720, 800]:
-    # init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, args.seed, len(args.dataset), data_number))
-    # set_random(args.seed)
-    # # for nhid in [16, 32, 64, 128, 256, 512, 1024, 2048]:
-    # logger.info("INFO: data: {}, seed: {}".format(data_number, args.seed))
-    # args.data_name = dataset_names
 
-    # runner = Runner()
-    # runner.run()
-    category = "nout"
-    for data_number in [3]:
-        # args.dataset, data = load_multiple_datasets("{}/dataset_package_16_{}.txt".format(category, data_number))
-        for args.seed in [800]:
-            
-            for nout in [8]:
-                # init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, len(args.dataset), args.seed, data_number))
-                init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, args.seed, len(args.dataset), nout))
-                set_random(args.seed)
-                args.nout = nout
-                args.nhid = nout
-                logger.info("INFO: data: {}, seed: {}".format(data_number, args.seed))
-                args.data_name = dataset_names
+    # args.dataset, data = load_multiple_datasets("dataset_package_64.txt")
+    # num_nodes = [data[i]['num_nodes'] for i in range(len(data))]
+    # args.num_nodes = max(num_nodes)
 
-                runner = Runner()
-                runner.run()
+    category = "nout" #"rand_data" "HTGN"
+    # data_number = 3
+    for nout in [32]:
+        # args.dataset, data = load_multiple_datasets("{}/dataset_package_16_{}.txt".format(category, data_number))            
+        # init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, len(args.dataset), args.seed, data_number))
+        init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, args.seed, len(args.dataset), nout))
+        set_random(args.seed)
+        # args.nout = nout
+        # args.nhid = nout
+        # runner = Runner()
+        # runner.run()
+    # import scipy.sparse as sp
+    # a = sp.load_npz("/home/mila/r/razieh.shirzadkhani/ScalingTGNs/data/input/raw/disease/disease_lp.feats.npz").toarray()
+    # print(a)
+    # print(a.shape)
+    edgelist_df = pd.read_csv("/network/scratch/r/razieh.shirzadkhani/fm/fm_data/data_lt_70/all_data/raw/edgelists/unnamedtoken222080x7e77dcb127f99ece88230a64db8d595f31f1b068_edgelist.txt")
+    unique_nodes = pd.unique(edgelist_df[['source', 'destination']].values.ravel('K'))
+    num_unique_nodes = len(unique_nodes)
+    print(num_unique_nodes)
+
+    data = loader(dataset="unnamedtoken222080x7e77dcb127f99ece88230a64db8d595f31f1b068", neg_sample=args.neg_sample)
+    print(data["num_nodes"])
