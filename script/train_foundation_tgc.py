@@ -219,10 +219,7 @@ class Runner(object):
         # Use Binary Cross Entropy for calculatin loss
         self.criterion = torch.nn.BCELoss()
 
-        # Use Adam optimizer
-        self.optimizer = torch.optim.Adam(
-            set(self.tgc_decoder.parameters()) | set(self.model.parameters()),
-            lr=self.tgc_lr)
+        
         # Loading graph features
         self.load_feature()
         self.model = load_model(args).to(args.device)
@@ -551,10 +548,10 @@ if __name__ == '__main__':
     t = time.localtime()
     args.curr_time = time.strftime("%Y-%m-%d-%H:%M:%S", t)
 
-    # args.dataset, data = load_multiple_datasets("dataset_package_64.txt")
+    args.dataset, data = load_multiple_datasets("dataset_package_1.txt")
     # num_nodes = [data[i]['num_nodes'] for i in range(len(data))]
     # args.num_nodes = max(num_nodes)
-
+    args.num_nodes = 100
     category = "nout" #"rand_data" "HTGN"
     # data_number = 3
     for nout in [32]:
@@ -564,16 +561,16 @@ if __name__ == '__main__':
         set_random(args.seed)
         # args.nout = nout
         # args.nhid = nout
-        # runner = Runner()
-        # runner.run()
+        runner = Runner()
+        runner.run()
     # import scipy.sparse as sp
     # a = sp.load_npz("/home/mila/r/razieh.shirzadkhani/ScalingTGNs/data/input/raw/disease/disease_lp.feats.npz").toarray()
-    # print(a)
+    # print(a[0])
     # print(a.shape)
-    edgelist_df = pd.read_csv("/network/scratch/r/razieh.shirzadkhani/fm/fm_data/data_lt_70/all_data/raw/edgelists/unnamedtoken222080x7e77dcb127f99ece88230a64db8d595f31f1b068_edgelist.txt")
-    unique_nodes = pd.unique(edgelist_df[['source', 'destination']].values.ravel('K'))
-    num_unique_nodes = len(unique_nodes)
-    print(num_unique_nodes)
+    # edgelist_df = pd.read_csv("/network/scratch/r/razieh.shirzadkhani/fm/fm_data/data_lt_70/all_data/raw/edgelists/unnamedtoken222080x7e77dcb127f99ece88230a64db8d595f31f1b068_edgelist.txt")
+    # unique_nodes = pd.unique(edgelist_df[['source', 'destination']].values.ravel('K'))
+    # num_unique_nodes = len(unique_nodes)
+    # print(num_unique_nodes)
 
-    data = loader(dataset="unnamedtoken222080x7e77dcb127f99ece88230a64db8d595f31f1b068", neg_sample=args.neg_sample)
-    print(data["num_nodes"])
+    # data = loader(dataset="unnamedtoken222080x7e77dcb127f99ece88230a64db8d595f31f1b068", neg_sample=args.neg_sample)
+    # print(data["num_nodes"])
