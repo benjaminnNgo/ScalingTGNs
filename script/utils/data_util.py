@@ -9,9 +9,13 @@ from torch_geometric.data import Data
 import pickle
 
 from script.utils.TGS import TGS_Handler
+
+from script.utils.TGS import TGS_Handler
 from script.utils.make_edges_orign import mask_edges_det, mask_edges_prd, mask_edges_prd_new_by_marlin
 from script.utils.make_edges_new import get_edges, get_prediction_edges, get_prediction_edges_modified, get_new_prediction_edges, get_new_prediction_edges_modified
+from sklearn.preprocessing import MinMaxScaler
 
+root_path = "/network/scratch/r/razieh.shirzadkhani/fm/fm_data/data_lt_70/all_data"
 
 def mkdirs(path):
     if not os.path.isdir(path):
@@ -173,7 +177,7 @@ def load_TGC_dataset(dataset):
     print("INFO: Loading a Graph from `Temporal Graph Classification (TGC)` Category: {}".format(dataset))
     data = {}
 
-    edgelist_rawfile = '../data/input/raw/edgelists/{}_edgelist.txt'.format(dataset)
+    edgelist_rawfile = '{}/raw/edgelists/{}_edgelist.txt'.format(root_path, dataset)
     edgelist_df = pd.read_csv(edgelist_rawfile)
     uniq_ts_list = np.unique(edgelist_df['snapshot'])
     print("INFO: Number of unique snapshots: {}".format(len(uniq_ts_list)))
@@ -207,6 +211,7 @@ def load_TGC_dataset(dataset):
     data['new_pedges'], data['new_nedges'] = new_pedges_list, new_nedges_list  # list
     data['num_nodes'] = int(np.max(np.vstack(edges))) + 1
 
+
     data['time_length'] = len(edge_index_list)
     data['weights'] = None
     print('INFO: Data: {}'.format(dataset))
@@ -216,10 +221,8 @@ def load_TGC_dataset(dataset):
 
 
 def loader(dataset='enron10', neg_sample=''):
-
-
     # if cached, load directly
-    data_root = '../data/input/cached/{}/'.format(dataset)
+    data_root = '{}/cached/{}/'.format(root_path, dataset)
     filepath = mkdirs(data_root) + '{}.data'.format(dataset)  # the data will be saved here after generation.
     print("INFO: Dataset: {}".format(dataset))
     print("DEBUG: Look for data at {}.".format(filepath))
@@ -229,7 +232,7 @@ def loader(dataset='enron10', neg_sample=''):
     
     # if not cached, to process and cached
     TGS_dataset_df = pd.read_csv("../data/TGS_available_datasets.csv")
-    TGS_available_dataset = TGS_dataset_df['dataset'].tolist()
+    TGS_available_dataset = TGS_dataset_df['token_name'].tolist()
     
     print('INFO: data does not exits, processing ...')
     if dataset in ['enron10', 'dblp']:
@@ -253,39 +256,40 @@ def loader(dataset='enron10', neg_sample=''):
             data = load_TGC_dataset(dataset)
         else:
             TGS_Handler("../data/input/tokens/raw/").creat_baseline_datasets(dataset)
+            print("=============Done===============")
+            data = load_TGC_dataset(dataset)
+
+        edgelist_rawfile = '../data/input/raw/edgelists/{}_edgelist.txt'.format(dataset)
+        if os.path.exists(edgelist_rawfile):
+            data = load_TGC_dataset(dataset)
+
+    elif dataset in TGS_available_dataset:
+        edgelist_rawfile = '../data/input/raw/edgelists/{}_edgelist.txt'.format(dataset)
+        if os.path.exists(edgelist_rawfile):
+            data = load_TGC_dataset(dataset)
+        else:
+            TGS_Handler("../data/input/tokens/raw/").creat_baseline_datasets(dataset)
+            print("=============Done===============")
             data = load_TGC_dataset(dataset)
     else:
         try:
+            print("INFO: Loading a dynamic graph datasets from TGS")
             print("INFO: Loading a dynamic graph datasets from TGS")
             data = load_TGC_dataset(dataset)
         except Exception as e:
             raise ValueError("ERROR: Undefined dataset!")
 
 
+
     torch.save(data, filepath)
     print('INFO: Dataset is saved!')
     return data
 
-def load_multiple_datasets(datasets_package_file,neg_sample):
-    datasets_packages = []
-    datasets_package_path = '../data/input/{}.txt'.format(datasets_package_file)
-    print(datasets_package_path)
-    if os.path.exists(datasets_package_path):
-        print("File exists.")
-    else:
-        print("File does not exist.")
 
-    try:
-        with open(datasets_package_path, 'r') as file:
-            for line in file:
-                print("INFO: Dataset: {}".format(line))
-                datasets_packages.append(loader(dataset=line.strip(), neg_sample=neg_sample))
-    except Exception as e:
-        print("ERROR: error in processing data pack {}".format(datasets_package_path))
-        print(e)
-
-    return datasets_packages
-
+def select_datset_no_gap(filename,max_gap):
+    dataset_df = pd.read_csv(filename)
+    filtered_df = dataset_df[dataset_df[' max_gap'] <= max_gap]
+    filtered_df.to_csv('dataset_no_gap_{}_day.csv'.format(max_gap), index=False)
 
 
 def process_data_gaps(directory,min_size = 10 ,max_size = 4000):
@@ -319,38 +323,58 @@ def process_data_gaps(directory,min_size = 10 ,max_size = 4000):
         print("Done processing {}/{}".format(counter,file_count))
     dataset_feature_file.close()
 
-def select_datset_no_gap(filename,max_gap):
-    dataset_df = pd.read_csv(filename)
-    filtered_df = dataset_df[dataset_df[' max_gap'] <= max_gap]
-    filtered_df.to_csv('dataset_no_gap_{}_day.csv'.format(max_gap), index=False)
-
-
 def load_multiple_datasets(datasets_package_path=""):
     datasets_packages = []
     dataset_names = []
 
-    print(datasets_package_path)
-    if os.path.exists(datasets_package_path):
-        print("Folder exists.")
-    else:
-        print("Folder does not exist.")
-    i = 0
     text_path = "../data/input/data_list/{}".format(datasets_package_path)
-
+    if not os.path.exists(text_path):
+        print("Folder does not exist.")
     try:
         with open(text_path, 'r') as file:
             for line in file:
                 print("INFO: Dataset: {}".format(line))
-                datasets_packages.append(loader(dataset=line.strip()))
+                datasets_packages.append(load_TGS_for_TGC(dataset=line.strip()))
                 dataset_names.append(line.strip())
+
 
     except Exception as e:
         print("ERROR: error in processing data pack {}".format(datasets_package_path))
-        print(e)
 
     print("Number of dataset{}".format(len(datasets_packages)))
     return dataset_names, datasets_packages
 
+def check_for_label_distribution(datasets_package_path=""):
+    datasets_packages = []
+    dataset_names = []
+    text_path = "../data/input/data_list/{}".format(datasets_package_path)
+    # datasets_package_path = '{}/raw/edgelists/{}'.format(root_path+folder, datasets_package_path)
+    print(datasets_package_path)
+    if os.path.exists(text_path):
+        print("Folder exists.")
+    else:
+        print("Folder does not exist.")
+    i = 0
+    try:
+        with open(text_path, 'r') as file:
+            for line in file:
+                print("INFO: Dataset: {}".format(line))
+                label_filename = f'{root_path}/raw/labels/{line.strip()}_labels.csv'
+                label_df = pd.read_csv(label_filename, header=None, names=['label'])
+                length = label_df.shape
+                train = list(map(int, label_df['label'][1:int(length[0] * 0.7)]))
+                val = list(map(int, label_df['label'][int(length[0] * 0.7): int(length[0] * 0.85)]))
+                test = list(map(int, label_df['label'][int(length[0] * 0.85):]))
+                x = True if 0 in train and 1 in train else False
+                y = True if 0 in val and 1 in val else False
+                z = True if 0 in test and 1 in test else False
+                print(x, y, z)
+
+    except Exception as e:
+        print("ERROR: error in processing data pack {}".format(datasets_package_path))
+        print(e)
+        
+    print("Number of dataset: {}".format(len(datasets_packages)))
 
 
 def find_max_node_id (dataname):
@@ -375,6 +399,261 @@ def find_max_node_id_package(datasets_package_file):
         print("ERROR: error in processing data pack {}".format(datasets_package_file))
         print(e)
 
+
+def load_TGS_for_TGC(dataset):
+    print("INFO: Loading a Graph from `Temporal Graph Classification (TGC)` Category: {}".format(dataset))
+
+    data_root = '{}/cached/{}/'.format(root_path, dataset)
+    filepath = mkdirs(data_root) + '{}.data'.format(dataset)  # the data will be saved here after generation.
+    print("INFO: Dataset: {}".format(dataset))
+    print("DEBUG: Look for data at {}.".format(filepath))
+    if os.path.isfile(filepath):
+        print('INFO: Loading {} directly.'.format(dataset))
+        return torch.load(filepath)
+    
+    data = {}
+    edgelist_rawfile = '{}/raw/edgelists/{}_edgelist.txt'.format(root_path, dataset)
+    # edgelist_rawfile = '../data/input/raw/edgelists/{}_edgelist.txt'.format(dataset)
+    edgelist_df = pd.read_csv(edgelist_rawfile)
+    uniq_ts_list = np.unique(edgelist_df['snapshot'])
+    print("INFO: Number of unique snapshots: {}".format(len(uniq_ts_list)))
+    adj_time_list = []
+    for ts in uniq_ts_list:
+        # NOTE: this code does not use any node or edge features
+        ts_edges = edgelist_df.loc[edgelist_df['snapshot'] == ts, ['source', 'destination']]
+        ts_G = nx.from_pandas_edgelist(ts_edges, 'source', 'destination')
+        ts_A = nx.to_scipy_sparse_array(ts_G)
+        adj_time_list.append(ts_A)
+
+    edges, biedges = mask_edges_det(adj_time_list)  # list
+    assert len(edges) == len(biedges)
+    edge_index_list = []
+    for t in range(len(biedges)):
+        edge_index_list.append(torch.tensor(np.transpose(biedges[t]), dtype=torch.long))
+
+
+    data['edge_index_list'] = edge_index_list
+    data['num_nodes'] = int(np.max(np.vstack(edges))) + 1
+
+    data['time_length'] = len(edge_index_list)
+    data['weights'] = None
+    print('INFO: Data: {}'.format(dataset))
+    print('INFO: Total length:{}'.format(len(edge_index_list)))
+    print('INFO: Number nodes: {}'.format(data['num_nodes']))
+
+    # data_root1 = '{}/cached/0new_cached/{}/'.format(root_path, dataset)
+    # filepath1 = mkdirs(data_root1) + '{}.data'.format(dataset)
+    torch.save(data, filepath)
+    print('INFO: Dataset is saved!')
+    
+    return data
+
+def extra_dataset_attributes_loading(args, dataset, readout_scheme='mean'):
+    """
+    Load and process additional dataset attributes for TG-Classification
+    This includes graph labels and node features for the nodes of each snapshot
+    """
+    # partial_path = f'../data/input/raw/'
+    partial_path = "/network/scratch/r/razieh.shirzadkhani/fm/fm_data/data_lt_70/all_data"
+    # TG_labels_data = []
+    # TG_feats_data = []
+    # for dataset in args.dataset:
+    print("INFO: Loading a Graph Feature and Labels for `Temporal Graph Classification (TGC)` Category: {}".format(dataset))
+    data_root = '{}/cached/{}'.format(partial_path, dataset)
+
+    # load graph lables
+    label_filename = f'{partial_path}/raw/labels/{dataset}_labels.csv'
+    label_df = pd.read_csv(label_filename, header=None, names=['label'])
+    TG_labels = torch.from_numpy(np.array(label_df['label'].tolist())).to(args.device)
+    # TG_labels_data.append(TG_labels)
+
+    cached_feature_path = "{}/{}_features_{}.npz".format(data_root, dataset, readout_scheme)
+    if os.path.exists(cached_feature_path):
+        TG_feats = np.load(cached_feature_path)['TG_feats']
+        print(
+            "INFO: Cached feature already exist. Loaded directly")
+        return TG_labels, TG_feats
+        # return TG_labels, TG_feats[readout_scheme]
+
+    print("INFO: Cached feature doesn't exist. Generate cached Graph Feature for `Temporal Graph Classification (TGC)` Category: {}".format(
+        dataset))
+    # cached_feats = {}
+    # load and process graph-pooled (node-level) features
+    edgelist_filename = f'{partial_path}/raw/edgelists/{dataset}_edgelist.txt'
+    edgelist_df = pd.read_csv(edgelist_filename)
+    uniq_ts_list = np.unique(edgelist_df['snapshot'])
+    # TG_feats_max = []
+    # TG_feats_mean = []
+    # TG_feats_sum = []
+    TG_feats = []
+
+    for ts in uniq_ts_list:
+        ts_edges = edgelist_df.loc[edgelist_df['snapshot'] == ts, ['source', 'destination', 'weight']]
+        ts_G = nx.from_pandas_edgelist(ts_edges, source='source', target='destination', edge_attr='weight',
+                                    create_using=nx.MultiDiGraph)
+        node_list = list(ts_G.nodes)
+        indegree_list = np.array(ts_G.in_degree(node_list))
+        weighted_indegree_list = np.array(ts_G.in_degree(node_list, weight='weight'))
+        outdegree_list = np.array(ts_G.out_degree(node_list))
+        weighted_outdegree_list = np.array(ts_G.out_degree(node_list, weight='weight'))
+
+
+        # TG_feats_max.append( np.array([np.max(indegree_list[:, 1].astype(float)), np.max(weighted_indegree_list[:, 1].astype(float)),
+        #                                 np.max(outdegree_list[:, 1].astype(float)), np.max(weighted_outdegree_list[:, 1].astype(float))]))
+
+        # TG_feats_mean.append(np.array([np.mean(indegree_list[:, 1].astype(float)),
+        #                                 np.mean(weighted_indegree_list[:, 1].astype(float)),
+        #                                 np.mean(outdegree_list[:, 1].astype(float)),
+        #                                 np.mean(weighted_outdegree_list[:, 1].astype(float))]))
+
+        # TG_feats_sum.append( np.array([np.sum(indegree_list[:, 1].astype(float)), np.sum(weighted_indegree_list[:, 1].astype(float)),
+        #                                 np.sum(outdegree_list[:, 1].astype(float)), np.sum(weighted_outdegree_list[:, 1].astype(float))]))
+        if readout_scheme == 'max':
+            TG_this_ts_feat = np.array([np.max(indegree_list), np.max(weighted_indegree_list), 
+                                        np.max(outdegree_list), np.max(weighted_outdegree_list)])
+        elif readout_scheme == 'mean':
+            TG_this_ts_feat = np.array([np.mean(indegree_list[: , 1].astype(float)), 
+                                        np.mean(weighted_indegree_list[: , 1].astype(float)), 
+                                        np.mean(outdegree_list[: , 1].astype(float)), 
+                                        np.mean(weighted_outdegree_list[: , 1].astype(float))])
+        elif readout_scheme == 'sum':
+            TG_this_ts_feat = np.array([np.sum(indegree_list), np.sum(weighted_indegree_list), 
+                                        np.sum(outdegree_list), np.sum(weighted_outdegree_list)])
+        else:
+            TG_this_ts_feat = None
+            raise ValueError("Readout scheme is Undefined!")
+        TG_feats.append(TG_this_ts_feat)
+
+    # assert len(TG_feats_max) == len(uniq_ts_list),"Missing TG_feature max"
+    # assert len(TG_feats_mean) == len(uniq_ts_list),"Missing TG_feature mean"
+    # assert len(TG_feats_sum) == len(uniq_ts_list),"Missing TG_feature sum"
+
+    # scale the temporal graph features to have a reasonable range
+    # scalar = MinMaxScaler()
+    # TG_feats_max = scalar.fit_transform(TG_feats_max)
+
+    # scalar = MinMaxScaler()
+    # TG_feats_mean = scalar.fit_transform(TG_feats_mean)
+
+    # scalar = MinMaxScaler()
+    # TG_feats_sum = scalar.fit_transform(TG_feats_sum)
+    
+    # cached_feats['max'] = np.array(TG_feats_max)
+    # cached_feats['mean'] = np.array(TG_feats_mean)
+    # cached_feats['sum'] = np.array(TG_feats_sum)
+
+    scalar = MinMaxScaler()
+    TG_feats = scalar.fit_transform(TG_feats)
+    # TG_feats_data.append(TG_feats)
+
+    if not os.path.exists(data_root):
+        os.makedirs(data_root)
+    np.savez(cached_feature_path, TG_feats=TG_feats)
+
+    return TG_labels, TG_feats
+
+
+def extra_node_attributes_loading(args, dataset, readout_scheme='mean'):
+    """
+    Load and process additional dataset attributes for TG-Classification
+    This includes graph labels and node features for the nodes of each snapshot
+    """
+    # partial_path = f'../data/input/raw/'
+    partial_path = "/network/scratch/r/razieh.shirzadkhani/fm/fm_data/data_lt_70/all_data"
+    # TG_labels_data = []
+    # TG_feats_data = []
+    # for dataset in args.dataset:
+    print("INFO: Loading a Graph Feature and Labels for `Temporal Graph Classification (TGC)` Category: {}".format(dataset))
+    data_root = '{}/cached/{}'.format(partial_path, dataset)
+
+    # load graph lables
+    label_filename = f'{partial_path}/raw/labels/{dataset}_labels.csv'
+    label_df = pd.read_csv(label_filename, header=None, names=['label'])
+    TG_labels = torch.from_numpy(np.array(label_df['label'].tolist())).to(args.device)
+    # TG_labels_data.append(TG_labels)
+
+    cached_feature_path = "{}/{}_features_{}.npz".format(data_root, dataset, readout_scheme)
+    if os.path.exists(cached_feature_path):
+        TG_feats = np.load(cached_feature_path)['TG_feats']
+        print(
+            "INFO: Cached feature already exist. Loaded directly")
+        return TG_labels, TG_feats
+        # return TG_labels, TG_feats[readout_scheme]
+
+    print("INFO: Cached feature doesn't exist. Generate cached Graph Feature for `Temporal Graph Classification (TGC)` Category: {}".format(
+        dataset))
+    # load and process graph-pooled (node-level) features
+    edgelist_filename = f'{partial_path}/raw/edgelists/{dataset}_edgelist.txt'
+    edgelist_df = pd.read_csv(edgelist_filename)
+    uniq_ts_list = np.unique(edgelist_df['snapshot'])
+    TG_feats = []
+
+    for ts in uniq_ts_list:
+        ts_edges = edgelist_df.loc[edgelist_df['snapshot'] == ts, ['source', 'destination', 'weight']]
+        ts_G = nx.from_pandas_edgelist(ts_edges, source='source', target='destination', edge_attr='weight',
+                                    create_using=nx.MultiDiGraph)
+        node_list = list(ts_G.nodes)
+        indegree_list = np.array(ts_G.in_degree(node_list))
+        weighted_indegree_list = np.array(ts_G.in_degree(node_list, weight='weight'))
+        outdegree_list = np.array(ts_G.out_degree(node_list))
+        weighted_outdegree_list = np.array(ts_G.out_degree(node_list, weight='weight'))
+
+
+        # TG_feats_max.append( np.array([np.max(indegree_list[:, 1].astype(float)), np.max(weighted_indegree_list[:, 1].astype(float)),
+        #                                 np.max(outdegree_list[:, 1].astype(float)), np.max(weighted_outdegree_list[:, 1].astype(float))]))
+
+        # TG_feats_mean.append(np.array([np.mean(indegree_list[:, 1].astype(float)),
+        #                                 np.mean(weighted_indegree_list[:, 1].astype(float)),
+        #                                 np.mean(outdegree_list[:, 1].astype(float)),
+        #                                 np.mean(weighted_outdegree_list[:, 1].astype(float))]))
+
+        # TG_feats_sum.append( np.array([np.sum(indegree_list[:, 1].astype(float)), np.sum(weighted_indegree_list[:, 1].astype(float)),
+        #                                 np.sum(outdegree_list[:, 1].astype(float)), np.sum(weighted_outdegree_list[:, 1].astype(float))]))
+        if readout_scheme == 'max':
+            TG_this_ts_feat = np.array([np.max(indegree_list), np.max(weighted_indegree_list), 
+                                        np.max(outdegree_list), np.max(weighted_outdegree_list)])
+        elif readout_scheme == 'mean':
+            TG_this_ts_feat = np.array([np.mean(indegree_list[: , 1].astype(float)), 
+                                        np.mean(weighted_indegree_list[: , 1].astype(float)), 
+                                        np.mean(outdegree_list[: , 1].astype(float)), 
+                                        np.mean(weighted_outdegree_list[: , 1].astype(float))])
+        elif readout_scheme == 'sum':
+            TG_this_ts_feat = np.array([np.sum(indegree_list), np.sum(weighted_indegree_list), 
+                                        np.sum(outdegree_list), np.sum(weighted_outdegree_list)])
+        else:
+            TG_this_ts_feat = None
+            raise ValueError("Readout scheme is Undefined!")
+        TG_feats.append(TG_this_ts_feat)
+
+    # assert len(TG_feats_max) == len(uniq_ts_list),"Missing TG_feature max"
+    # assert len(TG_feats_mean) == len(uniq_ts_list),"Missing TG_feature mean"
+    # assert len(TG_feats_sum) == len(uniq_ts_list),"Missing TG_feature sum"
+
+    # scale the temporal graph features to have a reasonable range
+    # scalar = MinMaxScaler()
+    # TG_feats_max = scalar.fit_transform(TG_feats_max)
+
+    # scalar = MinMaxScaler()
+    # TG_feats_mean = scalar.fit_transform(TG_feats_mean)
+
+    # scalar = MinMaxScaler()
+    # TG_feats_sum = scalar.fit_transform(TG_feats_sum)
+    
+    # cached_feats['max'] = np.array(TG_feats_max)
+    # cached_feats['mean'] = np.array(TG_feats_mean)
+    # cached_feats['sum'] = np.array(TG_feats_sum)
+
+    scalar = MinMaxScaler()
+    TG_feats = scalar.fit_transform(TG_feats)
+    # TG_feats_data.append(TG_feats)
+
+    if not os.path.exists(data_root):
+        os.makedirs(data_root)
+    np.savez(cached_feature_path, TG_feats=TG_feats)
+
+    return TG_labels, TG_feats
+
+
 if __name__ == '__main__':
     # process_data_gaps("E:/token/")
     # dataset_df = pd.read_csv("TGS_available_datasets.csv")
@@ -383,7 +662,10 @@ if __name__ == '__main__':
     # select_datset_no_gap("dataset_features.txt",1)
 
     # print(find_max_node_id('unnamedtoken18980x00a8b738e453ffd858a7edf03bccfe20412f0eb0'))
-    print(find_max_node_id_package("node_id_package.txt"))
+    # print(find_max_node_id_package("node_id_package.txt"))
 
+    # data = load_TGS_for_TGC("unnamedtoken216800x389999216860ab8e0175387a0c90e5c52522c945")
+    # torch.save(data,"unnamedtoken216800x389999216860ab8e0175387a0c90e5c52522c945.data")
+    check_for_label_distribution("all_data.txt")
 
 

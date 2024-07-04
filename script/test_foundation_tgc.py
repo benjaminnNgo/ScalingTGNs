@@ -65,7 +65,7 @@ def readout_function(embeddings, readout_scheme='mean'):
     return readout
   
 
-def extra_dataset_attributes_loading(args, readout_scheme='mean'):
+def extra_dataset_attributes_loading2(args, readout_scheme='mean'):
     """
     Load and process additional dataset attributes for multi-network TG-Classification
     This includes graph labels and node features for the nodes of each snapshot
@@ -203,7 +203,7 @@ class Runner(object):
             self.tgc_decoder.eval()
             with torch.no_grad():
                 
-                edge_index, pos_edge, neg_edge = prepare(data[dataset_idx], t)[:3]
+                edge_index = prepare(data[dataset_idx], t)[:3]
                 embeddings = self.model(edge_index, self.x)
 
                 # graph readout
@@ -232,7 +232,7 @@ class Runner(object):
             self.tgc_decoder.eval()
             with torch.no_grad():
                 
-                edge_index, pos_edge, neg_edge = prepare(data[dataset_idx], t)[:3]
+                edge_index = prepare(data[dataset_idx], t)[:3]
                 embeddings = self.model(edge_index, self.x)
 
                 # graph readout
@@ -263,7 +263,7 @@ class Runner(object):
             for t_train_idx, t_train in enumerate(self.train_shots[dataset_idx]):
                 self.optimizer.zero_grad()
 
-                edge_index, pos_index, neg_index, activate_nodes, edge_weight, _, _ = prepare(data[dataset_idx], t_train)
+                edge_index = prepare(data[dataset_idx], t_train)
                 embeddings = inference_model(edge_index, self.x)
                 
                 # graph readout
@@ -295,7 +295,7 @@ class Runner(object):
             for dataset_idx_i in range(self.num_datasets):
                 for t_train in self.train_shots[dataset_idx_i]:
                     with torch.no_grad():
-                        edge_index, _, _, _, _, _, _ = prepare(data[dataset_idx_i], t_train)
+                        edge_index = prepare(data[dataset_idx_i], t_train)
                         embeddings = self.model(edge_index, self.x)
                         self.model.update_hiddens_all_with(embeddings)
                 
@@ -309,7 +309,7 @@ class Runner(object):
 
                 for t_val in self.val_shots[dataset_idx_i]:
                     with torch.no_grad():
-                        edge_index, _, _, _, _, _, _ = prepare(data[dataset_idx_i], t_val)
+                        edge_index = prepare(data[dataset_idx_i], t_val)
                         embeddings = self.model(edge_index, self.x)
                         self.model.update_hiddens_all_with(embeddings)
                 test_auc, test_ap = self.tgclassification_test(self.readout_scheme, dataset_idx_i)
@@ -346,7 +346,7 @@ class Runner(object):
                 # Forwad pass through train data to get the embeddings
                 for t_train in self.train_shots[dataset_idx]:
                     with torch.no_grad():
-                        edge_index, _, _, _, _, _, _ = prepare(data[dataset_idx], t_train)
+                        edge_index = prepare(data[dataset_idx], t_train)
                         embeddings = self.model(edge_index, self.x)
                         self.model.update_hiddens_all_with(embeddings)
                 
@@ -361,7 +361,7 @@ class Runner(object):
                 # Forward pass through validation set to get the embeddings
                 for t_train in self.val_shots[dataset_idx]:
                     with torch.no_grad():
-                        edge_index, _, _, _, _, _, _ = prepare(data[dataset_idx], t_train)
+                        edge_index = prepare(data[dataset_idx], t_train)
                         embeddings = self.model(edge_index, self.x)
                         self.model.update_hiddens_all_with(embeddings)
 

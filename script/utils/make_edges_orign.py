@@ -258,6 +258,7 @@ def mask_edges_det(adjs_list):
     '''
     edges_list = []
     biedges_list = []
+    # print(len(adjs_list))
     for i in range(0, len(adjs_list)):
         adj = adjs_list[i]
         # Remove diagonal elements

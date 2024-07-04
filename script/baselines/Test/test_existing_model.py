@@ -159,10 +159,10 @@ class Runner(object):
         self.model = load_model(args).to(args.device)
 
         #Load existing model
-        self.model_path = '../saved_models/{}/{}_{}_seed_{}.pth'.format(args.dataset, args.dataset,
-                                                                   args.models, args.seed)
+        self.model_path = '../saved_models/fm/{}_{}_seed_{}.pth'.format(3, 
+                                                                   args.model, args.seed)
         logger.info("The models is going to be loaded from {}".format(self.model_path))
-        self.models.load_state_dict(torch.load(self.model_path))
+        self.model.load_state_dict(torch.load(self.model_path))
 
         # load the graph labels
         self.t_graph_labels, self.t_graph_feat = extra_dataset_attributes_loading(args)
@@ -216,6 +216,7 @@ class Runner(object):
                     self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid().cpu().numpy())
 
         auc, ap = roc_auc_score(tg_labels, tg_preds), average_precision_score(tg_labels, tg_preds)
+        print(auc, ap)
         return auc, ap
 
 
@@ -233,6 +234,9 @@ if __name__ == '__main__':
     print("======================================")
     print("INFO: Dataset: {}".format(args.dataset))
     print("INFO: Model: {}".format(args.model))
+    args.test_dataset="unnamedtoken18980x00a8b738e453ffd858a7edf03bccfe20412f0eb0"
+    args.testlength=30
+    args.seed=710
     if args.test_dataset is not None:
         test_dataset = loader(dataset=args.test_dataset, neg_sample=args.neg_sample)
         args.num_nodes = test_dataset['num_nodes']

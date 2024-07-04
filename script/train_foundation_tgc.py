@@ -70,7 +70,7 @@ def readout_function(embeddings, readout_scheme='mean'):
     return readout
   
 
-def extra_dataset_attributes_loading(args, readout_scheme='mean'):
+def extra_dataset_attributes_loading2(args, readout_scheme='mean'):
     """
     Load and process additional dataset attributes for multi-network TG-Classification
     This includes graph labels and node features for the nodes of each snapshot
@@ -225,30 +225,46 @@ class Runner(object):
             lr=self.tgc_lr)
         # Loading graph features
         self.load_feature()
-
-        # Loading model
         self.model = load_model(args).to(args.device)
+        self.model_path = '{}/saved_models/fm/{}/{}_{}_seed_{}_{}'.format(model_file_path, 
+                                                                        category,
+                                                                        args.model,
+                                                                        self.num_datasets,
+                                                                        args.seed,
+                                                                        args.nhid)
         
-        # Paths for saving model and checkpoints
-        self.model_path = '{}/saved_models/fm/{}_{}_seed_{}'.format(model_file_path,
+        self.model_chkp_path = '{}/saved_models/fm/{}/checkpoint/{}_{}_seed_{}_{}'.format(model_file_path, 
+                                                                        category,
                                                                         args.model,
                                                                         self.num_datasets,
-                                                                        args.seed)
-        self.model_chkp_path = '{}/saved_models/fm/checkpoint/{}_{}_seed_{}'.format(model_file_path,
-                                                                        args.model,
-                                                                        self.num_datasets,
-                                                                        args.seed)
+                                                                        args.seed,
+                                                                        args.nhid)
        
         # load the graph labels
-        self.t_graph_labels, self.t_graph_feat = extra_dataset_attributes_loading(args)
+        self.t_graph_labels, self.t_graph_feat = [], []
+        for dataset in args.dataset:
+            t_graph_label_i, t_graph_feat_i = extra_dataset_attributes_loading(args, dataset)
+            self.t_graph_labels.append(t_graph_label_i)
+            self.t_graph_feat.append(t_graph_feat_i)
+        # a, b = extra_dataset_attributes_loading2(args)
+        # print(b)
+        # print(self.t_graph_feat)
         
+        # self.t_graph_labels = t_graph_labels
+        # self.t_graph_feat = t_graph_feat
         # define decoder: graph classifier
         num_extra_feat = 4  # = len([in-degree, weighted-in-degree, out-degree, weighted-out-degree])
         self.tgc_decoder = MLP(in_dim=args.nout+num_extra_feat, hidden_dim_1=args.nout+num_extra_feat, 
                                hidden_dim_2=args.nout+num_extra_feat, drop=0.1)  # @NOTE: these hyperparameters may need to be changed 
 
-        
-        # If checkpoint of current run is saved, load and resume training 
+        self.optimizer = torch.optim.Adam(
+            set(self.tgc_decoder.parameters()) | set(self.model.parameters()),
+            lr=self.tgc_lr)
+        logger.info("{}".format(self.model_chkp_path))
+        # total_params = [p.numel() for p in self.tgc_decoder.parameters()]
+        # print(f"Number of parameters: {total_params}")
+        # total_params2 = [p.numel() for p in self.model.parameters()]
+        # print(f"Number of parameters2: {total_params2}")
         if os.path.exists("{}.pth".format(self.model_chkp_path)):
             logger.info("INFO: Model already exist and will be loaded from {}".format(self.model_chkp_path))
             checkpoint = torch.load("{}.pth".format(self.model_chkp_path))
@@ -272,6 +288,7 @@ class Runner(object):
                 self.x = torch.from_numpy(feature).float().to(args.device)
                 logger.info('INFO: using pre-defined feature')
             else:
+                print("here")
                 self.x = torch.eye(args.num_nodes).to(args.device)
                 # self.x = np.fill_diagonal(torch.zeros(args.num_nodes, args.num_nodes), 
                 #                           args.node_ids).to(args.device)
@@ -288,7 +305,9 @@ class Runner(object):
             self.model.eval()
             self.tgc_decoder.eval()
             with torch.no_grad():
-                edge_index, pos_edge, neg_edge = prepare(data[dataset_idx], t)[:3]
+                edge_index = prepare(data[dataset_idx], t)[:3]
+                # new_pos_edge, new_neg_edge = prepare(data, t)[-2:]
+
                 embeddings = self.model(edge_index, self.x)
 
                 # graph readout
@@ -315,7 +334,8 @@ class Runner(object):
             self.model.eval()
             self.tgc_decoder.eval()
             with torch.no_grad():
-                edge_index, pos_edge, neg_edge = prepare(data[dataset_idx], t)[:3]
+                edge_index = prepare(data[dataset_idx], t)[:3]
+
                 embeddings = self.model(edge_index, list(self.x))
 
                 # graph readout
@@ -349,12 +369,17 @@ class Runner(object):
         # Set the model and decoder to train mode
         self.model = self.model.train()
         self.tgc_decoder = self.tgc_decoder.train()
+        t_total_start = timeit.default_timer()
+        
 
         t_total_start = timeit.default_timer()
         best_model = self.model.state_dict()
         patience = 0
-        best_val_auc = -1
-        
+        best_eval_auc = -1
+        train_avg_epoch_loss_dict = {} # Stores the average of epoch loss over all datasets
+        # epoch_losses_per_dataset = {} # Stores each dataset loss at each epoch: {"data_1" : [e_1, e_2, ..], ...}
+        # test_auc, test_ap = [], []
+        time_t = 0
         for epoch in range(self.start_epoch + 1, args.max_epoch + 1):
             print("Epoch: ", epoch)
             t_epoch_start = timeit.default_timer()
@@ -364,10 +389,13 @@ class Runner(object):
 
             # Shuffling order of datasets for each epoch
             dataset_rnd = random.sample(range(self.num_datasets), self.num_datasets)
-
             for dataset_idx in dataset_rnd:
-                tg_labels, tg_preds = [], [] 
-                data_name = args.data_name[args.dataset[dataset_idx]] if args.dataset[dataset_idx] in args.data_name else args.dataset[dataset_idx]
+                
+                tg_labels, tg_preds = [], []
+                # data_name = args.data_name[args.dataset[dataset_idx]] if args.dataset[dataset_idx] in args.data_name else args.dataset[dataset_idx]
+                # initialize a list to save the dataset losses for each epoch
+                # if epoch == 1:
+                #     epoch_losses_per_dataset[dataset_idx] = []
                 self.model.train()
                 self.tgc_decoder.train()
                 self.model.init_hiddens()
@@ -375,7 +403,7 @@ class Runner(object):
 
                 for t_train_idx, t_train in enumerate(self.train_shots[dataset_idx]):
                     self.optimizer.zero_grad()
-                    edge_index, pos_index, neg_index, activate_nodes, edge_weight, _, _ = prepare(data[dataset_idx], t_train)
+                    edge_index = prepare(data[dataset_idx], t_train)
                     embeddings = self.model(edge_index, self.x)
                     
                     # graph readout
@@ -494,8 +522,8 @@ class Runner(object):
         # Saving best model and decoder
         logger.info("INFO: Saving best model from epoch {}...".format(best_epoch))
         logger.info("File name: {}_seed_{}_{}.pth".format(args.model, args.seed, self.num_datasets))
-        torch.save(best_model, "{}_{}.pth".format(self.model_path, args.nout))
-        torch.save(best_mlp, "{}_{}_mlp.pth".format(self.model_path, args.nout))
+        torch.save(best_model, "{}.pth".format(self.model_path))
+        torch.save(best_mlp, "{}_mlp.pth".format(self.model_path))
         logger.info("Best test results: {}".format(best_test_results))
         
 
@@ -504,28 +532,48 @@ if __name__ == '__main__':
     from script.utils.config import args
     from script.utils.util import set_random, logger, init_logger, disease_path
     from script.models.load_model import load_model
-    from script.utils.data_util import load_multiple_datasets
+    from script.utils.data_util import load_multiple_datasets, extra_dataset_attributes_loading, loader
     from script.utils.inits import prepare
     
-    # args.model = "HTGN"
-    # args.seed = 710
-    # args.max_epoch=300
-    # args.lr = 0.0001
-    # args.log_interval=10
-    # args.patience = 30
+    args.model = "HTGN"
+    args.seed = 800
+    args.max_epoch=300
+    args.lr = 0.0001
+    args.log_interval=10
+    args.patience = 30
+    args.min_epoch = 100
     # args.wandb = True
     print("INFO: >>> Temporal Graph Classification <<<")
     print("======================================")
     print("INFO: Model: {}".format(args.model))
     
-    # Load the datasets listed on the .txt file
-    args.dataset, data = load_multiple_datasets("dataset_package_2.txt")
-    
-    init_logger(
-        '../data/output/log/{}_{}_seed_{}_log.txt'.format(args.model, args.seed, len(args.dataset)))
-    set_random(args.seed)
-    logger.info("INFO: Number of data: {}, seed: {}".format(len(data), args.seed))
-    
+    # use time of run for saving results
+    t = time.localtime()
+    args.curr_time = time.strftime("%Y-%m-%d-%H:%M:%S", t)
 
-    runner = Runner()
-    runner.run()
+    # args.dataset, data = load_multiple_datasets("dataset_package_64.txt")
+    # num_nodes = [data[i]['num_nodes'] for i in range(len(data))]
+    # args.num_nodes = max(num_nodes)
+
+    category = "nout" #"rand_data" "HTGN"
+    # data_number = 3
+    for nout in [32]:
+        # args.dataset, data = load_multiple_datasets("{}/dataset_package_16_{}.txt".format(category, data_number))            
+        # init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, len(args.dataset), args.seed, data_number))
+        init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, args.seed, len(args.dataset), nout))
+        set_random(args.seed)
+        # args.nout = nout
+        # args.nhid = nout
+        # runner = Runner()
+        # runner.run()
+    # import scipy.sparse as sp
+    # a = sp.load_npz("/home/mila/r/razieh.shirzadkhani/ScalingTGNs/data/input/raw/disease/disease_lp.feats.npz").toarray()
+    # print(a)
+    # print(a.shape)
+    edgelist_df = pd.read_csv("/network/scratch/r/razieh.shirzadkhani/fm/fm_data/data_lt_70/all_data/raw/edgelists/unnamedtoken222080x7e77dcb127f99ece88230a64db8d595f31f1b068_edgelist.txt")
+    unique_nodes = pd.unique(edgelist_df[['source', 'destination']].values.ravel('K'))
+    num_unique_nodes = len(unique_nodes)
+    print(num_unique_nodes)
+
+    data = loader(dataset="unnamedtoken222080x7e77dcb127f99ece88230a64db8d595f31f1b068", neg_sample=args.neg_sample)
+    print(data["num_nodes"])
