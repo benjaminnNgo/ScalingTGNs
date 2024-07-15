@@ -86,6 +86,8 @@ class HTGN(BaseModel):
     def forward(self, edge_index, x=None, weight=None):
         if x is None:  # using trainable feat matrix
             x = self.initHyperX(self.linear(self.feat), self.c[0])
+            print(x)
+            print(x.shape)
         else:
             x = self.initHyperX(self.linear(x), self.c[0])
         if self.cat:

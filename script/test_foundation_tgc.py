@@ -425,7 +425,7 @@ if __name__ == '__main__':
         for n_data in [64]:
             # args.dataset, data = load_multiple_datasets("{}/dataset_package_{}_{}.txt".format(category, n_data, data_number))
             # t_graph_labels, t_graph_feat = extra_dataset_attributes_loading(args)
-            for seed in [710, 720]:
+            for seed in [800]:
             # for nout in [256]:
                 args.nhid = nout
                 args.nout = nout
