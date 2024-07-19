@@ -157,7 +157,7 @@ class Runner(object):
         self.start_train = 0
         self.train_shots = [list(range(0, self.len[i] - self.testlength[i] - self.evalLength[i])) for i in range(self.num_datasets)] #Changed
         self.val_shots = [list(range(self.len[i] - self.testlength[i] - self.evalLength[i], self.len[i] - self.testlength[i])) for i in range(self.num_datasets)] #Changed
-        self.test_shots = [list(range(self.len[i] - self.testlength[i] - self.evalLength[i], self.len[i])) for i in range(self.num_datasets)]
+        self.test_shots = [list(range(self.len[i] - self.testlength[i], self.len[i])) for i in range(self.num_datasets)]
         self.criterion = torch.nn.BCELoss()
         self.load_feature()
 
@@ -166,7 +166,7 @@ class Runner(object):
         logger.info("The models is going to be loaded from {}".format(self.model_path))
         self.model.load_state_dict(torch.load(self.model_path))
         # load the graph labels
-        # self.t_graph_labels, self.t_graph_feat = extra_dataset_attributes_loading(args)
+        # self.t_graph_labels, self.t_graph_feat = extra_dataset_attributes_loading2(args)
         self.t_graph_labels, self.t_graph_feat = t_graph_labels, t_graph_feat
         # define decoder: graph classifier
         num_extra_feat = 4  
@@ -218,10 +218,10 @@ class Runner(object):
                 tg_readout = readout_function(embeddings, readout_scheme)
                 tg_embedding = torch.cat((tg_readout,
                                           torch.from_numpy(self.t_graph_feat[dataset_idx][t_test_idx + 
-                                                                                          len(self.train_shots[dataset_idx])]).to(args.device)))
+                                                                                          len(self.train_shots[dataset_idx])+ len(self.val_shots[dataset_idx])]).to(args.device)))
 
                 # graph classification
-                tg_labels.append(self.t_graph_labels[dataset_idx][t_test_idx + len(self.train_shots[dataset_idx])].cpu().numpy())
+                tg_labels.append(self.t_graph_labels[dataset_idx][t_test_idx + len(self.train_shots[dataset_idx])+ len(self.val_shots[dataset_idx])].cpu().numpy())
                 tg_preds.append(
                     self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid().cpu().numpy())
                 self.model.update_hiddens_all_with(embeddings)
@@ -409,29 +409,31 @@ if __name__ == '__main__':
     print("INFO: Dataset: {}".format(args.dataset))
     print("INFO: Model: {}".format(args.model))
     args.dataset, data = load_multiple_datasets("dataset_package_test.txt")
-    t_graph_labels, t_graph_feat = [], []
-    for dataset in args.dataset:
-            t_graph_label_i, t_graph_feat_i = extra_dataset_attributes_loading(args, dataset)
-            t_graph_labels.append(t_graph_label_i)
-            t_graph_feat.append(t_graph_feat_i)
+    t_graph_labels, t_graph_feat = extra_dataset_attributes_loading2(args)
+
+    # t_graph_labels, t_graph_feat = [], []
+    # for dataset in args.dataset:
+    #         t_graph_label_i, t_graph_feat_i = extra_dataset_attributes_loading(args, dataset)
+    #         t_graph_labels.append(t_graph_label_i)
+    #         t_graph_feat.append(t_graph_feat_i)
     # t_graph_labels, t_graph_feat = extra_dataset_attributes_loading(args)
     # num_nodes_per_data = [data[i]['num_nodes'] for i in range(len(data))]
     # args.num_nodes = 183714#max(num_nodes_per_data)
     # args.max_node_id = 183713
     # args.num_nodes = args.max_node_id + 1
-    # category = "HTGN"
-    category = "nout"
+    category = "HTGN"
+    # category = "nout"
     for nout in [32]:
-        for n_data in [64]:
+        for n_data in [2]:
             # args.dataset, data = load_multiple_datasets("{}/dataset_package_{}_{}.txt".format(category, n_data, data_number))
             # t_graph_labels, t_graph_feat = extra_dataset_attributes_loading(args)
-            for seed in [800]:
+            for seed in [710, 720, 800]:
             # for nout in [256]:
-                args.nhid = nout
-                args.nout = nout
+                # args.nhid = nout
+                # args.nout = nout
             # model_path = "HTGN_16_seed_{}".format(seed)
                 # model_path = "rand_data/rr/{}".format(n_data)
-                model_path = "{}_{}_seed_{}_{}".format(args.model, n_data, seed, nout)
+                model_path = "{}_{}_seed_{}".format(args.model, n_data, seed)
                 # model_path = "HTGN_16_seed_{}_{}".format(seed, nout)
                 # model_path = "node_id/HTGN_seed_{}_{}".format(seed, n_data)
                 # result_path = "../data/output/{}/test_result/{}_results.csv".format(category, model_path)
