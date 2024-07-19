@@ -15,7 +15,6 @@ class HTGN(BaseModel):
         self.manifold = PoincareBall()
 
         self.c = Parameter(torch.ones(3, 1).to(args.device) * args.curvature, requires_grad=not args.fixed_curvature)
-
         self.feat = Parameter((torch.ones(args.num_nodes, args.nfeat)), requires_grad=True)
         self.linear = nn.Linear(args.nfeat, args.nout)
         self.hidden_initial = torch.ones(args.num_nodes, args.nout).to(args.device)

@@ -421,8 +421,30 @@ def load_TGS_for_TGC(dataset):
     for ts in uniq_ts_list:
         # NOTE: this code does not use any node or edge features
         ts_edges = edgelist_df.loc[edgelist_df['snapshot'] == ts, ['source', 'destination']]
+        # print(ts_edges.loc[ts_edges['destination']=="0xf7557e4a8e9d5f3a84ba963609c370e7f2c9246b"])
         ts_G = nx.from_pandas_edgelist(ts_edges, 'source', 'destination')
         ts_A = nx.to_scipy_sparse_array(ts_G)
+        # ts_A = nx.to_scipy_sparse_array(ts_G, format='csr')
+        # ts_A = nx.to_scipy_sparse_array(ts_G, format='csr')
+        # sparse_matrix_coo = ts_A.tocoo()
+
+        # Save to a human-readable text file
+        # with open('sparse_matrix.txt', 'w') as f:
+        #     for i, j, v in zip(sparse_matrix_coo.row, sparse_matrix_coo.col, sparse_matrix_coo.data):
+        #         f.write(f"({i}, {j}) {v}\n")
+        # row_index = "1"
+        # print(f"Non-zero elements in row {row_index}:")
+        # # Getting the non-zero elements in the specified row
+        # row_data = ts_A[row_index].toarray()  # Convert the row to a dense array
+        # print(f"Non-zero elements in row {row_index}:")
+        # non_zero_indices = np.nonzero(row_data)[0]  # Get indices of non-zero elements
+        # print(f"Non-zero elements in row {row_index}:")
+        # non_zero_values = row_data[non_zero_indices]  # Get the non-zero values
+
+        # print(f"Non-zero elements in row {row_index}:")
+        # for index, value in zip(non_zero_indices, non_zero_values):
+        #     print(f"Column {index}: {value}")
+        # exit()
         adj_time_list.append(ts_A)
 
     edges, biedges = mask_edges_det(adj_time_list)  # list
@@ -573,12 +595,13 @@ def extra_node_attributes_loading(args, dataset, readout_scheme='mean'):
     # TG_labels_data.append(TG_labels)
 
     cached_feature_path = "{}/{}_features_{}.npz".format(data_root, dataset, readout_scheme)
-    if os.path.exists(cached_feature_path):
+    cached_matrices_path = "{}/{}_matrices.npz".format(data_root, dataset)
+    if os.path.exists(cached_feature_path) and os.path.exists(cached_matrices_path):
         TG_feats = np.load(cached_feature_path)['TG_feats']
+        TG_matrices = np.load(cached_matrices_path)['TG_matrices']
         print(
             "INFO: Cached feature already exist. Loaded directly")
-        return TG_labels, TG_feats
-        # return TG_labels, TG_feats[readout_scheme]
+        return TG_labels, TG_feats, TG_matrices
 
     print("INFO: Cached feature doesn't exist. Generate cached Graph Feature for `Temporal Graph Classification (TGC)` Category: {}".format(
         dataset))
@@ -587,28 +610,20 @@ def extra_node_attributes_loading(args, dataset, readout_scheme='mean'):
     edgelist_df = pd.read_csv(edgelist_filename)
     uniq_ts_list = np.unique(edgelist_df['snapshot'])
     TG_feats = []
+    TG_matrices = []
+    TG_matrix = np.zeros((args.num_nodes, args.nfeat))
 
     for ts in uniq_ts_list:
         ts_edges = edgelist_df.loc[edgelist_df['snapshot'] == ts, ['source', 'destination', 'weight']]
         ts_G = nx.from_pandas_edgelist(ts_edges, source='source', target='destination', edge_attr='weight',
                                     create_using=nx.MultiDiGraph)
+        
         node_list = list(ts_G.nodes)
         indegree_list = np.array(ts_G.in_degree(node_list))
         weighted_indegree_list = np.array(ts_G.in_degree(node_list, weight='weight'))
         outdegree_list = np.array(ts_G.out_degree(node_list))
         weighted_outdegree_list = np.array(ts_G.out_degree(node_list, weight='weight'))
 
-
-        # TG_feats_max.append( np.array([np.max(indegree_list[:, 1].astype(float)), np.max(weighted_indegree_list[:, 1].astype(float)),
-        #                                 np.max(outdegree_list[:, 1].astype(float)), np.max(weighted_outdegree_list[:, 1].astype(float))]))
-
-        # TG_feats_mean.append(np.array([np.mean(indegree_list[:, 1].astype(float)),
-        #                                 np.mean(weighted_indegree_list[:, 1].astype(float)),
-        #                                 np.mean(outdegree_list[:, 1].astype(float)),
-        #                                 np.mean(weighted_outdegree_list[:, 1].astype(float))]))
-
-        # TG_feats_sum.append( np.array([np.sum(indegree_list[:, 1].astype(float)), np.sum(weighted_indegree_list[:, 1].astype(float)),
-        #                                 np.sum(outdegree_list[:, 1].astype(float)), np.sum(weighted_outdegree_list[:, 1].astype(float))]))
         if readout_scheme == 'max':
             TG_this_ts_feat = np.array([np.max(indegree_list), np.max(weighted_indegree_list), 
                                         np.max(outdegree_list), np.max(weighted_outdegree_list)])
@@ -623,35 +638,28 @@ def extra_node_attributes_loading(args, dataset, readout_scheme='mean'):
         else:
             TG_this_ts_feat = None
             raise ValueError("Readout scheme is Undefined!")
+        
         TG_feats.append(TG_this_ts_feat)
 
-    # assert len(TG_feats_max) == len(uniq_ts_list),"Missing TG_feature max"
-    # assert len(TG_feats_mean) == len(uniq_ts_list),"Missing TG_feature mean"
-    # assert len(TG_feats_sum) == len(uniq_ts_list),"Missing TG_feature sum"
-
-    # scale the temporal graph features to have a reasonable range
-    # scalar = MinMaxScaler()
-    # TG_feats_max = scalar.fit_transform(TG_feats_max)
-
-    # scalar = MinMaxScaler()
-    # TG_feats_mean = scalar.fit_transform(TG_feats_mean)
-
-    # scalar = MinMaxScaler()
-    # TG_feats_sum = scalar.fit_transform(TG_feats_sum)
-    
-    # cached_feats['max'] = np.array(TG_feats_max)
-    # cached_feats['mean'] = np.array(TG_feats_mean)
-    # cached_feats['sum'] = np.array(TG_feats_sum)
+        # Combine the degree lists into a single matrix
+        TG_matrix_snapshot = np.column_stack((indegree_list[:, 1].astype(float), 
+                                     weighted_indegree_list[:, 1].astype(float),
+                                     outdegree_list[:, 1].astype(float),
+                                     weighted_outdegree_list[:, 1].astype(float)))
+        
+        TG_matrix[:TG_matrix_snapshot.shape[0]] = TG_matrix_snapshot
+        TG_matrices.append(TG_matrix)
 
     scalar = MinMaxScaler()
     TG_feats = scalar.fit_transform(TG_feats)
-    # TG_feats_data.append(TG_feats)
+    TG_matrices = [scalar.fit_transform(matrix) for matrix in TG_matrices]
 
     if not os.path.exists(data_root):
         os.makedirs(data_root)
     np.savez(cached_feature_path, TG_feats=TG_feats)
+    np.savez(cached_matrices_path, TG_matrices=TG_matrices)
 
-    return TG_labels, TG_feats
+    return TG_labels, TG_feats, TG_matrices
 
 
 if __name__ == '__main__':

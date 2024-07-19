@@ -7,13 +7,14 @@ parser = argparse.ArgumentParser(description='HTGN')
 parser.add_argument('--dataset', type=str, default='enron10', help='datasets')
 parser.add_argument('--data_pt_path', type=str, default='', help='need to be modified')
 parser.add_argument('--num_nodes', type=int, default=33190, help='num of nodes') #33190
-parser.add_argument('--nfeat', type=int, default=128, help='dim of input feature')
+parser.add_argument('--nfeat', type=int, default=4, help='dim of input feature')
 parser.add_argument('--nhid', type=int, default=16, help='dim of hidden embedding')#32-64
 parser.add_argument('--nout', type=int, default=16, help='dim of output embedding')
 parser.add_argument('--neg_sample', type=str, default='rnd', help='negative sampling strategy')
 parser.add_argument("--wandb", action="store_true", default=False, help="now using wandb")
 parser.add_argument('--results_file', type=str, default='results.csv', help='Name of file to store evaluation of all models')
 parser.add_argument('--data_name', type=dict, default={}, help='Token name of each dataset')
+# parser.add_argument('--num_feats', type=int, default=4, help='Token name of each dataset')
 # 2.experiments
 parser.add_argument('--max_epoch', type=int, default=500, help='number of epochs to train.')
 parser.add_argument('--testlength', type=int, default=3, help='length for test, default:3')
