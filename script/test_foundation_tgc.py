@@ -3,7 +3,7 @@ Assumption:
     Train and test temporal graph classification task 
     without having a pre-trained models
 
-July 14, 2023
+April 2024
 """
 
 import os
