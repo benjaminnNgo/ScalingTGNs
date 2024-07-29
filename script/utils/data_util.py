@@ -16,7 +16,7 @@ from script.utils.make_edges_new import get_edges, get_prediction_edges, get_pre
 from sklearn.preprocessing import MinMaxScaler
 
 root_path = "/network/scratch/r/razieh.shirzadkhani/fm/fm_data/data_lt_70/all_data"
-
+cached_path = "cached_feat"
 def mkdirs(path):
     if not os.path.isdir(path):
         os.makedirs(path)
@@ -403,7 +403,7 @@ def find_max_node_id_package(datasets_package_file):
 def load_TGS_for_TGC(dataset):
     print("INFO: Loading a Graph from `Temporal Graph Classification (TGC)` Category: {}".format(dataset))
 
-    data_root = '{}/cached/{}/'.format(root_path, dataset)
+    data_root = '{}/{}/{}/'.format(root_path, cached_path, dataset)
     filepath = mkdirs(data_root) + '{}.data'.format(dataset)  # the data will be saved here after generation.
     print("INFO: Dataset: {}".format(dataset))
     print("DEBUG: Look for data at {}.".format(filepath))
@@ -580,22 +580,20 @@ def extra_node_attributes_loading(args, dataset, readout_scheme='mean'):
     Load and process additional dataset attributes for TG-Classification
     This includes graph labels and node features for the nodes of each snapshot
     """
-    # partial_path = f'../data/input/raw/'
+    # partial_path = f'../data/input/'
     partial_path = "/network/scratch/r/razieh.shirzadkhani/fm/fm_data/data_lt_70/all_data"
-    # TG_labels_data = []
-    # TG_feats_data = []
-    # for dataset in args.dataset:
     print("INFO: Loading a Graph Feature and Labels for `Temporal Graph Classification (TGC)` Category: {}".format(dataset))
-    data_root = '{}/cached/{}'.format(partial_path, dataset)
+    data_root = '{}/{}/{}'.format(partial_path, cached_path, dataset)
 
     # load graph lables
     label_filename = f'{partial_path}/raw/labels/{dataset}_labels.csv'
     label_df = pd.read_csv(label_filename, header=None, names=['label'])
     TG_labels = torch.from_numpy(np.array(label_df['label'].tolist())).to(args.device)
-    # TG_labels_data.append(TG_labels)
+    
 
     cached_feature_path = "{}/{}_features_{}.npz".format(data_root, dataset, readout_scheme)
     cached_matrices_path = "{}/{}_matrices.npz".format(data_root, dataset)
+    # Check if both node features and pooled features exist
     if os.path.exists(cached_feature_path) and os.path.exists(cached_matrices_path):
         TG_feats = np.load(cached_feature_path)['TG_feats']
         TG_matrices = np.load(cached_matrices_path)['TG_matrices']
@@ -603,8 +601,8 @@ def extra_node_attributes_loading(args, dataset, readout_scheme='mean'):
             "INFO: Cached feature already exist. Loaded directly")
         return TG_labels, TG_feats, TG_matrices
 
-    print("INFO: Cached feature doesn't exist. Generate cached Graph Feature for `Temporal Graph Classification (TGC)` Category: {}".format(
-        dataset))
+    print("INFO: Cached feature doesn't exist. Generating cached Feature...")
+
     # load and process graph-pooled (node-level) features
     edgelist_filename = f'{partial_path}/raw/edgelists/{dataset}_edgelist.txt'
     edgelist_df = pd.read_csv(edgelist_filename)
@@ -641,7 +639,7 @@ def extra_node_attributes_loading(args, dataset, readout_scheme='mean'):
         
         TG_feats.append(TG_this_ts_feat)
 
-        # Combine the degree lists into a single matrix
+        # Add node features for this snapshot to one matrix
         TG_matrix_snapshot = np.column_stack((indegree_list[:, 1].astype(float), 
                                      weighted_indegree_list[:, 1].astype(float),
                                      outdegree_list[:, 1].astype(float),
