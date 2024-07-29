@@ -153,7 +153,7 @@ class Runner(object):
         self.start_train = 0
         self.train_shots = [list(range(0, self.len[i] - self.testLength[i] - self.valLength[i])) for i in range(self.num_datasets)] 
         self.val_shots = [list(range(self.len[i] - self.testLength[i] - self.valLength[i], self.len[i] - self.testLength[i])) for i in range(self.num_datasets)] 
-        self.test_shots = [list(range(self.len[i] - self.testLength[i] - self.valLength[i], self.len[i])) for i in range(self.num_datasets)]
+        self.test_shots = [list(range(self.len[i] - self.testLength[i], self.len[i])) for i in range(self.num_datasets)]
         self.criterion = torch.nn.BCELoss()
         # self.load_feature()
 
@@ -396,6 +396,6 @@ if __name__ == '__main__':
     args.dataset, data = load_multiple_datasets("dataset_package_test.txt")
     category = "features"
     for args.seed in [710, 720, 800]:
-        model_path = "{}_{}_seed_{}".format(args.model, 8, args.seed)
+        model_path = "{}_{}_seed_{}".format(args.model, 4, args.seed)
         runner = Runner()
         runner.test()

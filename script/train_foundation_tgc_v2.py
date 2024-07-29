@@ -385,6 +385,8 @@ class Runner(object):
             # Shuffling order of datasets for each epoch
             dataset_rnd = random.sample(range(self.num_datasets), self.num_datasets)
             for dataset_idx in dataset_rnd:
+
+                # Loading node-level and graph-level features for the dataset
                 self.t_graph_labels, self.t_graph_feat, self.t_node_feat = extra_node_attributes_loading(args, args.dataset[dataset_idx])
                 tg_labels, tg_preds = [], []
                 self.model.train()
@@ -536,21 +538,31 @@ if __name__ == '__main__':
     t = time.localtime()
     args.curr_time = time.strftime("%Y-%m-%d-%H:%M:%S", t)
 
-    args.dataset, data = load_multiple_datasets("dataset_package_4.txt")
-    # num_nodes = [data[i]['num_nodes'] for i in range(len(data))]
-    # args.num_nodes = max(num_nodes)
-    # args.num_nodes = 100
+    args.dataset, data = load_multiple_datasets("dataset_package_128.txt")
+    num_nodes = [data[i]['num_nodes'] for i in range(len(data))]
+    args.num_nodes = max(num_nodes)
+    
+    
     category = "features" #"nout" #"rand_data" "HTGN"
+    init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, args.seed, len(args.dataset), nout))
+    print('Number of Nodes:', args.num_nodes)
+    set_random(args.seed)
+    runner = Runner()
+    # runner.run()
+
+
+
     # data_number = 3
-    for nout in [32]:
+    # for nout in [32]:
         # args.dataset, data = load_multiple_datasets("{}/dataset_package_16_{}.txt".format(category, data_number))            
         # init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, len(args.dataset), args.seed, data_number))
-        init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, args.seed, len(args.dataset), nout))
-        set_random(args.seed)
+        # init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, args.seed, len(args.dataset), nout))
+        # print('Number of Nodes:', args.num_nodes)
+        # set_random(args.seed)
         # args.nout = nout
         # args.nhid = nout
-        runner = Runner()
-        runner.run()
+        # runner = Runner()
+        # runner.run()
     # import scipy.sparse as sp
     # a = sp.load_npz("/home/mila/r/razieh.shirzadkhani/ScalingTGNs/data/input/raw/disease/disease_lp.feats.npz").toarray()
     # print(a[0])
