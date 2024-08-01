@@ -396,7 +396,7 @@ class Runner(object):
 
                 for t_train_idx, t_train in enumerate(self.train_shots[dataset_idx]):
                     self.x = torch.from_numpy(self.t_node_feat[t_train_idx]).to(torch.float32).to(args.device)
-                    
+                    # print(self.x.shape)
                     self.optimizer.zero_grad()
                     edge_index = prepare(data[dataset_idx], t_train)
                     embeddings = self.model(edge_index, self.x)
@@ -538,17 +538,18 @@ if __name__ == '__main__':
     t = time.localtime()
     args.curr_time = time.strftime("%Y-%m-%d-%H:%M:%S", t)
 
-    args.dataset, data = load_multiple_datasets("dataset_package_128.txt")
-    num_nodes = [data[i]['num_nodes'] for i in range(len(data))]
-    args.num_nodes = max(num_nodes)
+    args.dataset, data = load_multiple_datasets("dataset_package_8.txt")
+    # args.dataset, data = load_multiple_datasets("test_data.txt")
+    # num_nodes = [data[i]['num_nodes'] for i in range(len(data))]
+    # args.num_nodes = max(num_nodes)
     
     
     category = "features" #"nout" #"rand_data" "HTGN"
-    init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, args.seed, len(args.dataset), nout))
-    print('Number of Nodes:', args.num_nodes)
+    init_logger('../data/output/{}/log/{}_{}_seed_{}_log.txt'.format(category, args.model, args.seed, len(args.dataset)))
+    # print('Number of Nodes:', args.num_nodes)
     set_random(args.seed)
     runner = Runner()
-    # runner.run()
+    runner.run()
 
 
 

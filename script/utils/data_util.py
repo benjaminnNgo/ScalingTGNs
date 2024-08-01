@@ -7,7 +7,7 @@ import torch
 from torch_geometric.utils import train_test_split_edges
 from torch_geometric.data import Data
 import pickle
-
+import hashlib
 from script.utils.TGS import TGS_Handler
 
 from script.utils.TGS import TGS_Handler
@@ -16,7 +16,7 @@ from script.utils.make_edges_new import get_edges, get_prediction_edges, get_pre
 from sklearn.preprocessing import MinMaxScaler
 
 root_path = "/network/scratch/r/razieh.shirzadkhani/fm/fm_data/data_lt_70/all_data"
-cached_path = "cached"
+cached_path = "new_cached"
 def mkdirs(path):
     if not os.path.isdir(path):
         os.makedirs(path)
@@ -27,6 +27,18 @@ def prepare_dir(output_folder):
     mkdirs(output_folder)
     log_folder = mkdirs(output_folder)
     return log_folder
+
+
+def map_addresses_to_floats(addresses):
+    # Convert addresses to bytes
+    address_bytes = [bytes.fromhex(addr.replace('0x', '')) for addr in addresses]
+    # Hash each address using SHA-256
+    hashed_addresses = [hashlib.sha256(addr).digest() for addr in address_bytes]
+    hash_ints = [int.from_bytes(h, 'big') for h in hashed_addresses]
+    hash_ints = np.array(hash_ints)
+    float_values = (hash_ints % 10**16) / 10**16
+    return 1 + (float_values * 9)
+
 
 
 def load_vgrnn_dataset(dataset):
@@ -423,9 +435,9 @@ def load_TGS_for_TGC(dataset):
         ts_edges = edgelist_df.loc[edgelist_df['snapshot'] == ts, ['source', 'destination']]
         # print(ts_edges.loc[ts_edges['destination']=="0xf7557e4a8e9d5f3a84ba963609c370e7f2c9246b"])
         ts_G = nx.from_pandas_edgelist(ts_edges, 'source', 'destination')
-        # ts_A = nx.to_scipy_sparse_array(ts_G)
-        ts_A = nx.to_scipy_sparse_array(ts_G, format='csr')
-        sparse_matrix_coo = ts_A.tocoo()
+        ts_A = nx.to_scipy_sparse_array(ts_G)
+        # ts_A = nx.to_scipy_sparse_array(ts_G, format='csr')
+        # sparse_matrix_coo = ts_A.tocoo()
 
         # Save to a human-readable text file
         # with open('sparse_matrix.txt', 'w') as f:
@@ -484,11 +496,11 @@ def extra_node_attributes_loading(args, dataset, readout_scheme='mean'):
     cached_matrices_path = "{}/{}_matrices.npz".format(data_root, dataset)
     # Check if both node features and pooled features exist
     if os.path.exists(cached_feature_path) and os.path.exists(cached_matrices_path):
-        TG_feats = np.load(cached_feature_path)['TG_feats']
-        TG_matrices = np.load(cached_matrices_path)['TG_matrices']
+        TG_graph_feats = np.load(cached_feature_path)['TG_graph_feats']
+        TG_node_feat_all = np.load(cached_matrices_path)['TG_node_feat_all']
         print(
             "INFO: Cached feature already exist. Loaded directly")
-        return TG_labels, TG_feats, TG_matrices
+        return TG_labels, TG_graph_feats, TG_node_feat_all
 
     print("INFO: Cached feature doesn't exist. Generating cached Feature...")
 
@@ -496,10 +508,13 @@ def extra_node_attributes_loading(args, dataset, readout_scheme='mean'):
     edgelist_filename = f'{partial_path}/raw/edgelists/{dataset}_edgelist.txt'
     edgelist_df = pd.read_csv(edgelist_filename)
     uniq_ts_list = np.unique(edgelist_df['snapshot'])
-    TG_feats = []
+    TG_graph_feats = []
     TG_matrices = []
-    TG_matrix = np.zeros((args.num_nodes, args.nfeat))
-
+    TG_node_features = np.zeros((args.num_nodes, args.nfeat))
+    min_values = np.full((1, 4), np.inf)
+    max_values = np.zeros((1, 4))
+    mapped_nodes_ts = []
+    # i=1
     for ts in uniq_ts_list:
         ts_edges = edgelist_df.loc[edgelist_df['snapshot'] == ts, ['source', 'destination', 'weight']]
         ts_G = nx.from_pandas_edgelist(ts_edges, source='source', target='destination', edge_attr='weight',
@@ -510,7 +525,8 @@ def extra_node_attributes_loading(args, dataset, readout_scheme='mean'):
         weighted_indegree_list = np.array(ts_G.in_degree(node_list, weight='weight'))
         outdegree_list = np.array(ts_G.out_degree(node_list))
         weighted_outdegree_list = np.array(ts_G.out_degree(node_list, weight='weight'))
-
+      
+        
         if readout_scheme == 'max':
             TG_this_ts_feat = np.array([np.max(indegree_list), np.max(weighted_indegree_list), 
                                         np.max(outdegree_list), np.max(weighted_outdegree_list)])
@@ -526,29 +542,76 @@ def extra_node_attributes_loading(args, dataset, readout_scheme='mean'):
             TG_this_ts_feat = None
             raise ValueError("Readout scheme is Undefined!")
         
-        TG_feats.append(TG_this_ts_feat)
+        TG_graph_feats.append(TG_this_ts_feat)
+
+        mapped_nodes_ts.append(map_addresses_to_floats(node_list))
+        # with open('mapped_node.txt', 'w') as f:
+        #     for ii, i in enumerate(mapped_nodes):
+        #         j = node_list[ii]
+        #         f.write(f"{i}, {j}\n")
+
 
         # Add node features for this snapshot to one matrix
-        TG_matrix_snapshot = np.column_stack((indegree_list[:, 1].astype(float), 
+        TG_node_feat_ts = np.column_stack((indegree_list[:, 1].astype(float), 
                                      weighted_indegree_list[:, 1].astype(float),
                                      outdegree_list[:, 1].astype(float),
                                      weighted_outdegree_list[:, 1].astype(float)))
         
-        TG_matrix[:TG_matrix_snapshot.shape[0]] = TG_matrix_snapshot
-        TG_matrices.append(TG_matrix)
+        snapshot_min_values = np.min(TG_node_feat_ts, axis=0)
+        snapshot_max_values = np.max(TG_node_feat_ts, axis=0)
+        min_values = np.minimum(snapshot_min_values, min_values)
+        max_values = np.maximum(snapshot_max_values, max_values)
+        
+        # Shape of TG_matrix is fixed and we fill it with TG_matrix_snapshot
+        # TG_matrix[:TG_matrix_snapshot.shape[0]] = TG_matrix_snapshot
+        TG_matrices.append(TG_node_feat_ts)
+        # if i==1:
+        #     i += 1
+        #     with open('TG_matrix.txt', 'w') as f:
+        #         for  j in TG_matrix:
+        #             f.write(f"{j}\n")
 
-    scalar = MinMaxScaler()
-    TG_feats = scalar.fit_transform(TG_feats)
-    TG_matrices = [scalar.fit_transform(matrix) for matrix in TG_matrices]
+    scaler = MinMaxScaler()
+    TG_graph_feats = scaler.fit_transform(TG_graph_feats)
+    # TG_node_features = [] # a List of node features per snapshot
+    TG_node_feat_all = []
+    for ts, node_feat_ts in enumerate(TG_matrices):
+        scaled_columns = [] # a list for each snapshot scaled features + node embeddings
+        for i in range(node_feat_ts.shape[1]):
+            # print(min_values)
+            # print(node_feat_ts[:, i])
+            scaled_column = normalize_column(node_feat_ts[:, i].reshape(-1,1), 
+                                             col_min=min_values[0][i], 
+                                             col_max = max_values[0][i])
+            # scaled_column = scaler.fit_transform(node_feat_ts[:, i].reshape(-1,1))
+            # scaled_column *= max_values[0][i] 
+            scaled_columns.append(scaled_column)
+        scaled_columns.append(mapped_nodes_ts[ts])
+
+        # Complete list of node features for all snapshots with fixed size
+        scalced_node_features = np.column_stack(scaled_columns)
+        TG_node_features[:scalced_node_features.shape[0]] = scalced_node_features
+        TG_node_feat_all.append(TG_node_features)
+
+        # with open('TG_node_feat.txt', 'w') as f:
+        #     for  j in TG_node_feat_all[0]:
+        #         f.write(f"{j}\n")
+        # exit()
 
     if not os.path.exists(data_root):
         os.makedirs(data_root)
-    np.savez(cached_feature_path, TG_feats=TG_feats)
-    np.savez(cached_matrices_path, TG_matrices=TG_matrices)
+    np.savez(cached_feature_path, TG_graph_feats=TG_graph_feats)
+    np.savez(cached_matrices_path, TG_node_feat_all=TG_node_feat_all)
 
-    return TG_labels, TG_feats, TG_matrices
+    return TG_labels, TG_graph_feats, TG_node_feat_all
 
 
+def normalize_column(column, col_max=None, col_min= None, new_min=0, new_max=1):
+    if col_max is None:
+        col_min = np.min(column)
+        col_max = np.max(column)
+    normalized_col = (column - col_min) / (col_max - col_min) * (new_max - new_min) + new_min
+    return normalized_col
 
 def extra_dataset_attributes_loading(args, dataset, readout_scheme='mean'):
     """
