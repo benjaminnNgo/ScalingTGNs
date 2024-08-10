@@ -354,12 +354,12 @@ class Runner(object):
                         self.model.update_hiddens_all_with(embeddings)
                 
                 # Inference testing on validation set
-                val_auc, val_ap = self.tgclassification_val(self.readout_scheme, dataset_idx)
-                save_inference_results(model_path, 
-                             "Val", 
-                             data_name, 
-                             val_auc, 
-                             val_ap)
+                # val_auc, val_ap = self.tgclassification_val(self.readout_scheme, dataset_idx)
+                # save_inference_results(model_path, 
+                #              "Val", 
+                #              data_name, 
+                #              val_auc, 
+                #              val_ap)
                 
                 # Forward pass through validation set to get the embeddings
                 for t_val_idx, t_val in enumerate(self.val_shots[dataset_idx]):
@@ -396,6 +396,6 @@ if __name__ == '__main__':
     args.dataset, data = load_multiple_datasets("dataset_package_test.txt")
     category = "features"
     for args.seed in [710, 720, 800]:
-        model_path = "{}_{}_seed_{}".format(args.model, 4, args.seed)
+        model_path = "{}_{}_seed_{}".format(args.model, 8, args.seed)
         runner = Runner()
         runner.test()

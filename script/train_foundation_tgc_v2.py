@@ -523,7 +523,7 @@ if __name__ == '__main__':
     from script.utils.inits import prepare
     
     args.model = "HTGN"
-    args.seed = 800
+    args.seed = 710
     args.max_epoch=300
     args.lr = 0.0001
     args.log_interval=10
@@ -541,7 +541,7 @@ if __name__ == '__main__':
     args.dataset, data = load_multiple_datasets("dataset_package_8.txt")
     # args.dataset, data = load_multiple_datasets("test_data.txt")
     # num_nodes = [data[i]['num_nodes'] for i in range(len(data))]
-    # args.num_nodes = max(num_nodes)
+    args.num_nodes = 81311 #max(num_nodes)
     
     
     category = "features" #"nout" #"rand_data" "HTGN"
@@ -549,7 +549,7 @@ if __name__ == '__main__':
     # print('Number of Nodes:', args.num_nodes)
     set_random(args.seed)
     runner = Runner()
-    runner.run()
+    # runner.run()
 
 
 

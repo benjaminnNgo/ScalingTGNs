@@ -14,5 +14,5 @@ source /home/mila/r/razieh.shirzadkhani/tgnn/bin/activate
 
 
 pwd
-python test_foundation_tgc.py 
+python test_foundation_tgc_v2.py 
 # python gclstm_test_foundation_model.py

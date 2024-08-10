@@ -82,7 +82,7 @@ def extra_dataset_attributes_loading2(args, readout_scheme='mean'):
     This includes graph labels and node features for the nodes of each snapshot
     """
 
-=======
+
     # Example Path
     # partial_path = f'../data/input/raw/'
     partial_path = f'PUT RAW DATA PATH HERE'
