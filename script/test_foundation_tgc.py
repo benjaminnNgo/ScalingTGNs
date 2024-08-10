@@ -157,7 +157,7 @@ class Runner(object):
         self.start_train = 0
         self.train_shots = [list(range(0, self.len[i] - self.testlength[i] - self.evalLength[i])) for i in range(self.num_datasets)] #Changed
         self.val_shots = [list(range(self.len[i] - self.testlength[i] - self.evalLength[i], self.len[i] - self.testlength[i])) for i in range(self.num_datasets)] #Changed
-        self.test_shots = [list(range(self.len[i] - self.testlength[i], self.len[i])) for i in range(self.num_datasets)]
+        self.test_shots = [list(range(self.len[i] - self.testlength[i] - self.evalLength[i], self.len[i])) for i in range(self.num_datasets)]
         self.criterion = torch.nn.BCELoss()
         self.load_feature()
 
@@ -218,10 +218,10 @@ class Runner(object):
                 tg_readout = readout_function(embeddings, readout_scheme)
                 tg_embedding = torch.cat((tg_readout,
                                           torch.from_numpy(self.t_graph_feat[dataset_idx][t_test_idx + 
-                                                                                          len(self.train_shots[dataset_idx])+ len(self.val_shots[dataset_idx])]).to(args.device)))
+                                                                                          len(self.train_shots[dataset_idx])]).to(args.device)))
 
                 # graph classification
-                tg_labels.append(self.t_graph_labels[dataset_idx][t_test_idx + len(self.train_shots[dataset_idx])+ len(self.val_shots[dataset_idx])].cpu().numpy())
+                tg_labels.append(self.t_graph_labels[dataset_idx][t_test_idx + len(self.train_shots[dataset_idx])].cpu().numpy())
                 tg_preds.append(
                     self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid().cpu().numpy())
                 self.model.update_hiddens_all_with(embeddings)
@@ -319,11 +319,11 @@ class Runner(object):
                 #              val_ap,
                 #              bias=True)
 
-                for t_val in self.val_shots[dataset_idx_i]:
-                    with torch.no_grad():
-                        edge_index = prepare(data[dataset_idx_i], t_val)
-                        embeddings = self.model(edge_index, self.x)
-                        self.model.update_hiddens_all_with(embeddings)
+                # for t_val in self.val_shots[dataset_idx_i]:
+                #     with torch.no_grad():
+                #         edge_index = prepare(data[dataset_idx_i], t_val)
+                #         embeddings = self.model(edge_index, self.x)
+                #         self.model.update_hiddens_all_with(embeddings)
                 test_auc, test_ap = self.tgclassification_test(self.readout_scheme, dataset_idx_i)
                 save_results(model_path, 
                              "Test", 
@@ -371,11 +371,11 @@ class Runner(object):
                 #              val_ap)
                 
                 # Passing through validation set to get the embeddings
-                for t_train in self.val_shots[dataset_idx]:
-                    with torch.no_grad():
-                        edge_index = prepare(data[dataset_idx], t_train)
-                        embeddings = self.model(edge_index, self.x)
-                        self.model.update_hiddens_all_with(embeddings)
+                # for t_train in self.val_shots[dataset_idx]:
+                #     with torch.no_grad():
+                #         edge_index = prepare(data[dataset_idx], t_train)
+                #         embeddings = self.model(edge_index, self.x)
+                #         self.model.update_hiddens_all_with(embeddings)
 
                 
                 test_auc, test_ap = self.tgclassification_test(self.readout_scheme, dataset_idx)
@@ -424,10 +424,10 @@ if __name__ == '__main__':
     category = "HTGN"
     # category = "nout"
     for nout in [32]:
-        for n_data in [2]:
+        for n_data in [64]:
             # args.dataset, data = load_multiple_datasets("{}/dataset_package_{}_{}.txt".format(category, n_data, data_number))
             # t_graph_labels, t_graph_feat = extra_dataset_attributes_loading(args)
-            for seed in [710, 720, 800]:
+            for seed in [720, 800]:
             # for nout in [256]:
                 # args.nhid = nout
                 # args.nout = nout
