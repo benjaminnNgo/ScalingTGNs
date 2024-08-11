@@ -136,7 +136,7 @@ def save_results(model_name, mode, dataset, test_auc, test_ap, test_accuracy, te
     if bias:
         result_path = "../data/output/{}/test_result/{}_results_bias.csv".format(category, model_name)
     else:
-        result_path = "../data/output/{}/test_result/{}_results_15_n.csv".format(category, model_name)
+        result_path = "../data/output/{}/test_result/{}_results_30.csv".format(category, model_name)
     if not os.path.exists(result_path):
         result_df = pd.DataFrame(columns=["dataset", "mode", "test_auc", "test_ap", "test_accuracy", "test_loss"])
     else:
@@ -160,7 +160,7 @@ class Runner(object):
         self.start_train = 0
         self.train_shots = [list(range(0, self.len[i] - self.testlength[i] - self.evalLength[i])) for i in range(self.num_datasets)] #Changed
         self.val_shots = [list(range(self.len[i] - self.testlength[i] - self.evalLength[i], self.len[i] - self.testlength[i])) for i in range(self.num_datasets)] #Changed
-        self.test_shots = [list(range(self.len[i] - self.testlength[i], self.len[i])) for i in range(self.num_datasets)]
+        self.test_shots = [list(range(self.len[i] - self.testlength[i] - self.evalLength[i], self.len[i])) for i in range(self.num_datasets)]
         self.criterion = torch.nn.BCELoss()
         self.load_feature()
 
@@ -208,6 +208,7 @@ class Runner(object):
         Final inference on the test set
         """
         tg_labels, tg_preds, test_loss = [], [], []
+        # self.test_shots = [list(range(self.len[i] - self.testlength[i] -self.evalLength[i], self.len[i])) for i in range(self.num_datasets)]
         for t_test_idx, t in enumerate(self.test_shots[dataset_idx]):
             self.model.eval()
             self.tgc_decoder.eval()
@@ -232,10 +233,15 @@ class Runner(object):
                 test_loss.append(self.criterion(tg_pred, tg_label))
         tg_preds_binary = [1 if pred >= 0.5 else 0 for pred in tg_preds]
         accuracy = accuracy_score(tg_labels, tg_preds_binary)
+        
         # cf_matrix = confusion_matrix(tg_labels, tg_preds_binary)
         test_loss_tensor = torch.stack(test_loss)
         total_test_loss = (torch.mean(test_loss_tensor)).cpu().numpy()
+        # print("Confusion Matrix: \n",cf_matrix)
+        # print("test loss: ", total_test_loss)
+        # print("Accuracy: ", accuracy)
         auc, ap = roc_auc_score(tg_labels, tg_preds), average_precision_score(tg_labels, tg_preds)
+        # print("AUC: ", auc)
         return auc, ap, accuracy, total_test_loss
 
     def tgclassification_val(self, readout_scheme, dataset_idx):
@@ -357,7 +363,7 @@ class Runner(object):
         self.tgc_decoder.eval()
         for dataset_idx in range(self.num_datasets):
             data_name = args.data_name[args.dataset[dataset_idx]] if args.dataset[dataset_idx] in args.data_name else args.dataset[dataset_idx]
-            # self.model.init_hiddens()
+            self.model.init_hiddens()
             if args.test_bias:
                 self.test_bias(dataset_idx)
             else:
@@ -379,11 +385,11 @@ class Runner(object):
                 #              val_ap)
                 
                 # Passing through validation set to get the embeddings
-                for t_train in self.val_shots[dataset_idx]:
-                    with torch.no_grad():
-                        edge_index = prepare(data[dataset_idx], t_train)
-                        embeddings = self.model(edge_index, self.x)
-                        self.model.update_hiddens_all_with(embeddings)
+                # for t_train in self.val_shots[dataset_idx]:
+                #     with torch.no_grad():
+                #         edge_index = prepare(data[dataset_idx], t_train)
+                #         embeddings = self.model(edge_index, self.x)
+                #         self.model.update_hiddens_all_with(embeddings)
 
                 
                 test_auc, test_ap, test_accuracy, test_loss = self.tgclassification_test(self.readout_scheme, dataset_idx)
@@ -442,7 +448,7 @@ if __name__ == '__main__':
     category = "HTGN"#"no_mem_update" #"HTGN"#"no_init" #"HTGN"
     # category = "nout"
     for nout in [64]:
-        for n_data in [64]:
+        for n_data in [32, 64]:
             # args.dataset, data = load_multiple_datasets("{}/dataset_package_{}_{}.txt".format(category, n_data, data_number))
             # t_graph_labels, t_graph_feat = extra_dataset_attributes_loading(args)
             for seed in [710, 720, 800]:

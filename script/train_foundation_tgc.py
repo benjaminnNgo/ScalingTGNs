@@ -25,9 +25,9 @@ import random
 import wandb
 
 
-model_file_path = 'PUT MODEL PATH HERE'
-data_file_path = 'PUT RAW DATA PATH HERE'
-# model_file_path = '..'
+# model_file_path = 'PUT MODEL PATH HERE'
+# data_file_path = 'PUT RAW DATA PATH HERE'
+model_file_path = '/network/scratch/r/razieh.shirzadkhani/fm'
 
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -219,7 +219,7 @@ class Runner(object):
         self.num_datasets = len(data)
         self.len = [data[i]['time_length'] for i in range(self.num_datasets)]
         self.testLength = [math.floor(self.len[i] * args.test_ratio) for i in range(self.num_datasets)] 
-        self.valLength = [math.floor(self.len[i] * args.val_ratio) for i in range(self.num_datasets)]
+        self.valLength = [math.floor(self.len[i] * args.eval_ratio) for i in range(self.num_datasets)]
         
         self.start_train = 0
         self.train_shots = [list(range(0, self.len[i] - self.testLength[i] - self.valLength[i])) for i in range(self.num_datasets)] #Changed
@@ -327,7 +327,7 @@ class Runner(object):
                 tg_labels.append(self.t_graph_labels[dataset_idx][t_val_idx + len(self.train_shots[dataset_idx])].cpu().numpy())
                 tg_preds.append(
                     self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid().cpu().numpy())
-                self.model.update_hiddens_all_with(embeddings)
+                self.model.update_hiddens_all_with(embeddings) #@NOTE: Be careful to delete hashtag
         auc, ap = roc_auc_score(tg_labels, tg_preds), average_precision_score(tg_labels, tg_preds)
         return epoch, auc, ap
 
@@ -366,7 +366,7 @@ class Runner(object):
         """
         Run the temporal graph classification task
         """
-        self.model.init_hiddens()
+        self.model.init_hiddens() #@NOTE: Be careful to delete hashtag
         logger.info("Start training the temporal graph classification models.")
 
         # make sure to have the right device setup
@@ -394,11 +394,11 @@ class Runner(object):
             # Shuffling order of datasets for each epoch
             dataset_rnd = random.sample(range(self.num_datasets), self.num_datasets)
             for dataset_idx in dataset_rnd:
-                self.t_graph_label, self.t_graph_feat = extra_dataset_attributes_loading(args, args.dataset[dataset_idx])
+                # self.t_graph_label, self.t_graph_feat = extra_dataset_attributes_loading(args, args.dataset[dataset_idx])
                 tg_labels, tg_preds = [], []
                 self.model.train()
                 self.tgc_decoder.train()
-                self.model.init_hiddens()
+                self.model.init_hiddens() #@NOTE: Be careful to delete hashtag
                 dataset_losses = [] # Store losses for each dataset in one epoch
 
                 for t_train_idx, t_train in enumerate(self.train_shots[dataset_idx]):
@@ -423,7 +423,7 @@ class Runner(object):
                     self.optimizer.step()
                     dataset_losses.append(train_loss.item())
                     # update the models
-                    self.model.update_hiddens_all_with(embeddings)
+                    self.model.update_hiddens_all_with(embeddings) #@NOTE: Be careful to delete hashtag
 
                 if isnan(train_loss):
                     print('ATTENTION: nan loss')
@@ -528,7 +528,7 @@ if __name__ == '__main__':
     from script.utils.inits import prepare
     
     args.model = "HTGN"
-    args.seed = 800
+    args.seed = 710
     args.max_epoch=300
     args.lr = 0.0001
     args.log_interval=10
@@ -543,11 +543,11 @@ if __name__ == '__main__':
     t = time.localtime()
     args.curr_time = time.strftime("%Y-%m-%d-%H:%M:%S", t)
 
-    args.dataset, data = load_multiple_datasets("dataset_package_1.txt")
+    args.dataset, data = load_multiple_datasets("dataset_package_8.txt")
     # num_nodes = [data[i]['num_nodes'] for i in range(len(data))]
     # args.num_nodes = max(num_nodes)
-    args.num_nodes = 100
-    category = "nout" #"rand_data" "HTGN"
+    # args.num_nodes = 100
+    category = "no_shuffle" #"no_mem_update" #"no_init" #"nout" #"rand_data" "HTGN"
     # data_number = 3
     for nout in [32]:
         # args.dataset, data = load_multiple_datasets("{}/dataset_package_16_{}.txt".format(category, data_number))            
