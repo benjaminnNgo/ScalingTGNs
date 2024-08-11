@@ -392,8 +392,9 @@ class Runner(object):
             test_aucs, test_aps = [], []
 
             # Shuffling order of datasets for each epoch
-            dataset_rnd = random.sample(range(self.num_datasets), self.num_datasets)
-            for dataset_idx in dataset_rnd:
+            # dataset_rnd = random.sample(range(self.num_datasets), self.num_datasets)
+            # for dataset_idx in dataset_rnd:
+            for dataset_idx in range(self.num_datasets):
                 # self.t_graph_label, self.t_graph_feat = extra_dataset_attributes_loading(args, args.dataset[dataset_idx])
                 tg_labels, tg_preds = [], []
                 self.model.train()
@@ -528,7 +529,7 @@ if __name__ == '__main__':
     from script.utils.inits import prepare
     
     args.model = "HTGN"
-    args.seed = 710
+    args.seed = 800
     args.max_epoch=300
     args.lr = 0.0001
     args.log_interval=10
@@ -546,18 +547,15 @@ if __name__ == '__main__':
     args.dataset, data = load_multiple_datasets("dataset_package_8.txt")
     # num_nodes = [data[i]['num_nodes'] for i in range(len(data))]
     # args.num_nodes = max(num_nodes)
-    # args.num_nodes = 100
+
     category = "no_shuffle" #"no_mem_update" #"no_init" #"nout" #"rand_data" "HTGN"
-    # data_number = 3
-    for nout in [32]:
-        # args.dataset, data = load_multiple_datasets("{}/dataset_package_16_{}.txt".format(category, data_number))            
-        # init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, len(args.dataset), args.seed, data_number))
-        init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, args.seed, len(args.dataset), nout))
-        set_random(args.seed)
-        # args.nout = nout
-        # args.nhid = nout
-        runner = Runner()
-        runner.run()
+    init_logger('../data/output/{}/log/{}_{}_seed_{}_log.txt'.format(category, args.model, args.seed, len(args.dataset)))
+    set_random(args.seed)
+    runner = Runner()
+    runner.run()
+
+
+
     # import scipy.sparse as sp
     # a = sp.load_npz("/home/mila/r/razieh.shirzadkhani/ScalingTGNs/data/input/raw/disease/disease_lp.feats.npz").toarray()
     # print(a[0])

@@ -136,7 +136,7 @@ def save_results(model_name, mode, dataset, test_auc, test_ap, test_accuracy, te
     if bias:
         result_path = "../data/output/{}/test_result/{}_results_bias.csv".format(category, model_name)
     else:
-        result_path = "../data/output/{}/test_result/{}_results_15_n.csv".format(category, model_name)
+        result_path = "../data/output/{}/test_result/{}_results_15.csv".format(category, model_name)
     if not os.path.exists(result_path):
         result_df = pd.DataFrame(columns=["dataset", "mode", "test_auc", "test_ap", "test_accuracy", "test_loss"])
     else:
@@ -220,10 +220,12 @@ class Runner(object):
                 tg_readout = readout_function(embeddings, readout_scheme)
                 tg_embedding = torch.cat((tg_readout,
                                           torch.from_numpy(self.t_graph_feat[dataset_idx][t_test_idx + 
-                                                                                          len(self.train_shots[dataset_idx])]).to(args.device)))
+                                                                                          len(self.train_shots[dataset_idx])+ 
+                                                                                          len(self.val_shots[dataset_idx])]).to(args.device)))
 
                 # graph classification
-                tg_label = self.t_graph_labels[dataset_idx][t_test_idx + len(self.train_shots[dataset_idx])].float().view(1, )
+                tg_label = self.t_graph_labels[dataset_idx][t_test_idx + len(self.train_shots[dataset_idx])+ 
+                                                                        len(self.val_shots[dataset_idx])].float().view(1, )
                 tg_pred = self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid()
                 
                 tg_labels.append(tg_label.cpu().numpy())
@@ -357,7 +359,7 @@ class Runner(object):
         self.tgc_decoder.eval()
         for dataset_idx in range(self.num_datasets):
             data_name = args.data_name[args.dataset[dataset_idx]] if args.dataset[dataset_idx] in args.data_name else args.dataset[dataset_idx]
-            # self.model.init_hiddens()
+            self.model.init_hiddens()
             if args.test_bias:
                 self.test_bias(dataset_idx)
             else:
@@ -420,6 +422,7 @@ if __name__ == '__main__':
     print("INFO: Dataset: {}".format(args.dataset))
     print("INFO: Model: {}".format(args.model))
 
+    # Loading features for all datasets
     t_graph_labels = []
     t_graph_feat = []
     args.dataset, data = load_multiple_datasets("dataset_package_test.txt")
@@ -427,38 +430,11 @@ if __name__ == '__main__':
             t_graph_label_i, t_graph_feat_i = extra_dataset_attributes_loading(args, dataset)
             t_graph_labels.append(t_graph_label_i)
             t_graph_feat.append(t_graph_feat_i)
-    # t_graph_labels, t_graph_feat = extra_dataset_attributes_loading(args)
 
-    # t_graph_labels, t_graph_feat = [], []
-    # for dataset in args.dataset:
-    #         t_graph_label_i, t_graph_feat_i = extra_dataset_attributes_loading(args, dataset)
-    #         t_graph_labels.append(t_graph_label_i)
-    #         t_graph_feat.append(t_graph_feat_i)
-    # t_graph_labels, t_graph_feat = extra_dataset_attributes_loading(args)
-    # num_nodes_per_data = [data[i]['num_nodes'] for i in range(len(data))]
-    # args.num_nodes = 183714#max(num_nodes_per_data)
-    # args.max_node_id = 183713
-    # args.num_nodes = args.max_node_id + 1
-    category = "HTGN"#"no_mem_update" #"HTGN"#"no_init" #"HTGN"
-    # category = "nout"
-    for nout in [64]:
-        for n_data in [64]:
-            # args.dataset, data = load_multiple_datasets("{}/dataset_package_{}_{}.txt".format(category, n_data, data_number))
-            # t_graph_labels, t_graph_feat = extra_dataset_attributes_loading(args)
-            for seed in [710, 720, 800]:
-                set_random(seed)
-            # for nout in [256]:
-                # args.nhid = nout
-                # args.nout = nout
-            # model_path = "HTGN_16_seed_{}".format(seed)
-                # model_path = "rand_data/rr/{}".format(n_data)
-                model_path = "{}_{}_seed_{}".format(args.model, n_data, seed)
-                # model_path = "HTGN_16_seed_{}_{}".format(seed, nout)
-                # model_path = "node_id/HTGN_seed_{}_{}".format(seed, n_data)
-                # result_path = "../data/output/{}/test_result/{}_results.csv".format(category, model_path)
-                # print(result_path)
-                runner = Runner()
-                runner.run()
-
-
-    # average_results(result_path)
+    category = "no_init" #"no_mem_update" #"HTGN"#"no_init" #"HTGN"
+    for n_data in [8]:
+        for seed in [710, 720, 800]:
+            set_random(seed)
+            model_path = "{}_{}_seed_{}".format(args.model, n_data, seed)
+            runner = Runner()
+            runner.run()
