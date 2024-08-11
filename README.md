@@ -25,6 +25,27 @@ The TGS dataset and benchmark includes:
 ![](https://github.com/benjaminnNgo/ScalingTGNs/blob/main/pic/img_2.jpg)
 *TGS Dataset and Benchmark Overview*
 
+### About datasets
+- Each ```.csv``` file represents all transactions of the token network that has the same name as the file name (```tokenname.csv```)
+- Each transaction corresponds to a row in each file
+- The information of each transaction is recorded as the table below:
+
+| column name | meaning|
+|-------------|----------------------------------------------------------------------------------------------------------------------------|
+| blockNumber | is the block ID of Ethereum that includes this transaction 2                                                              |
+| timestamp   | time that the transaction is made in UNIX timestamp format                                                                |
+| tokenAddress | the address that specifies a unique ERC20 token                                                                            |
+| from        | address of sender                                                                                                         |
+| to          | address of receiver                                                                                                        |
+| value       | the amount the transaction                                                                                                 |
+| fileBlock   | we split the whole number of blocks count to 35 buckets and assigned the bucket ID to the transaction to trace the blocks  |
+
+- To use the same setting as described in the papers, we include edge list and label that contain node interactions and labels for each snapshot in each token network
+  -  Each transaction in the edge list also has "from","to" and "amount" fields, but with an additional "snapshot" field to indicate the index of the snapshot that the transaction below to
+  -  Each row in label file indicates the ground truth label of the snapshot having an index corresponding to the index of the row (e.g first row indicates the label of the first snapshot)
+- However, we also provide raw ```.csv```  to divide into generate edges list and label with a different setting.
+
+
 # Core backbone package installation
 
 1. install torch
