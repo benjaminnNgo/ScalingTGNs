@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --partition=long
+#SBATCH --partition=unkillable
 #SBATCH --output=../run_scripts/dt%j.txt
 #SBATCH --error=../run_scripts/dt%jerror.txt 
 #SBATCH --cpus-per-task=4                # Ask for 4 CPUs
@@ -14,5 +14,5 @@ source /home/mila/r/razieh.shirzadkhani/tgnn/bin/activate
 
 
 pwd
-python test_foundation_tgc.py 
+python test_foundation_tgc_30.py 
 # python gclstm_test_foundation_model.py

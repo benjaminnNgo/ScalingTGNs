@@ -430,9 +430,9 @@ if __name__ == '__main__':
             t_graph_label_i, t_graph_feat_i = extra_dataset_attributes_loading(args, dataset)
             t_graph_labels.append(t_graph_label_i)
             t_graph_feat.append(t_graph_feat_i)
-
-    category = "no_init" #"no_mem_update" #"HTGN"#"no_init" #"HTGN"
-    for n_data in [8]:
+    args.test_ratio = 0.3
+    category = "HTGN" #"no_mem_update" #"HTGN"#"no_init" #"HTGN"
+    for n_data in [64]:
         for seed in [710, 720, 800]:
             set_random(seed)
             model_path = "{}_{}_seed_{}".format(args.model, n_data, seed)

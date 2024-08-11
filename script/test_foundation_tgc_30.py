@@ -208,7 +208,6 @@ class Runner(object):
         Final inference on the test set
         """
         tg_labels, tg_preds, test_loss = [], [], []
-        # self.test_shots = [list(range(self.len[i] - self.testlength[i] -self.evalLength[i], self.len[i])) for i in range(self.num_datasets)]
         for t_test_idx, t in enumerate(self.test_shots[dataset_idx]):
             self.model.eval()
             self.tgc_decoder.eval()
@@ -448,7 +447,7 @@ if __name__ == '__main__':
     category = "HTGN"#"no_mem_update" #"HTGN"#"no_init" #"HTGN"
     # category = "nout"
     for nout in [64]:
-        for n_data in [32, 64]:
+        for n_data in [64]:
             # args.dataset, data = load_multiple_datasets("{}/dataset_package_{}_{}.txt".format(category, n_data, data_number))
             # t_graph_labels, t_graph_feat = extra_dataset_attributes_loading(args)
             for seed in [710, 720, 800]:
