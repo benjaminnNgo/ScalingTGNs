@@ -190,7 +190,7 @@ class Runner(object):
         self.len = data['time_length']
         args.testlength = math.floor(self.len * args.test_ratio)  # Re-calculate number of test snapshots
         self.start_train = 0
-        args.evalLength = math.floor(self.len * args.eval_ratio)
+        args.evalLength = math.floor(self.len * args.val_ratio)
 
         self.train_shots = list(range(self.start_train, self.len - args.testlength - args.evalLength))
         self.eval_shots = list(range(self.len - args.testlength - args.evalLength, self.len - args.testlength))
