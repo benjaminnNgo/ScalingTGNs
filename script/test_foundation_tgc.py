@@ -153,7 +153,7 @@ class Runner(object):
         self.start_train = 0
         self.train_shots = [list(range(0, self.len[i] - self.testLength[i] - self.valLength[i])) for i in range(self.num_datasets)] 
         self.val_shots = [list(range(self.len[i] - self.testLength[i] - self.valLength[i], self.len[i] - self.testLength[i])) for i in range(self.num_datasets)] 
-        self.test_shots = [list(range(self.len[i] - self.testLength[i] - self.valLength[i], self.len[i])) for i in range(self.num_datasets)]
+        self.test_shots = [list(range(self.len[i] - self.testLength[i], self.len[i])) for i in range(self.num_datasets)]
         self.criterion = torch.nn.BCELoss()
         self.load_feature()
 
@@ -371,6 +371,7 @@ class Runner(object):
 
                 # Inference testing on test set
                 test_auc, test_ap = self.tgclassification_test(self.readout_scheme, dataset_idx)
+                print(test_auc)
                 save_inference_results(model_path, 
                              "Test", 
                              data_name, 
@@ -393,9 +394,9 @@ if __name__ == '__main__':
     print("======================================")
     print("INFO: Dataset: {}".format(args.dataset))
     print("INFO: Model: {}".format(args.model))
-    args.dataset, data = load_multiple_datasets("dataset_package_test.txt")
-    args.seed = 710
-    category = "HTGN"
-    model_path = "{}_{}_seed_{}".format(args.model, 4, args.seed)
-    runner = Runner()
-    runner.test()
+    args.dataset, data = load_multiple_datasets("dataset_package_1.txt")
+    for args.seed in [710, 720, 800]:
+        category = "HTGN"
+        model_path = "{}_{}_seed_{}".format(args.model, 64, args.seed)
+        runner = Runner()
+        runner.test()

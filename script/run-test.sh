@@ -1,8 +1,8 @@
 #!/bin/bash
-#SBATCH --partition=short-unkillable
+#SBATCH --partition=unkillable
 #SBATCH --output=../run_scripts/dt%j.txt
 #SBATCH --error=../run_scripts/dt%jerror.txt 
-#SBATCH --cpus-per-task=24                # Ask for 4 CPUs
+#SBATCH --cpus-per-task=4                # Ask for 4 CPUs
 #SBATCH --gres=gpu:1                     # Ask for 1 titan xp
 #SBATCH --mem=20G                             # Ask for 32 GB of RAM
 #SBATCH --time=3:00:00                       # The job will run for 1 day

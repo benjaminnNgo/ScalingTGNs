@@ -546,7 +546,7 @@ if __name__ == '__main__':
     args.dataset, data = load_multiple_datasets("dataset_package_1.txt")
     # num_nodes = [data[i]['num_nodes'] for i in range(len(data))]
     # args.num_nodes = max(num_nodes)
-    args.num_nodes = 100
+    # args.num_nodes = 100
     category = "nout" #"rand_data" "HTGN"
     # data_number = 3
     for nout in [32]:

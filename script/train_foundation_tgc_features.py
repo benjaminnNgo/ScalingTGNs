@@ -192,7 +192,7 @@ class Runner(object):
         if args.wandb:
             wandb.init(
                 # set the wandb project where this run will be logged
-                project="ScalingTGNs_feat_node_id",
+                project="ScalingTGNs_features",
                 name="{}_{}_{}".format(args.model, args.seed, len(data)),
                 # track hyperparameters and run metadata
                 config={
@@ -210,7 +210,7 @@ class Runner(object):
         self.num_datasets = len(data)
         self.len = [data[i]['time_length'] for i in range(self.num_datasets)]
         self.testLength = [math.floor(self.len[i] * args.test_ratio) for i in range(self.num_datasets)] 
-        self.valLength = [math.floor(self.len[i] * args.val_ratio) for i in range(self.num_datasets)]
+        self.valLength = [math.floor(self.len[i] * args.eval_ratio) for i in range(self.num_datasets)]
         
         self.start_train = 0
         self.train_shots = [list(range(0, self.len[i] - self.testLength[i] - self.valLength[i])) for i in range(self.num_datasets)] #Changed
@@ -387,7 +387,7 @@ class Runner(object):
             for dataset_idx in dataset_rnd:
 
                 # Loading node-level and graph-level features for the dataset
-                self.t_graph_labels, self.t_graph_feat, self.t_node_feat = extra_node_id_attributes_loading(args, args.dataset[dataset_idx])
+                self.t_graph_labels, self.t_graph_feat, self.t_node_feat = extra_node_attributes_loading(args, args.dataset[dataset_idx])
                 tg_labels, tg_preds = [], []
                 self.model.train()
                 self.tgc_decoder.train()
@@ -396,7 +396,7 @@ class Runner(object):
 
                 for t_train_idx, t_train in enumerate(self.train_shots[dataset_idx]):
                     self.x = torch.from_numpy(self.t_node_feat[t_train_idx]).to(torch.float32).to(args.device)
-                    print(self.x.shape)
+                    # print(self.x.shape)
                     self.optimizer.zero_grad()
                     edge_index = prepare(data[dataset_idx], t_train)
                     embeddings = self.model(edge_index, self.x)
@@ -519,11 +519,11 @@ if __name__ == '__main__':
     from script.utils.config import args
     from script.utils.util import set_random, logger, init_logger, disease_path
     from script.models.load_model import load_model
-    from script.utils.data_util import load_multiple_datasets, extra_dataset_attributes_loading, loader, extra_node_id_attributes_loading
+    from script.utils.data_util import load_multiple_datasets, extra_dataset_attributes_loading, loader, extra_node_attributes_loading
     from script.utils.inits import prepare
     
     args.model = "HTGN"
-    args.seed = 0
+    args.seed = 800
     args.max_epoch=300
     args.lr = 0.0001
     args.log_interval=10
@@ -533,18 +533,18 @@ if __name__ == '__main__':
     print("INFO: >>> Temporal Graph Classification <<<")
     print("======================================")
     print("INFO: Model: {}".format(args.model))
-    args.nfeat = 1
+    
     # use time of run for saving results
     t = time.localtime()
     args.curr_time = time.strftime("%Y-%m-%d-%H:%M:%S", t)
 
-    args.dataset, data = load_multiple_datasets("dataset_package_2.txt")
+    args.dataset, data = load_multiple_datasets("dataset_package_128.txt")
     # args.dataset, data = load_multiple_datasets("test_data.txt")
     # num_nodes = [data[i]['num_nodes'] for i in range(len(data))]
     args.num_nodes = 81311 #max(num_nodes)
     
     
-    category = "feat_node_id" #"nout" #"rand_data" "HTGN"
+    category = "features" #"nout" #"rand_data" "HTGN"
     init_logger('../data/output/{}/log/{}_{}_seed_{}_log.txt'.format(category, args.model, args.seed, len(args.dataset)))
     # print('Number of Nodes:', args.num_nodes)
     set_random(args.seed)
