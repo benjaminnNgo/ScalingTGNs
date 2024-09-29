@@ -13,11 +13,10 @@ Temporal graph learning focuses on predicting future interactions from evolving 
 *TGS foundation model performance on unseen networks*
 
 ### Dataset and Benchmark Implementation 
-All extracted transaction networks required for foundation model training can be downloaded [here](https://zenodo.org/doi/10.5281/zenodo.11455827).
+All extracted transaction networks required for foundation model training can be downloaded [here](https://www.dropbox.com/sh/hsjrzu4x0d2x4a0/AAAjAqkd8kO4RkjFMPmNdo1ma?e=2&dl=0).
 
-The standard ML croissant repository for datasets TGS's metadata is also available [here](https://huggingface.co/datasets/ntgbaoo/Temporal_Graph_Scaling_TGS_Benchmark).
 
-The TGS dataset and benchmark includes: 
+The TGS dataset and benchmark include: 
 (1) Token extraction: extracting the token transaction network from our P2P Ethereum live node. 
 (2) Discretization: creating weekly snapshots to form discrete time dynamic graphs. 
 (3) Foundation Model Training: TGS transaction networks are divided randomly into train and test sets. We train the FMs on a collection of training networks. Lastly, FMs are tested on 20 unseen test networks.
@@ -72,12 +71,12 @@ pip install torch-geometric-temporal
 - Libraries listed in `installed_packages.txt`
 
 # Results reproduce
-To train a single or foundation model, download datasets from [here](https://zenodo.org/doi/10.5281/zenodo.11455827).
+To train a single or multi-network model, download datasets from [here](https://www.dropbox.com/sh/hsjrzu4x0d2x4a0/AAAjAqkd8kO4RkjFMPmNdo1ma?e=2&dl=0).
 - All label files need to be placed in the directory `data/input/raw/labels/ `
 - All edge list files need to be placed in the directory `data/input/raw/edgelists/ `
 - All raw `.csv` files need to be placed in the directory `data/input/tokens/raw/ ` if you want to re-generate edge lists and labels.
 
-## Foundation Models
+## Multi-network Models
 ### Data Loader
 Multi-network loading for  foundation model training is done through the following function which is already included in the `train_foundation_tgc.py` and `test_foundation_tgc.py` scripts.
 ```
