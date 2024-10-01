@@ -9,17 +9,18 @@ This repository provides the implementation of the TGS foundation model benchmar
 ## Overview
 Temporal graph learning focuses on predicting future interactions from evolving network data. Our study addresses whether it's possible to predict the evolution of an unseen network within the same domain using observed temporal graphs. We introduce the Temporal Graph Scaling (TGS) dataset, comprising 84 ERC20 token transaction networks collected from 2017 to 2023. To evaluate transferability, we pre-train Temporal Graph Neural Networks (TGNNs) on up to 64 token transaction networks and assess their performance on 20 unseen token types. Our findings reveal that the neural scaling law observed in NLP and Computer Vision also applies to temporal graph learning: pre-training on more networks with more parameters enhances downstream performance. This is the first empirical demonstration of temporal graph transferability. Notably, the largest pre-trained model surpasses fine-tuned TGNNs on unseen test networks, marking a significant step towards building foundation models for temporal graphs. The code and datasets are publicly available.
 
-![](https://github.com/benjaminnNgo/ScalingTGNs/blob/main/pic/img_1.png)
+![](https://github.com/benjaminnNgo/ScalingTGNs/blob/main/pic/figure4.jpg)
 *TGS foundation model performance on unseen networks*
 
 ### Dataset and Benchmark Implementation 
-All extracted transaction networks required for foundation model training can be downloaded [here](https://www.dropbox.com/sh/hsjrzu4x0d2x4a0/AAAjAqkd8kO4RkjFMPmNdo1ma?e=2&dl=0).
+All extracted transaction networks required for multi-network model training can be downloaded [here](#).
+Link has been removed for anonymizing the authors. 
 
 
 The TGS dataset and benchmark include: 
 (1) Token extraction: extracting the token transaction network from our P2P Ethereum live node. 
 (2) Discretization: creating weekly snapshots to form discrete time dynamic graphs. 
-(3) Foundation Model Training: TGS transaction networks are divided randomly into train and test sets. We train the FMs on a collection of training networks. Lastly, FMs are tested on 20 unseen test networks.
+(3) Foundation Model Training: TGS transaction networks are divided randomly into train and test sets. We train the MNs on a collection of training networks. Lastly, MNs are tested on 20 unseen test networks.
 
 ![](https://github.com/benjaminnNgo/ScalingTGNs/blob/main/pic/img_2.jpg)
 *TGS Dataset and Benchmark Overview*
@@ -84,12 +85,12 @@ load_multiple_datasets("dataset_package_2.txt")
 ```
 
 ### Model Training
-To train the foundation model `train_foundation_tgc.py` should be used. Examples include:
+To train the multi-network model `train_foundation_tgc.py` should be used. Examples include:
 ```
 python train_foundation_tgc.py --model=HTGN --max_epoch=300 --lr=0.0001 --seed=710 --wandb
 ```
 ### Model Inference
-In order to inference testing on saved foundation models `test_foundation_tgc.py` is used:
+In order to inference testing on saved multi-network models `test_foundation_tgc.py` is used:
 
 ```
 python test_foundation_tgc.py --model=HTGGN --seed=710
