@@ -4,27 +4,27 @@
 
 # MiNT: Multi-Network Training for Transfer Learning on Temporal Graphs
 
-This repository provides the implementation of the TGS foundation model benchmarking and includes links to temporal networks suitable for foundation model training. TGS introduces a training process for foundation models using various real-world temporal networks, enabling prediction on previously unseen networks.
+This repository provides the implementation of the multi-network training for temporal graph, enabling prediction on previously unseen networks.
 
 ## Overview
 Temporal Graph Learning (TGL) has become a robust framework for discovering patterns in dynamic networks and predicting future interactions. While existing research has largely concentrated on learning from individual networks, this study explores a transfer learning approach for temporal networks: predicting the evolution of unobserved networks within the same domain using knowledge derived from observed temporal graphs. To achieve this, we introduce Temporal Multi-network Training MiNT, a novel pre-training approach that leverages information from multiple temporal networks. Using a dataset of 84 cryptocurrency transaction networks, we pre-train TGL models on up to 64 networks and assess their transferability to 20 unseen networks. Remarkably, MiNT achieves state-of-the-art results in zero-shot inference, surpassing models individually trained on each network. Our findings further demonstrate that increasing the number of pre-training networks significantly improves transfer performance. This work lays the groundwork for developing Temporal Graph Foundation Models, highlighting the significant potential of multi-network pre-training in TGL.
 
 ![](https://github.com/benjaminnNgo/ScalingTGNs/blob/main/pic/Figure4.jpg)
-*TGS foundation model performance on unseen networks*
+*MN models performance on unseen networks*
 
 ### Dataset and Benchmark Implementation 
-All extracted transaction networks required for multi-network model training can be downloaded [here](#).
+All extracted transaction networks required for multi-network model training can be downloaded [here](https://www.dropbox.com/scl/fo/eroebauovdsodz87wfi36/AIDpW9E4d3VIwX9cKPJc_0Q?rlkey=0k8i68mg958vdwk07532p8kt2&e=1&dl=0).
 
 Link has been removed for the purpose of anonymizing the authors. 
 
 
-The TGS dataset and benchmark include: 
+The  dataset include: 
 (1) Token extraction: extracting the token transaction network from our P2P Ethereum live node. 
 (2) Discretization: creating weekly snapshots to form discrete time dynamic graphs. 
-(3) Foundation Model Training: TGS transaction networks are divided randomly into train and test sets. We train the MNs on a collection of training networks. Lastly, MNs are tested on 20 unseen test networks.
+(3) MN Models Training: our transaction networks are divided randomly into train and test sets. We train the MNs on a collection of training networks. Lastly, MNs are tested on 20 unseen test networks.
 
 ![](https://github.com/benjaminnNgo/ScalingTGNs/blob/main/pic/Mint_overview.png)
-*TGS Dataset and Benchmark Overview*
+* Dataset Overview*
 
 ### About datasets
 - Each ```.csv``` file represents all transactions of the token network that has the same name as the file name (```tokenname.csv```)
@@ -83,7 +83,7 @@ Link has been removed for the purpose of anonymizing the authors.
 
 ## Multi-network Models
 ### Data Loader
-Multi-network loading for  foundation model training is done through the following function which is already included in the `train_foundation_tgc.py` and `test_foundation_tgc.py` scripts.
+Multi-network loading for MN models training is done through the following function which is already included in the `train_foundation_tgc.py` and `test_foundation_tgc.py` scripts.
 ```
 load_multiple_datasets("dataset_package_2.txt")
 ```
