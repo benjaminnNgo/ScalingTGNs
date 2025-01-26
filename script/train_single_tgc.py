@@ -381,13 +381,6 @@ class Runner(object):
                 best_eval_auc = eval_auc
                 best_epoch, best_test_auc, best_test_ap = self.tgclassification_test(epoch, self.readout_scheme)
             else:
-                if epoch < args.min_epoch:  # If it is less than min_epoch, reset best AUC to current AUC and save current model as best model
-                    patience = 0
-                    best_eval_auc = eval_auc
-                    best_model = self.model.state_dict()
-                    best_epoch, best_test_auc, best_test_ap = self.tgclassification_test(epoch, self.readout_scheme)
-
-                    best_epoch = epoch
                 if best_eval_auc - eval_auc > 0.05:
                     patience += 1
                 if epoch > args.min_epoch and patience > args.patience:  # NOTE: args.min_epoch prevents it from stopping early in most cases
