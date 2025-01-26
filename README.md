@@ -1,30 +1,33 @@
-<p align="center">
-  <img width="300" height="150" src="https://github.com/benjaminnNgo/ScalingTGNs/blob/main/pic/TGS_Logo.png">
-</p>
+[//]: # (<p align="center">)
 
-# Towards Neural Scaling Laws for Foundation Models on Temporal Graphs
+[//]: # (  <img width="300" height="150" src="https://github.com/benjaminnNgo/ScalingTGNs/blob/main/pic/MiN_Logo.png">)
 
-This repository provides the implementation of the TGS foundation model benchmarking and includes links to temporal networks suitable for foundation model training. TGS introduces a training process for foundation models using various real-world temporal networks, enabling prediction on previously unseen networks.
+[//]: # (</p>)
+
+# MiNT: Multi-Network Training for Transfer Learning on Temporal Graphs
+
+This repository provides the implementation of the MiNT and includes links to temporal networks suitable for foundation model training. MiNT introduces a training process for multi-network temporal model training using various real-world temporal networks, enabling prediction on previously unseen networks.
 
 ## Overview
-Temporal graph learning focuses on predicting future interactions from evolving network data. Our study addresses whether it's possible to predict the evolution of an unseen network within the same domain using observed temporal graphs. We introduce the Temporal Graph Scaling (TGS) dataset, comprising 84 ERC20 token transaction networks collected from 2017 to 2023. To evaluate transferability, we pre-train Temporal Graph Neural Networks (TGNNs) on up to 64 token transaction networks and assess their performance on 20 unseen token types. Our findings reveal that the neural scaling law observed in NLP and Computer Vision also applies to temporal graph learning: pre-training on more networks with more parameters enhances downstream performance. This is the first empirical demonstration of temporal graph transferability. Notably, the largest pre-trained model surpasses fine-tuned TGNNs on unseen test networks, marking a significant step towards building foundation models for temporal graphs. The code and datasets are publicly available.
+
+Temporal Graph Learning (TGL) has become a robust framework for discovering patterns in dynamic networks and predicting future interactions. While existing research has largely concentrated on learning from individual networks, this study explores a transfer learning approach for temporal networks: predicting the evolution of unobserved networks within the same domain using knowledge derived from observed temporal graphs. To achieve this, we introduce Temporal Multi-network Training (MiNT), a novel pre-training approach that leverages information from multiple temporal networks. Using a dataset of 84 cryptocurrency transaction networks, we pre-train TGL models on up to 64 networks and assess their transferability to 20 unseen networks. Our findings demonstrate that increasing the number of pre-training networks significantly improves downstream transferred performance. Notably, MiNT achieves state-of-the-art results under zero-shot inference, surpassing models individually trained on each network. This work lays the groundwork for developing Temporal Graph Foundation Models, highlighting the significant potential of multi-network pre-training in TGL. 
 
 ![](https://github.com/benjaminnNgo/ScalingTGNs/blob/main/pic/Figure4.jpg)
-*TGS foundation model performance on unseen networks*
+*MiN multi-network model performance on unseen networks*
 
-### Dataset and Benchmark Implementation 
+### Dataset Implementation 
 All extracted transaction networks required for multi-network model training can be downloaded [here](#).
 
 Link has been removed for the purpose of anonymizing the authors. 
 
 
-The TGS dataset and benchmark include: 
+The MiNT dataset and benchmark include: 
 (1) Token extraction: extracting the token transaction network from our P2P Ethereum live node. 
 (2) Discretization: creating weekly snapshots to form discrete time dynamic graphs. 
-(3) Foundation Model Training: TGS transaction networks are divided randomly into train and test sets. We train the MNs on a collection of training networks. Lastly, MNs are tested on 20 unseen test networks.
+(3) Foundation Model Training: MiN transaction networks are divided randomly into train and test sets. We train the MNs on a collection of training networks. Lastly, MNs are tested on 20 unseen test networks.
 
 ![](https://github.com/benjaminnNgo/ScalingTGNs/blob/main/pic/img_2.jpg)
-*TGS Dataset and Benchmark Overview*
+*MiNT Dataset and Benchmark Overview*
 
 ### About datasets
 - Each ```.csv``` file represents all transactions of the token network that has the same name as the file name (```tokenname.csv```)
