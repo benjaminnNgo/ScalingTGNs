@@ -163,10 +163,15 @@ class Runner(object):
         print("The models is going to be loaded from {}".format(self.model_path))
         self.model.load_state_dict(torch.load(self.model_path))
         # load the graph labels
-        self.t_graph_labels, self.t_graph_feat = extra_dataset_attributes_loading(args)
+        self.t_graph_labels, self.t_graph_feat = [], []
+        for dataset in args.dataset:
+            t_graph_label_i, t_graph_feat_i = extra_dataset_attributes_loading(args, dataset)
+            self.t_graph_labels.append(t_graph_label_i)
+            self.t_graph_feat.append(t_graph_feat_i)
+        # self.t_graph_labels, self.t_graph_feat = extra_dataset_attributes_loading(args, dataset)
 
         # define decoder: graph classifier
-        num_extra_feat = 4  
+        num_extra_feat = 0  
         self.mlp_path = '{}/saved_models/fm/{}/{}_mlp.pth'.format(model_file_path, category, model_path)
         self.tgc_decoder = MLP(in_dim=args.nout+num_extra_feat, hidden_dim_1=args.nout+num_extra_feat, 
                                hidden_dim_2=args.nout+num_extra_feat, drop=0.1)  # @NOTE: these hyperparameters may need to be changed 
@@ -208,12 +213,12 @@ class Runner(object):
 
                 # graph readout
                 tg_readout = readout_function(embeddings, readout_scheme)
-                tg_embedding = torch.cat((tg_readout,
-                                          torch.from_numpy(self.t_graph_feat[dataset_idx][t_test_idx + 
-                                                                                          len(self.train_shots[dataset_idx])
-                                                                                           +
-                                                                  len(self.val_shots[dataset_idx])]).to(args.device)))
-
+                # tg_embedding = torch.cat((tg_readout,
+                #                           torch.from_numpy(self.t_graph_feat[dataset_idx][t_test_idx + 
+                #                                                                           len(self.train_shots[dataset_idx])
+                #                                                                            +
+                #                                                   len(self.val_shots[dataset_idx])]).to(args.device)))
+                tg_embedding = tg_readout.to(args.device)
                 # graph classification
                 tg_labels.append(self.t_graph_labels[dataset_idx][t_test_idx + len(self.train_shots[dataset_idx])
                                                                    +
@@ -241,10 +246,10 @@ class Runner(object):
 
                 # graph readout
                 tg_readout = readout_function(embeddings, readout_scheme)
-                tg_embedding = torch.cat((tg_readout,
-                                          torch.from_numpy(self.t_graph_feat[dataset_idx][t_val_idx + 
-                                                                                          len(self.train_shots[dataset_idx])]).to(args.device)))
-
+                # tg_embedding = torch.cat((tg_readout,
+                #                           torch.from_numpy(self.t_graph_feat[dataset_idx][t_val_idx + 
+                #                                                                           len(self.train_shots[dataset_idx])]).to(args.device)))
+                tg_embedding = tg_readout.to(args.device)
                 # graph classification
                 tg_labels.append(self.t_graph_labels[dataset_idx][t_val_idx + len(self.train_shots[dataset_idx])].cpu().numpy())
                 tg_preds.append(
@@ -341,6 +346,7 @@ class Runner(object):
         self.model.eval()
         self.tgc_decoder.eval()
         for dataset_idx in range(self.num_datasets):
+            self.model.init_hiddens()
             data_name = args.data_name[args.dataset[dataset_idx]] if args.dataset[dataset_idx] in args.data_name else args.dataset[dataset_idx]
 
             if args.test_bias:
@@ -355,23 +361,23 @@ class Runner(object):
                         self.model.update_hiddens_all_with(embeddings)
                 
                 # Inference testing on validation set
-                val_auc, val_ap = self.tgclassification_val(self.readout_scheme, dataset_idx)
-                save_inference_results(model_path, 
-                             "Val", 
-                             data_name, 
-                             val_auc, 
-                             val_ap)
+                # val_auc, val_ap = self.tgclassification_val(self.readout_scheme, dataset_idx)
+                # save_inference_results(model_path, 
+                #              "Val", 
+                #              data_name, 
+                #              val_auc, 
+                #              val_ap)
                 
                 # Forward pass through validation set to get the embeddings
-                for t_train in self.val_shots[dataset_idx]:
+                for t_val in self.val_shots[dataset_idx]:
                     with torch.no_grad():
-                        edge_index = prepare(data[dataset_idx], t_train)
+                        edge_index = prepare(data[dataset_idx], t_val)
                         embeddings = self.model(edge_index, self.x)
                         self.model.update_hiddens_all_with(embeddings)
 
                 # Inference testing on test set
                 test_auc, test_ap = self.tgclassification_test(self.readout_scheme, dataset_idx)
-                print(test_auc)
+                # print(test_auc)
                 save_inference_results(model_path, 
                              "Test", 
                              data_name, 
@@ -394,9 +400,9 @@ if __name__ == '__main__':
     print("======================================")
     print("INFO: Dataset: {}".format(args.dataset))
     print("INFO: Model: {}".format(args.model))
-    args.dataset, data = load_multiple_datasets("dataset_package_1.txt")
-    for args.seed in [710, 720, 800]:
+    args.dataset, data = load_multiple_datasets("dataset_package_test.txt")
+    for args.seed in [710, 800]:
         category = "HTGN"
-        model_path = "{}_{}_seed_{}".format(args.model, 64, args.seed)
+        model_path = "{}_{}_seed_{}_high".format(args.model, 4, args.seed)
         runner = Runner()
         runner.test()

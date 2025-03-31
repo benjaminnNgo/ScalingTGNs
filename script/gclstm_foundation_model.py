@@ -59,7 +59,7 @@ def get_node_id_int(node_id_dict,lookup_node,curr_idx):
 
 
 
-def extra_dataset_attributes_loading(args, readout_scheme='mean'):
+def extra_dataset_attributes_loading_old(args, readout_scheme='mean'):
     """
     Load and process additional dataset attributes for TG-Classification
     This includes graph labels and node features for the nodes of each snapshot
@@ -128,7 +128,7 @@ def data_loader_geometric_temporal(dataset):
     """
     # partial_path = f'../data/input/raw/'
 
-    data_root = '{}/cached/{}/'.format(partial_path, dataset)
+    data_root = '{}/cached_iclr_rebuttal/{}/'.format(partial_path, dataset)
     filepath = mkdirs(data_root) + '{}_pyTorchGeoTemp.data'.format(dataset)  # the data will be saved here after generation.
     print("INFO: Dataset: {}".format(dataset))
     print("DEBUG: Look for data at {}".format(filepath))
@@ -306,9 +306,14 @@ class Runner():
                 }
             )
 
-        init_logger('../data/output/log/{}/{}_{}_seed_{}_{}_{}_log.txt'.format(args.model, args.model, args.seed, len(args.dataset), args.nhid, args.curr_time))
+        # init_logger('../data/output/log/{}/{}_{}_seed_{}_{}_{}_log.txt'.format(args.model, args.model, args.seed, len(args.dataset), args.nhid, args.curr_time))
         logger.info("INFO: Args: {}".format(args))
-        self.t_graph_labels, self.t_graph_feat = extra_dataset_attributes_loading(args)
+        # self.t_graph_labels, self.t_graph_feat = extra_dataset_attributes_loading(args)
+        self.t_graph_labels, self.t_graph_feat = [], []
+        for dataset in args.dataset:
+            t_graph_label_i, t_graph_feat_i = extra_dataset_attributes_loading(args, dataset)
+            self.t_graph_labels.append(t_graph_label_i)
+            self.t_graph_feat.append(t_graph_feat_i)
         self.num_datasets = len(self.data)
         # self.data = data_loader_geometric_temporal(args.dataset)
         self.edge_idx_list = [self.data[i]['edge_index'] for i in range(self.num_datasets)]
@@ -319,7 +324,7 @@ class Runner():
         self.tgc_lr = args.lr
         self.len = [self.data[i]['time_length'] for i in range(self.num_datasets)]
         self.testlength = [math.floor(self.len[i] * args.test_ratio) for i in range(self.num_datasets)]  # Re-calculate number of test snapshots
-        self.evalLength = [math.floor(self.len[i] * args.eval_ratio) for i in range(self.num_datasets)]
+        self.evalLength = [math.floor(self.len[i] * args.val_ratio) for i in range(self.num_datasets)]
 
         self.train_shots_mask = [list(range(0, self.len[i] - self.testlength[i] - self.evalLength[i])) for i in range(self.num_datasets)] #Changed
         self.eval_shots_mask = [list(range(self.len[i] - self.testlength[i] - self.evalLength[i], self.len[i] - self.testlength[i])) for i in range(self.num_datasets)] #Changed
@@ -330,12 +335,12 @@ class Runner():
         # print(self.node_feat.size())
         # self.node_feat_dim = self.node_feat.size(1)  # @TODO: Replace with args to config it easily
         self.edge_feat_dim = 1 #@TODO: Replace with args to config it easily
-        self.hidden_dim = args.nhid
-        self.model_path = '{}/saved_models/fm/{}/{}'.format(model_file_path, 
+        self.hidden_dim = args.nhid * 20
+        self.model_path = '{}/saved_models/fm/{}/{}_20'.format(model_file_path, 
                                                                         args.model,
                                                                         filename)
         
-        self.model_chkp_path = '{}/saved_models/fm/{}/checkpoint/{}'.format(model_file_path, 
+        self.model_chkp_path = '{}/saved_models/fm/{}/checkpoint/{}_20'.format(model_file_path, 
                                                                         args.model,
                                                                         filename)
         self.model = RecurrentGCN(node_feat_dim=self.node_feat_dim, hidden_dim=self.hidden_dim).to(args.device)
@@ -612,7 +617,8 @@ class Runner():
 if __name__ == '__main__':
     from script.utils.config import args
     from script.utils.util import set_random, logger, init_logger
-    args.seed = 710
+    from script.utils.data_util import extra_dataset_attributes_loading
+    # args.seed = 710
     args.max_epoch = 300
     # args.wandb = True
     args.min_epoch = 100
@@ -620,18 +626,18 @@ if __name__ == '__main__':
     args.patience = 30
     args.log_interval = 10
     args.lr = 0.0001
-    t = time.localtime()
-    args.curr_time = time.strftime("%Y-%m-%d-%H:%M:%S", t)
+    # t = time.localtime()
+    # args.curr_time = time.strftime("%Y-%m-%d-%H:%M:%S", t)
     
     category = "GCLSTM"
     
-    for args.seed in [720]:
-        for data_count in [2]:
-                num_data = 32
-        # for nout in [64]:
-                datasets_package_path = "rand_data/dataset_package_{}_{}.txt".format(num_data,data_count)
-                filename = "{}_{}_seed_{}_{}".format("rand_data", num_data, args.seed, data_count)
+    for args.seed in [710]:
+        # for data_count in [16]:
+                num_data = 64
+                datasets_package_path = "dataset_package_{}.txt".format(num_data)
+                filename = "{}_{}_seed_{}".format(category, num_data, args.seed)
                 init_logger('../data/output/{}/log/{}_log.txt'.format(category, filename))
+                logger.info("Start Logging")
                 set_random(args.seed)
                 # args.nout = nout
                 # args.nhid = nout

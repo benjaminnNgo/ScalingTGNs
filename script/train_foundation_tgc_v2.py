@@ -301,7 +301,7 @@ class Runner(object):
             self.model.eval()
             self.tgc_decoder.eval()
             with torch.no_grad():
-                self.x = torch.from_numpy(self.t_node_feat[t_val_idx]).to(torch.float32).to(args.device)
+                self.x = torch.from_numpy(self.t_node_feat[t]).to(torch.float32).to(args.device)
                 edge_index = prepare(data[dataset_idx], t)[:3]
                 # new_pos_edge, new_neg_edge = prepare(data, t)[-2:]
 
@@ -310,11 +310,11 @@ class Runner(object):
                 # graph readout
                 tg_readout = readout_function(embeddings, readout_scheme)
                 tg_embedding = torch.cat((tg_readout,
-                                          torch.from_numpy(self.t_graph_feat[t_val_idx + len(self.train_shots[dataset_idx])]).to(
+                                          torch.from_numpy(self.t_graph_feat[t]).to(
                                               args.device)))
 
                 # graph classification
-                tg_labels.append(self.t_graph_labels[t_val_idx + len(self.train_shots[dataset_idx])].cpu().numpy())
+                tg_labels.append(self.t_graph_labels[t].cpu().numpy())
                 tg_preds.append(
                     self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid().cpu().numpy())
                 self.model.update_hiddens_all_with(embeddings)
@@ -331,7 +331,7 @@ class Runner(object):
             self.model.eval()
             self.tgc_decoder.eval()
             with torch.no_grad():
-                self.x = torch.from_numpy(self.t_node_feat[t_test_idx]).to(torch.float32).to(args.device)
+                self.x = torch.from_numpy(self.t_node_feat[t]).to(torch.float32).to(args.device)
                 edge_index = prepare(data[dataset_idx], t)[:3]
 
                 embeddings = self.model(edge_index, list(self.x))
@@ -339,12 +339,11 @@ class Runner(object):
                 # graph readout
                 tg_readout = readout_function(embeddings, readout_scheme)
                 tg_embedding = torch.cat((tg_readout,
-                                          torch.from_numpy(self.t_graph_feat[t_test_idx + len(self.train_shots[dataset_idx])]).to(
+                                          torch.from_numpy(self.t_graph_feat[t]).to(
                                               args.device)))
 
                 # graph classification
-                tg_labels.append(self.t_graph_labels[t_test_idx + len(self.train_shots[dataset_idx]) +
-                                                                  len(self.val_shots[dataset_idx])].cpu().numpy())
+                tg_labels.append(self.t_graph_labels[t].cpu().numpy())
                 tg_preds.append(
                     self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid().cpu().numpy())
                 self.model.update_hiddens_all_with(embeddings)
@@ -396,7 +395,7 @@ class Runner(object):
 
                 for t_train_idx, t_train in enumerate(self.train_shots[dataset_idx]):
                     self.x = torch.from_numpy(self.t_node_feat[t_train_idx]).to(torch.float32).to(args.device)
-                    print(self.x.shape)
+                    
                     self.optimizer.zero_grad()
                     edge_index = prepare(data[dataset_idx], t_train)
                     embeddings = self.model(edge_index, self.x)
@@ -523,7 +522,7 @@ if __name__ == '__main__':
     from script.utils.inits import prepare
     
     args.model = "HTGN"
-    args.seed = 0
+    args.seed = 800
     args.max_epoch=300
     args.lr = 0.0001
     args.log_interval=10
@@ -541,10 +540,10 @@ if __name__ == '__main__':
     args.dataset, data = load_multiple_datasets("dataset_package_2.txt")
     # args.dataset, data = load_multiple_datasets("test_data.txt")
     # num_nodes = [data[i]['num_nodes'] for i in range(len(data))]
-    args.num_nodes = 81311 #max(num_nodes)
+    # args.num_nodes = 81311 #max(num_nodes)
     
     
-    category = "feat_node_id" #"nout" #"rand_data" "HTGN"
+    category = "feat_node_id_new" #"nout" #"rand_data" "HTGN"
     init_logger('../data/output/{}/log/{}_{}_seed_{}_log.txt'.format(category, args.model, args.seed, len(args.dataset)))
     # print('Number of Nodes:', args.num_nodes)
     set_random(args.seed)

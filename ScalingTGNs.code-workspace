@@ -8,6 +8,12 @@
 		},
 		{
 			"path": "../TemporalGFM"
+		},
+		{
+			"path": "../Mental-Health-Research"
+		},
+		{
+			"path": "../data"
 		}
 	],
 	"settings": {}

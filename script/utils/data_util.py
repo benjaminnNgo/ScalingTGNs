@@ -16,7 +16,7 @@ from script.utils.make_edges_new import get_edges, get_prediction_edges, get_pre
 from sklearn.preprocessing import MinMaxScaler
 
 root_path = "/network/scratch/r/razieh.shirzadkhani/fm/fm_data/data_lt_70/all_data"
-cached_path = "new_cached"
+cached_path = "cached_iclr_rebuttal"
 def mkdirs(path):
     if not os.path.isdir(path):
         os.makedirs(path)
@@ -709,10 +709,10 @@ def extra_dataset_attributes_loading(args, dataset, readout_scheme='mean'):
     # TG_feats_data = []
     # for dataset in args.dataset:
     print("INFO: Loading a Graph Feature and Labels for `Temporal Graph Classification (TGC)` Category: {}".format(dataset))
-    data_root = '{}/cached/{}'.format(partial_path, dataset)
+    data_root = '{}/{}/{}'.format(partial_path, cached_path, dataset)
 
     # load graph lables
-    label_filename = f'{partial_path}/raw/labels/{dataset}_labels.csv'
+    label_filename = f'{partial_path}/raw/labels/Edge_GS/{dataset}_Edge_GS_labels.csv'
     label_df = pd.read_csv(label_filename, header=None, names=['label'])
     TG_labels = torch.from_numpy(np.array(label_df['label'].tolist())).to(args.device)
     # TG_labels_data.append(TG_labels)
@@ -732,9 +732,9 @@ def extra_dataset_attributes_loading(args, dataset, readout_scheme='mean'):
     edgelist_filename = f'{partial_path}/raw/edgelists/{dataset}_edgelist.txt'
     edgelist_df = pd.read_csv(edgelist_filename)
     uniq_ts_list = np.unique(edgelist_df['snapshot'])
-    # TG_feats_max = []
-    # TG_feats_mean = []
-    # TG_feats_sum = []
+    # # TG_feats_max = []
+    # # TG_feats_mean = []
+    # # TG_feats_sum = []
     TG_feats = []
 
     for ts in uniq_ts_list:
@@ -774,23 +774,23 @@ def extra_dataset_attributes_loading(args, dataset, readout_scheme='mean'):
             raise ValueError("Readout scheme is Undefined!")
         TG_feats.append(TG_this_ts_feat)
 
-    # assert len(TG_feats_max) == len(uniq_ts_list),"Missing TG_feature max"
-    # assert len(TG_feats_mean) == len(uniq_ts_list),"Missing TG_feature mean"
-    # assert len(TG_feats_sum) == len(uniq_ts_list),"Missing TG_feature sum"
+    # # assert len(TG_feats_max) == len(uniq_ts_list),"Missing TG_feature max"
+    # # assert len(TG_feats_mean) == len(uniq_ts_list),"Missing TG_feature mean"
+    # # assert len(TG_feats_sum) == len(uniq_ts_list),"Missing TG_feature sum"
 
-    # scale the temporal graph features to have a reasonable range
-    # scalar = MinMaxScaler()
-    # TG_feats_max = scalar.fit_transform(TG_feats_max)
+    # # scale the temporal graph features to have a reasonable range
+    # # scalar = MinMaxScaler()
+    # # TG_feats_max = scalar.fit_transform(TG_feats_max)
 
-    # scalar = MinMaxScaler()
-    # TG_feats_mean = scalar.fit_transform(TG_feats_mean)
+    # # scalar = MinMaxScaler()
+    # # TG_feats_mean = scalar.fit_transform(TG_feats_mean)
 
-    # scalar = MinMaxScaler()
-    # TG_feats_sum = scalar.fit_transform(TG_feats_sum)
+    # # scalar = MinMaxScaler()
+    # # TG_feats_sum = scalar.fit_transform(TG_feats_sum)
     
-    # cached_feats['max'] = np.array(TG_feats_max)
-    # cached_feats['mean'] = np.array(TG_feats_mean)
-    # cached_feats['sum'] = np.array(TG_feats_sum)
+    # # cached_feats['max'] = np.array(TG_feats_max)
+    # # cached_feats['mean'] = np.array(TG_feats_mean)
+    # # cached_feats['sum'] = np.array(TG_feats_sum)
 
     scalar = MinMaxScaler()
     TG_feats = scalar.fit_transform(TG_feats)
@@ -800,7 +800,7 @@ def extra_dataset_attributes_loading(args, dataset, readout_scheme='mean'):
         os.makedirs(data_root)
     np.savez(cached_feature_path, TG_feats=TG_feats)
 
-    return TG_labels, TG_feats
+    return TG_labels, []
 
 
 

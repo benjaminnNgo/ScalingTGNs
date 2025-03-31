@@ -198,24 +198,21 @@ class Runner(object):
         Final inference on the test set
         """
         tg_labels, tg_preds, test_loss = [], [], []
-        for t_test_idx, t in enumerate(self.test_shots[dataset_idx]):
+        for t in self.test_shots[dataset_idx]:
             self.model.eval()
             self.tgc_decoder.eval()
             with torch.no_grad():
-                self.x = torch.from_numpy(self.t_node_feat[t_test_idx]).to(torch.float32).to(args.device)
+                self.x = torch.from_numpy(self.t_node_feat[t]).to(torch.float32).to(args.device)
                 edge_index = prepare(data[dataset_idx], t)[:3]
                 embeddings = self.model(edge_index, self.x)
 
                 # graph readout
                 tg_readout = readout_function(embeddings, readout_scheme)
                 tg_embedding = torch.cat((tg_readout,
-                                          torch.from_numpy(self.t_graph_feat[t_test_idx + 
-                                                                len(self.train_shots[dataset_idx]) +
-                                                                len(self.val_shots[dataset_idx])]).to(args.device)))
+                                          torch.from_numpy(self.t_graph_feat[t]).to(args.device)))
 
                 # graph classification
-                tg_labels.append(self.t_graph_labels[t_test_idx + len(self.train_shots[dataset_idx]) +
-                                                                  len(self.val_shots[dataset_idx])].cpu().numpy())
+                tg_labels.append(self.t_graph_labels[t].cpu().numpy())
                 tg_preds.append(
                     self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid().cpu().numpy())
                 self.model.update_hiddens_all_with(embeddings)
@@ -240,11 +237,10 @@ class Runner(object):
                 # graph readout
                 tg_readout = readout_function(embeddings, readout_scheme)
                 tg_embedding = torch.cat((tg_readout,
-                                          torch.from_numpy(self.t_graph_feat[t_val_idx + 
-                                                                                          len(self.train_shots[dataset_idx])]).to(args.device)))
+                                          torch.from_numpy(self.t_graph_feat[t]).to(args.device)))
 
                 # graph classification
-                tg_labels.append(self.t_graph_labels[t_val_idx + len(self.train_shots[dataset_idx])].cpu().numpy())
+                tg_labels.append(self.t_graph_labels[t].cpu().numpy())
                 tg_preds.append(
                     self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid().cpu().numpy())
                 self.model.update_hiddens_all_with(embeddings)
@@ -348,9 +344,9 @@ class Runner(object):
             else:
 
                 # Forwad pass through train data to get the embeddings
-                for t_train_idx, t_train in enumerate(self.train_shots[dataset_idx]):
+                for t_train in self.train_shots[dataset_idx]:
                     with torch.no_grad():
-                        self.x = torch.from_numpy(self.t_node_feat[t_train_idx]).to(torch.float32).to(args.device)
+                        self.x = torch.from_numpy(self.t_node_feat[t_train]).to(torch.float32).to(args.device)
                         edge_index = prepare(data[dataset_idx], t_train)
                         embeddings = self.model(edge_index, self.x)
                         self.model.update_hiddens_all_with(embeddings)
@@ -364,9 +360,9 @@ class Runner(object):
                 #              val_ap)
                 
                 # Forward pass through validation set to get the embeddings
-                for t_val_idx, t_val in enumerate(self.val_shots[dataset_idx]):
+                for t_val in self.val_shots[dataset_idx]:
                     with torch.no_grad():
-                        self.x = torch.from_numpy(self.t_node_feat[t_val_idx]).to(torch.float32).to(args.device)
+                        self.x = torch.from_numpy(self.t_node_feat[t_val]).to(torch.float32).to(args.device)
                         edge_index = prepare(data[dataset_idx], t_val)
                         embeddings = self.model(edge_index, self.x)
                         self.model.update_hiddens_all_with(embeddings)
@@ -397,9 +393,9 @@ if __name__ == '__main__':
     print("INFO: Model: {}".format(args.model))
     args.dataset, data = load_multiple_datasets("dataset_package_test.txt")
     args.nfeat = 1
-    args.num_nodes = 81311
-    category = "feat_node_id"
-    for n_data in [8, 16]:
+    # args.num_nodes = 81311
+    category = "feat_node_id_new"
+    for n_data in [2]:
         for args.seed in [710, 720, 800]:
             model_path = "{}_{}_seed_{}".format(args.model, n_data, args.seed)
             runner = Runner()

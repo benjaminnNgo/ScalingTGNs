@@ -25,10 +25,10 @@ import random
 import wandb
 
 
-model_file_path = 'PUT MODEL PATH HERE'
-data_file_path = 'PUT RAW DATA PATH HERE'
-# model_file_path = '..'
-
+# model_file_path = 'PUT MODEL PATH HERE'
+# data_file_path = 'PUT RAW DATA PATH HERE'
+model_file_path = '/network/scratch/r/razieh.shirzadkhani/fm'
+wandb.login(key="29968c684c2e412ed650ce0b5b52db584d572b86")
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
@@ -147,13 +147,13 @@ def save_train_results(epoch, train_auc, train_ap, loss, time, dataset=None):
     If dataset is None, average over all datasets for each epoch is saved.
     """
     if dataset is None:
-        result_folder = "../data/output/training_result/average"
-        result_path = result_folder + "/{}_seed_{}_{}_epochResult.csv".format(args.model,
+        result_folder = "../data/output/{}/training_result/average".format(category)
+        result_path = result_folder + "/{}_seed_{}_{}_high_epochResult.csv".format(args.model,
                                                                                 args.seed,
                                                                                 len(args.dataset))
     else:
-        result_folder = "../data/output/training_result/data/{}".format(dataset)
-        result_path = result_folder + "/{}_seed_{}_{}_epochResult.csv".format(args.model,
+        result_folder = "../data/output/{}/training_result/data/{}".format(category, dataset)
+        result_path = result_folder + "/{}_seed_{}_{}_high_epochResult.csv".format(args.model,
                                                                                  args.seed,
                                                                                  len(args.dataset))
     if not os.path.exists(result_folder):
@@ -174,13 +174,13 @@ def save_val_results(epoch, val_auc, val_ap, time, dataset=None):
     If dataset in None average is saved.
     """
     if dataset is None:
-        result_folder = "../data/output/val_result/average"
-        result_path = result_folder + "/{}_seed_{}_{}_epochResult.csv".format(args.model,
+        result_folder = "../data/output/{}/val_result/average".format(category)
+        result_path = result_folder + "/{}_seed_{}_{}_high_epochResult.csv".format(args.model,
                                                                                 args.seed,
                                                                                 len(args.dataset))
     else:
-        result_folder = "../data/output/val_result/data/{}".format(dataset)
-        result_path = result_folder + "/{}_seed_{}_{}_epochResult.csv".format(args.model,
+        result_folder = "../data/output/{}/val_result/data/{}".format(category, dataset)
+        result_path = result_folder + "/{}_seed_{}_{}_high_epochResult.csv".format(args.model,
                                                                                  args.seed,
                                                                                  len(args.dataset))
     if not os.path.exists(result_folder):
@@ -201,7 +201,7 @@ class Runner(object):
         if args.wandb:
             wandb.init(
                 # set the wandb project where this run will be logged
-                project="ScalingTGNs_nout",
+                project="ScalingTGNs_icml",
                 name="{}_{}_{}".format(args.model, args.seed, len(data)),
                 # track hyperparameters and run metadata
                 config={
@@ -238,14 +238,14 @@ class Runner(object):
                                                                         args.model,
                                                                         self.num_datasets,
                                                                         args.seed,
-                                                                        args.nhid)
+                                                                        "high")
         
         self.model_chkp_path = '{}/saved_models/fm/{}/checkpoint/{}_{}_seed_{}_{}'.format(model_file_path, 
                                                                         category,
                                                                         args.model,
                                                                         self.num_datasets,
                                                                         args.seed,
-                                                                        args.nhid)
+                                                                        "high")
        
         # load the graph labels
         self.t_graph_labels, self.t_graph_feat = [], []
@@ -260,7 +260,7 @@ class Runner(object):
         # self.t_graph_labels = t_graph_labels
         # self.t_graph_feat = t_graph_feat
         # define decoder: graph classifier
-        num_extra_feat = 4  # = len([in-degree, weighted-in-degree, out-degree, weighted-out-degree])
+        num_extra_feat = 4 # = len([in-degree, weighted-in-degree, out-degree, weighted-out-degree])
         self.tgc_decoder = MLP(in_dim=args.nout+num_extra_feat, hidden_dim_1=args.nout+num_extra_feat, 
                                hidden_dim_2=args.nout+num_extra_feat, drop=0.1)  # @NOTE: these hyperparameters may need to be changed 
 
@@ -322,7 +322,7 @@ class Runner(object):
                 tg_embedding = torch.cat((tg_readout,
                                           torch.from_numpy(self.t_graph_feat[dataset_idx][t_val_idx + len(self.train_shots[dataset_idx])]).to(
                                               args.device)))
-
+                # tg_embedding = tg_readout.to(args.device)
                 # graph classification
                 tg_labels.append(self.t_graph_labels[dataset_idx][t_val_idx + len(self.train_shots[dataset_idx])].cpu().numpy())
                 tg_preds.append(
@@ -350,7 +350,7 @@ class Runner(object):
                 tg_embedding = torch.cat((tg_readout,
                                           torch.from_numpy(self.t_graph_feat[dataset_idx][t_test_idx + len(self.train_shots[dataset_idx])]).to(
                                               args.device)))
-
+                # tg_embedding = tg_readout.to(args.device)
                 # graph classification
                 tg_labels.append(self.t_graph_labels[dataset_idx][t_test_idx + len(self.train_shots[dataset_idx]) +
                                                                   len(self.val_shots[dataset_idx])].cpu().numpy())
@@ -392,9 +392,10 @@ class Runner(object):
             test_aucs, test_aps = [], []
 
             # Shuffling order of datasets for each epoch
-            dataset_rnd = random.sample(range(self.num_datasets), self.num_datasets)
-            for dataset_idx in dataset_rnd:
-                self.t_graph_label, self.t_graph_feat = extra_dataset_attributes_loading(args, args.dataset[dataset_idx])
+            # dataset_rnd = random.sample(range(self.num_datasets), self.num_datasets)
+            # for dataset_idx in dataset_rnd:
+            for dataset_idx in range(self.num_datasets):
+                # self.t_graph_label, self.t_graph_feat = extra_dataset_attributes_loading(args, args.dataset[dataset_idx])
                 tg_labels, tg_preds = [], []
                 self.model.train()
                 self.tgc_decoder.train()
@@ -410,7 +411,7 @@ class Runner(object):
                     tg_readout = readout_function(embeddings, self.readout_scheme)
                     tg_embedding = torch.cat((tg_readout, 
                                               torch.from_numpy(self.t_graph_feat[dataset_idx][t_train_idx]).to(args.device)))
-                    
+                    # tg_embedding = tg_readout.to(args.device)
                     
                     # graph classification
                     tg_label = self.t_graph_labels[dataset_idx][t_train_idx].float().view(1, )
@@ -528,7 +529,7 @@ if __name__ == '__main__':
     from script.utils.inits import prepare
     
     args.model = "HTGN"
-    args.seed = 800
+    args.seed = 720
     args.max_epoch=300
     args.lr = 0.0001
     args.log_interval=10
@@ -538,34 +539,15 @@ if __name__ == '__main__':
     print("INFO: >>> Temporal Graph Classification <<<")
     print("======================================")
     print("INFO: Model: {}".format(args.model))
-    
-    # use time of run for saving results
-    t = time.localtime()
-    args.curr_time = time.strftime("%Y-%m-%d-%H:%M:%S", t)
 
-    args.dataset, data = load_multiple_datasets("dataset_package_1.txt")
+    args.dataset, data = load_multiple_datasets("dataset_package_8.txt")
     # num_nodes = [data[i]['num_nodes'] for i in range(len(data))]
     # args.num_nodes = max(num_nodes)
-    # args.num_nodes = 100
-    category = "nout" #"rand_data" "HTGN"
-    # data_number = 3
-    for nout in [32]:
-        # args.dataset, data = load_multiple_datasets("{}/dataset_package_16_{}.txt".format(category, data_number))            
-        # init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, len(args.dataset), args.seed, data_number))
-        init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_log.txt'.format(category, args.model, args.seed, len(args.dataset), nout))
-        set_random(args.seed)
-        # args.nout = nout
-        # args.nhid = nout
+
+    category = "HTGN" #"HTGN_distance" #"no_shuffle" #"rand_data" "HTGN"
+    for nout in [16]:
+        init_logger('../data/output/{}/log/{}_{}_seed_{}_{}_low_log.txt'.format(category, args.model, args.seed, len(args.dataset), nout))
+        set_random(args.seed)  
         runner = Runner()
         runner.run()
-    # import scipy.sparse as sp
-    # a = sp.load_npz("/home/mila/r/razieh.shirzadkhani/ScalingTGNs/data/input/raw/disease/disease_lp.feats.npz").toarray()
-    # print(a[0])
-    # print(a.shape)
-    # edgelist_df = pd.read_csv("/network/scratch/r/razieh.shirzadkhani/fm/fm_data/data_lt_70/all_data/raw/edgelists/unnamedtoken222080x7e77dcb127f99ece88230a64db8d595f31f1b068_edgelist.txt")
-    # unique_nodes = pd.unique(edgelist_df[['source', 'destination']].values.ravel('K'))
-    # num_unique_nodes = len(unique_nodes)
-    # print(num_unique_nodes)
-
-    # data = loader(dataset="unnamedtoken222080x7e77dcb127f99ece88230a64db8d595f31f1b068", neg_sample=args.neg_sample)
-    # print(data["num_nodes"])
+    

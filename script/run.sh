@@ -1,4 +1,5 @@
 #!/bin/bash
+#SBATCH --job-name=htgn-8-800
 #SBATCH --partition=long
 #SBATCH --output=../run_scripts/dt%j.txt
 #SBATCH --error=../run_scripts/dt%jerror.txt 
@@ -14,6 +15,7 @@ source /home/mila/r/razieh.shirzadkhani/tgnn/bin/activate
 
 
 pwd
-# python gclstm_foundation_model.py --wandb
-python train_foundation_tgc_v2.py --wandb
+# python gclstm_foundation_model.py
+python train_foundation_tgc.py 
+# python train_foundation_tgc.py
 # python train_tgc_end_to_end.py
