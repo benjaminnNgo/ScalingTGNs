@@ -22,7 +22,7 @@ The  dataset include:
 (2) Discretization: creating weekly snapshots to form discrete time dynamic graphs. 
 (3) MN Models Training: our transaction networks are divided randomly into train and test sets. We train the MNs on a collection of training networks. Lastly, MNs are tested on 20 unseen test networks.
 
-![](https://github.com/benjaminnNgo/ScalingTGNs/blob/main/pic/Mint_Overview_V7b.tif)
+![](https://github.com/benjaminnNgo/ScalingTGNs/blob/main/pic/Mint_Overview_V7b.jpg)
 * Dataset Overview*
 
 ### About datasets
