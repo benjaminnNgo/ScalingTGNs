@@ -7,8 +7,7 @@
 This repository provides the implementation of the multi-network training for temporal graph, enabling prediction on previously unseen networks.
 
 ## Overview
-Temporal Graph Learning (TGL) has become a robust framework for discovering patterns in dynamic networks and predicting future interactions. While existing research has largely concentrated on learning from individual networks, this study explores a transfer learning approach for temporal networks: predicting the evolution of unobserved networks within the same domain using knowledge derived from observed temporal graphs. To achieve this, we introduce Temporal Multi-network Training MiNT, a novel pre-training approach that leverages information from multiple temporal networks. Using a dataset of 84 cryptocurrency transaction networks, we pre-train TGL models on up to 64 networks and assess their transferability to 20 unseen networks. Remarkably, MiNT achieves state-of-the-art results in zero-shot inference, surpassing models individually trained on each network. Our findings further demonstrate that increasing the number of pre-training networks significantly improves transfer performance. This work lays the groundwork for developing Temporal Graph Foundation Models, highlighting the significant potential of multi-network pre-training in TGL.
-
+Temporal Graph Learning (TGL) aims to discover patterns in evolving networks or temporal graphs and leverage these patterns to predict future interactions. However, most existing research focuses on learning from a single network in isolation, leaving the challenges of within-domain and cross-domain generalization largely unaddressed. In this study, we introduce a new benchmark of 84 real-world temporal transaction networks and propose Temporal Multi-network Transfer (MiNT), a pre-training framework designed to capture transferable temporal dynamics across diverse networks. We train MiNT models on up to 64 transaction networks and evaluate their generalization ability on 20 held-out, unseen networks. Our results show that MiNT consistently outperforms individually trained models, revealing a strong relation between the number of pre-training networks and transfer performance. These findings highlight scaling trends in temporal graph learning and underscore the importance of network diversity in improving generalization. This work establishes the first large-scale benchmark for studying transferability in TGL and lays the groundwork for developing Temporal Graph Foundation Models.
 ![](https://github.com/benjaminnNgo/ScalingTGNs/blob/main/pic/Figure4_mint_wo_pf.pdf)
 *MN models performance on unseen networks*
 
@@ -23,7 +22,7 @@ The  dataset include:
 (2) Discretization: creating weekly snapshots to form discrete time dynamic graphs. 
 (3) MN Models Training: our transaction networks are divided randomly into train and test sets. We train the MNs on a collection of training networks. Lastly, MNs are tested on 20 unseen test networks.
 
-![](https://github.com/benjaminnNgo/ScalingTGNs/blob/main/pic/Mint_overview.png)
+![](https://github.com/benjaminnNgo/ScalingTGNs/blob/main/pic/Mint_Overview_V7b.tif)
 * Dataset Overview*
 
 ### About datasets
