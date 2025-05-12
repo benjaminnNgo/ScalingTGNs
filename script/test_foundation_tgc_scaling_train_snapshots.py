@@ -23,11 +23,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'
 from script.configs.data_spec import DATA_PATH
 # model_file_path = 'PUT MODEL PATH HERE'
 # data_file_path = 'PUT RAW DATA PATH HERE'
-model_file_path = f"{DATA_PATH}/output/ckpts/htgn/"
+model_file_path = f"{DATA_PATH}/output/ckpts/htgn/trainratio/"
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
-
+  
 
 class MLP(torch.nn.Module):
   """
@@ -55,7 +55,7 @@ class MLP(torch.nn.Module):
 def readout_function(embeddings, readout_scheme='mean'):
     """
     Read out function to generate a representation for the whole graph
-    reference:
+    reference:    
     https://github.com/qbxlvnf11/graph-neural-networks-for-graph-classification/blob/master/readouts/basic_readout.py
     """
     # note: x.size(): [#nodes, args.n_out]
@@ -69,7 +69,7 @@ def readout_function(embeddings, readout_scheme='mean'):
       readout = None
       raise ValueError("Readout Method Undefined!")
     return readout
-
+  
 
 
 def save_inference_results(model_name, mode, dataset, test_auc, test_ap, bias=False):
@@ -95,15 +95,43 @@ class Runner(object):
         self.readout_scheme = 'mean'
         self.tgc_lr = args.lr
 
-        # Calculate the length of validation and test sets and split the datasets individually
         self.num_datasets = len(data)
         self.len = [data[i]['time_length'] for i in range(self.num_datasets)]
+
         self.testLength = [math.floor(self.len[i] * args.test_ratio) for i in range(self.num_datasets)]
         self.valLength = [math.floor(self.len[i] * args.val_ratio) for i in range(self.num_datasets)]
-        self.start_train = 0
-        self.train_shots = [list(range(0, self.len[i] - self.testLength[i] - self.valLength[i])) for i in range(self.num_datasets)]
-        self.val_shots = [list(range(self.len[i] - self.testLength[i] - self.valLength[i], self.len[i] - self.testLength[i])) for i in range(self.num_datasets)]
-        self.test_shots = [list(range(self.len[i] - self.testLength[i], self.len[i])) for i in range(self.num_datasets)]
+
+        self.train_shots = []
+        self.val_shots = []
+        self.test_shots = []
+        self.teststart = []
+
+
+        for i in range(self.num_datasets):
+            test_start = self.len[i] - self.testLength[i]
+            self.teststart.append(test_start)
+            val_start = test_start - self.valLength[i]
+
+
+
+            # Compute available room before validation set
+            available_train_len = val_start
+            desired_train_len = args.fixed_train_length
+
+            if desired_train_len > available_train_len:
+                train_start = 0
+            else:
+                train_start = val_start - desired_train_len
+
+            train_range = list(range(train_start, val_start))
+            val_range = list(range(val_start, test_start))
+            test_range = list(range(test_start, self.len[i]))
+
+            self.train_shots.append(train_range)
+            self.val_shots.append(val_range)
+            self.test_shots.append(test_range)
+            print(f" Dataset = {i} , Len total = {self.len[i]} ,  test start = {test_start} , Len Test = {len(test_range)}, Test snapshots Min= {min(test_range)} , Test Snaphshot Max = {max(test_range)}")
+
         self.criterion = torch.nn.BCELoss()
         self.load_feature()
 
@@ -121,8 +149,8 @@ class Runner(object):
         num_extra_feat = 4
         self.mlp_path = "{}/{}_mlp.pth".format(model_file_path, model_path)
         print("The MLP models is going to be loaded from {}".format(self.model_path))
-        self.tgc_decoder = MLP(in_dim=args.nout+num_extra_feat, hidden_dim_1=args.nout+num_extra_feat,
-                               hidden_dim_2=args.nout+num_extra_feat, drop=0.1)  # @NOTE: these hyperparameters may need to be changed
+        self.tgc_decoder = MLP(in_dim=args.nout+num_extra_feat, hidden_dim_1=args.nout+num_extra_feat, 
+                               hidden_dim_2=args.nout+num_extra_feat, drop=0.1)  # @NOTE: these hyperparameters may need to be changed 
         # Load from check point
         # self.tgc_decoder.load_state_dict(torch.load(self.mlp_path)['model_state_dict'])
         self.tgc_decoder.load_state_dict(torch.load(self.mlp_path))
@@ -157,24 +185,24 @@ class Runner(object):
     #         self.model.eval()
     #         self.tgc_decoder.eval()
     #         with torch.no_grad():
-
+                
     #             edge_index = prepare(data[dataset_idx], t,args)[:3]
     #             embeddings = self.model(edge_index, self.x)
 
     #             # graph readout
     #             tg_readout = readout_function(embeddings, readout_scheme)
     #             tg_embedding = torch.cat((tg_readout,
-    #                                       torch.from_numpy(self.t_graph_feat[dataset_idx][t_test_idx +
-    #                                                                                       len(self.train_shots[dataset_idx])+
+    #                                       torch.from_numpy(self.t_graph_feat[dataset_idx][t_test_idx + 
+    #                                                                                       len(self.train_shots[dataset_idx])+ 
     #                                                                                       len(self.val_shots[dataset_idx])]).to(args.device)))
 
     #             # graph classification
-    #             tg_labels.append(self.t_graph_labels[dataset_idx][t_test_idx + len(self.train_shots[dataset_idx]+
+    #             tg_labels.append(self.t_graph_labels[dataset_idx][t_test_idx + len(self.train_shots[dataset_idx]+ 
     #                                                                                       len(self.val_shots[dataset_idx]))].cpu().numpy())
     #             tg_preds.append(
     #                 self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid().cpu().numpy())
     #             self.model.update_hiddens_all_with(embeddings)
-
+                
     #     auc, ap = roc_auc_score(tg_labels, tg_preds), average_precision_score(tg_labels, tg_preds)
     #     return auc, ap
     def tgclassification_test(self, readout_scheme, dataset_idx):
@@ -186,7 +214,7 @@ class Runner(object):
             self.model.eval()
             self.tgc_decoder.eval()
             with torch.no_grad():
-
+                
                 edge_index = prepare(data[dataset_idx], t, args)[:3]
                 embeddings = self.model(edge_index, self.x)
 
@@ -194,16 +222,15 @@ class Runner(object):
                 tg_readout = readout_function(embeddings, readout_scheme)
                 tg_embedding = tg_readout
                 tg_embedding = torch.cat((tg_readout,
-                                          torch.from_numpy(self.t_graph_feat[dataset_idx][t_test_idx +
-                                                                                          len(self.train_shots[dataset_idx])+
-                                                                                          len(self.val_shots[dataset_idx])]).to(args.device)))
+                                          torch.from_numpy(self.t_graph_feat[dataset_idx][self.teststart[dataset_idx] + t_test_idx ]).to(args.device)))
 
                 # graph classification
-                tg_label = self.t_graph_labels[dataset_idx][t_test_idx + len(self.train_shots[dataset_idx])+
-                                                                        len(self.val_shots[dataset_idx])].float().view(1, )
+                tg_label = self.t_graph_labels[dataset_idx][self.teststart[dataset_idx] + t_test_idx ].float().view(1, )
 
+                index = int((self.teststart[dataset_idx] + t_test_idx ))
+                print(f"This is for dataset = {dataset_idx} ,  Label inndex Test = { index }")
                 tg_pred = self.tgc_decoder(tg_embedding.view(1, tg_embedding.size()[0]).float()).sigmoid()
-
+                
                 tg_labels.append(tg_label.cpu().numpy())
                 tg_preds.append(tg_pred.cpu().detach().numpy())
                 self.model.update_hiddens_all_with(embeddings)
@@ -213,7 +240,7 @@ class Runner(object):
         # cf_matrix = confusion_matrix(tg_labels, tg_preds_binary)
         test_loss_tensor = torch.stack(test_loss)
         total_test_loss = (torch.mean(test_loss_tensor)).cpu().numpy()
-        print(f"Labels : {tg_labels}")
+        print(f"Test labels = {tg_labels}")
         auc, ap = roc_auc_score(tg_labels, tg_preds), average_precision_score(tg_labels, tg_preds)
         return auc, ap
 
@@ -227,7 +254,7 @@ class Runner(object):
             self.model.eval()
             self.tgc_decoder.eval()
             with torch.no_grad():
-
+                
                 edge_index = prepare(data[dataset_idx], t,args)[:3]
                 embeddings = self.model(edge_index, self.x)
 
@@ -251,14 +278,14 @@ class Runner(object):
         """
         Test the temporal graph classification task
         """
-
+        
         self.model.init_hiddens()
 
         # make sure to have the right device setup
         self.tgc_decoder = self.tgc_decoder.to(args.device)
-        self.model = self.model.to(args.device)
+        self.model = self.model.to(args.device)     
 
-        # Set model and decoder to evaluation mode
+        # Set model and decoder to evaluation mode   
         self.model.eval()
         self.tgc_decoder.eval()
         for dataset_idx in range(self.num_datasets):
@@ -275,15 +302,15 @@ class Runner(object):
                         edge_index = prepare(data[dataset_idx], t_train,args)
                         embeddings = self.model(edge_index, self.x)
                         self.model.update_hiddens_all_with(embeddings)
-
+                
                 # Inference testing on validation set
                 # val_auc, val_ap = self.tgclassification_val(self.readout_scheme, dataset_idx)
-                # save_inference_results(model_path,
-                #              "Val",
-                #              data_name,
-                #              val_auc,
+                # save_inference_results(model_path, 
+                #              "Val", 
+                #              data_name, 
+                #              val_auc, 
                 #              val_ap)
-
+                
                 # Forward pass through validation set to get the embeddings
                 for t_val in self.val_shots[dataset_idx]:
                     with torch.no_grad():
@@ -292,12 +319,13 @@ class Runner(object):
                         self.model.update_hiddens_all_with(embeddings)
 
                 # Inference testing on test set
+                print(f"Testing Dataset {data_name}")
                 test_auc, test_ap = self.tgclassification_test(self.readout_scheme, dataset_idx)
                 print(test_auc)
-                save_inference_results(model_path,
-                             "Test",
-                             data_name,
-                             test_auc,
+                save_inference_results(model_path, 
+                             "Test", 
+                             data_name, 
+                             test_auc, 
                              test_ap)
 
 
@@ -309,7 +337,7 @@ if __name__ == '__main__':
     from script.utils.util import disease_path
     from script.nn.models.load_model import load_model
     from script.utils.data_util import load_multiple_datasets,prepare, multi_datasets_attributes_loading
-
+    
     args.model = "HTGN"
     # args.seed = "710"
     pack = args.pack
@@ -320,6 +348,6 @@ if __name__ == '__main__':
     print("INFO: Model: {}".format(args.model))
     args.dataset, data = load_multiple_datasets("mix_dataset_package_test.txt")
 
-    model_path = "{}_{}_seed_{}_{}".format(args.model, pack, args.seed, args.nout)
+    model_path = "{}_{}_seed_{}_fixed_train_length_{}_{}".format(args.model, pack, args.seed, args.fixed_train_length ,args.nout)
     runner = Runner()
     runner.test()

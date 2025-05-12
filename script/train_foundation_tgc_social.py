@@ -25,7 +25,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'
 from script.configs.data_spec import DATA_PATH
 # model_file_path = 'PUT MODEL PATH HERE'
 # data_file_path = 'PUT RAW DATA PATH HERE'
-model_file_path = f"{DATA_PATH}/output/ckpts/htgn/"
+model_file_path = f"{DATA_PATH}/output/ckpts/htgn/social_models/"
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
@@ -58,7 +58,7 @@ class MLP(torch.nn.Module):
 def readout_function(embeddings, readout_scheme='mean'):
     """
     Read out function to generate a representation for the whole graph
-    reference:
+    reference:    
     https://github.com/qbxlvnf11/graph-neural-networks-for-graph-classification/blob/master/readouts/basic_readout.py
     """
     # note: x.size(): [#nodes, args.n_out]
@@ -214,7 +214,7 @@ class Runner(object):
             set(self.tgc_decoder.parameters()) | set(self.model.parameters()),
             lr=self.tgc_lr)
 
-        # If checkpoint of current run is saved, load and resume training
+        # If checkpoint of current run is saved, load and resume training 
         if os.path.exists("{}.pth".format(self.model_chkp_path)):
             logger.info("INFO: Model already exist and will be loaded from {}".format(self.model_chkp_path))
             checkpoint = torch.load("{}.pth".format(self.model_chkp_path))
@@ -238,7 +238,7 @@ class Runner(object):
                 logger.info('INFO: using pre-defined feature')
             else:
                 self.x = torch.eye(args.num_nodes).to(args.device)
-                # self.x = np.fill_diagonal(torch.zeros(args.num_nodes, args.num_nodes),
+                # self.x = np.fill_diagonal(torch.zeros(args.num_nodes, args.num_nodes), 
                 #                           args.node_ids).to(args.device)
                 logger.info('INFO: using one-hot feature')
             # Comment when generating cache
@@ -487,7 +487,7 @@ if __name__ == '__main__':
     print("INFO: Model: {}".format(args.model))
 
     # Load the datasets listed on the .txt file
-    args.dataset, data = load_multiple_datasets("dataset_package_{}.txt".format(args.pack))
+    args.dataset, data = load_multiple_datasets("social_dataset_package_{}.txt".format(args.pack))
 
     init_logger(
         '../../data/output/log/{}_{}_seed_{}_log.txt'.format(args.model,  len(args.dataset), args.seed))

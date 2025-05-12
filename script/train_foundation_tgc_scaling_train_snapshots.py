@@ -25,7 +25,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'
 from script.configs.data_spec import DATA_PATH
 # model_file_path = 'PUT MODEL PATH HERE'
 # data_file_path = 'PUT RAW DATA PATH HERE'
-model_file_path = f"{DATA_PATH}/output/ckpts/htgn/"
+model_file_path = f"{DATA_PATH}/output/ckpts/htgn/trainratio/"
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
@@ -58,7 +58,7 @@ class MLP(torch.nn.Module):
 def readout_function(embeddings, readout_scheme='mean'):
     """
     Read out function to generate a representation for the whole graph
-    reference:
+    reference:    
     https://github.com/qbxlvnf11/graph-neural-networks-for-graph-classification/blob/master/readouts/basic_readout.py
     """
     # note: x.size(): [#nodes, args.n_out]
@@ -81,14 +81,15 @@ def save_train_results(epoch, train_auc, train_ap, loss, time, dataset=None):
     """
     if dataset is None:
         result_folder = f"{model_file_path}/training_result/average"
-        result_path = result_folder + "/{}_seed_{}_{}_epochResult.csv".format(args.model,
+        result_path = result_folder + "/{}_seed_{}_{}_fixed_train_length_{}_epochResult.csv".format(args.model,
                                                                               args.seed,
-                                                                              len(args.dataset))
+                                                                              len(args.dataset), args.fixed_train_length)
     else:
         result_folder = "{}/training_result/average/training_result/data/{}".format(model_file_path,dataset)
-        result_path = result_folder + "/{}_seed_{}_{}_epochResult.csv".format(args.model,
+        result_path = result_folder + "/{}_seed_{}_{}_fixed_train_length_{}_epochResult.csv".format(args.model,
                                                                               args.seed,
-                                                                              len(args.dataset))
+                                                                              len(args.dataset),
+                                                                                        args.fixed_train_length)
     if not os.path.exists(result_folder):
         os.makedirs(result_folder)
 
@@ -120,14 +121,14 @@ def save_val_results(epoch, val_auc, val_ap, time, dataset=None):
     """
     if dataset is None:
         result_folder = f"{model_file_path}/val_result/average"
-        result_path = result_folder + "/{}_seed_{}_{}_epochResult.csv".format(args.model,
+        result_path = result_folder + "/{}_seed_{}_{}_fixed_train_length_{}_epochResult.csv".format(args.model,
                                                                               args.seed,
-                                                                              len(args.dataset))
+                                                                              len(args.dataset), args.fixed_train_length)
     else:
         result_folder = "{}/val_result/average/val_result/data/{}".format(model_file_path, dataset)
-        result_path = result_folder + "/{}_seed_{}_{}_epochResult.csv".format(args.model,
+        result_path = result_folder + "/{}_seed_{}_{}_fixed_train_length_{}_epochResult.csv".format(args.model,
                                                                               args.seed,
-                                                                              len(args.dataset))
+                                                                              len(args.dataset), args.fixed_train_length)
     if not os.path.exists(result_folder):
         os.makedirs(result_folder)
 
@@ -169,16 +170,34 @@ class Runner(object):
         # Calculate the length of validation and test sets and split the datasets individually
         self.num_datasets = len(data)
         self.len = [data[i]['time_length'] for i in range(self.num_datasets)]
+
         self.testLength = [math.floor(self.len[i] * args.test_ratio) for i in range(self.num_datasets)]
         self.valLength = [math.floor(self.len[i] * args.val_ratio) for i in range(self.num_datasets)]
 
-        self.start_train = 0
-        self.train_shots = [list(range(0, self.len[i] - self.testLength[i] - self.valLength[i])) for i in
-                            range(self.num_datasets)]
-        self.val_shots = [
-            list(range(self.len[i] - self.testLength[i] - self.valLength[i], self.len[i] - self.testLength[i])) for i in
-            range(self.num_datasets)]
-        self.test_shots = [list(range(self.len[i] - self.testLength[i], self.len[i])) for i in range(self.num_datasets)]
+        self.train_shots = []
+        self.val_shots = []
+        self.test_shots = []
+
+        for i in range(self.num_datasets):
+            test_start = self.len[i] - self.testLength[i]
+            val_start = test_start - self.valLength[i]
+
+            # Compute available room before validation set
+            available_train_len = val_start
+            desired_train_len = args.fixed_train_length
+
+            if desired_train_len > available_train_len:
+                train_start = 0
+            else:
+                train_start = val_start - desired_train_len
+
+            train_range = list(range(train_start, val_start))
+            val_range = list(range(val_start, test_start))
+            test_range = list(range(test_start, self.len[i]))
+
+            self.train_shots.append(train_range)
+            self.val_shots.append(val_range)
+            self.test_shots.append(test_range)
 
         # Use Binary Cross Entropy for calculatin loss
         self.criterion = torch.nn.BCELoss()
@@ -190,15 +209,18 @@ class Runner(object):
         self.model = load_model(args).to(args.device)
 
         # Paths for saving model and checkpoints
-        self.model_path = '{}/{}_{}_seed_{}'.format(model_file_path,
+        self.model_path = '{}/{}_{}_seed_{}_fixed_train_length_{}'.format(model_file_path,
                                                                     args.model,
                                                                     self.num_datasets,
-                                                                    args.seed)
+                                                                    args.seed
+                                                              , args.fixed_train_length)
 
-        self.model_chkp_path = '{}/{}_{}_seed_{}'.format(model_file_path,
+        self.model_chkp_path = '{}/{}_{}_seed_{}_fixed_train_length_{}'.format(model_file_path,
                                                                                     args.model,
                                                                                     self.num_datasets,
-                                                                                    args.seed)
+                                                                                    args.seed,
+                                                                   args.fixed_train_length
+                                                                   )
 
         # load the graph-pooled features and graph labels
         self.t_graph_labels, self.t_graph_feat, TG_node_feats_data = multi_datasets_attributes_loading(args)
@@ -214,7 +236,7 @@ class Runner(object):
             set(self.tgc_decoder.parameters()) | set(self.model.parameters()),
             lr=self.tgc_lr)
 
-        # If checkpoint of current run is saved, load and resume training
+        # If checkpoint of current run is saved, load and resume training 
         if os.path.exists("{}.pth".format(self.model_chkp_path)):
             logger.info("INFO: Model already exist and will be loaded from {}".format(self.model_chkp_path))
             checkpoint = torch.load("{}.pth".format(self.model_chkp_path))
@@ -238,7 +260,7 @@ class Runner(object):
                 logger.info('INFO: using pre-defined feature')
             else:
                 self.x = torch.eye(args.num_nodes).to(args.device)
-                # self.x = np.fill_diagonal(torch.zeros(args.num_nodes, args.num_nodes),
+                # self.x = np.fill_diagonal(torch.zeros(args.num_nodes, args.num_nodes), 
                 #                           args.node_ids).to(args.device)
                 logger.info('INFO: using one-hot feature')
             # Comment when generating cache
@@ -321,7 +343,7 @@ class Runner(object):
         best_val_auc = -1
 
         for epoch in range(self.start_epoch + 1, args.max_epoch + 1):
-            print("Epoch: ", epoch)
+            logger.info("Epoch: ", epoch)
             t_epoch_start = timeit.default_timer()
             epoch_losses = []  # Saving average losses of datasets in each epoch
             train_aucs, train_aps, val_aucs, val_aps = [], [], [], []
@@ -339,7 +361,7 @@ class Runner(object):
                 dataset_losses = []  # Store losses for each dataset in one epoch
 
                 for t_train in self.train_shots[dataset_idx]:
-                    print(f"Training for snapshot : {t_train}/{len(self.train_shots[dataset_idx])}")
+                    logger.info(f"Training for snapshot : {t_train}/{len(self.train_shots[dataset_idx])}")
                     self.optimizer.zero_grad()
                     edge_index = prepare(data[dataset_idx], t_train, args)
                     embeddings = self.model(edge_index, self.x)
@@ -481,6 +503,9 @@ if __name__ == '__main__':
     args.patience = 30
 
 
+    if (args.fixed_train_length == 0):
+        raise Exception("train ratio is zero!")
+
     # args.wandb = True
     print("INFO: >>> Temporal Graph Classification <<<")
     print("======================================")
@@ -490,7 +515,7 @@ if __name__ == '__main__':
     args.dataset, data = load_multiple_datasets("dataset_package_{}.txt".format(args.pack))
 
     init_logger(
-        '../../data/output/log/{}_{}_seed_{}_log.txt'.format(args.model,  len(args.dataset), args.seed))
+        '../../data/output/log/{}_{}_seed_{}_fixed_train_length_{}_log.txt'.format(args.model,  len(args.dataset), args.seed, args.fixed_train_length))
     set_random(args.seed)
     logger.info("INFO: Number of data: {}, seed: {}".format(len(data), args.seed))
 
