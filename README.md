@@ -72,9 +72,9 @@ pip install torch-geometric-temporal
 - Libraries listed in `installed_packages.txt`
 
 # Results reproduce
-To train a single or multi-network model, download datasets from [here](#).
+To train a single or multi-network model, download datasets from [here](https://zenodo.org/records/15364297).
 
-Link has been removed for the purpose of anonymizing the authors. 
+[//]: # (Link has been removed for the purpose of anonymizing the authors. )
 
 - All label files need to be placed in the directory `data/input/raw/labels/ `
 - All edge list files need to be placed in the directory `data/input/raw/edgelists/ `
