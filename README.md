@@ -8,13 +8,13 @@ This repository provides the implementation of the multi-network training for te
 
 ## Overview
 Temporal Graph Learning (TGL) aims to discover patterns in evolving networks or temporal graphs and leverage these patterns to predict future interactions. However, most existing research focuses on learning from a single network in isolation, leaving the challenges of within-domain and cross-domain generalization largely unaddressed. In this study, we introduce a new benchmark of 84 real-world temporal transaction networks and propose Temporal Multi-network Transfer (MiNT), a pre-training framework designed to capture transferable temporal dynamics across diverse networks. We train MiNT models on up to 64 transaction networks and evaluate their generalization ability on 20 held-out, unseen networks. Our results show that MiNT consistently outperforms individually trained models, revealing a strong relation between the number of pre-training networks and transfer performance. These findings highlight scaling trends in temporal graph learning and underscore the importance of network diversity in improving generalization. This work establishes the first large-scale benchmark for studying transferability in TGL and lays the groundwork for developing Temporal Graph Foundation Models.
-![](https://github.com/benjaminnNgo/ScalingTGNs/blob/main/pic/Figure4_mint_wo_pf.pdf)
+![](https://github.com/benjaminnNgo/ScalingTGNs/blob/main/pic/Figure4_mint_wo_pf.jpg)
 *MN models performance on unseen networks*
 
 ### Dataset and Benchmark Implementation 
-All extracted transaction networks required for multi-network model training can be downloaded [here](https://www.dropbox.com/scl/fo/eroebauovdsodz87wfi36/AIDpW9E4d3VIwX9cKPJc_0Q?rlkey=0k8i68mg958vdwk07532p8kt2&e=1&dl=0).
+All extracted transaction networks required for multi-network model training can be downloaded [here](https://zenodo.org/records/15364297).
 
-Link has been removed for the purpose of anonymizing the authors. 
+[//]: # (Link has been removed for the purpose of anonymizing the authors. )
 
 
 The  dataset include: 
