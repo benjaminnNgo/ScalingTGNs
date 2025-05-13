@@ -87,6 +87,13 @@ Multi-network loading for MN models training is done through the following funct
 load_multiple_datasets("dataset_package_2.txt")
 ```
 
+### Train, Validation, and Test Split 
+In our experiments, we split each temporal graph chronologically: the first 70% of snapshots are used for training, the next 15% for validation, and the final 15% for testing. These splits are handled automatically during model training and evaluation through a configurable argument, which is set to the default in the provided configuration file. It can be changed with the following arguments:
+```
+--test_ratio=(set your test_ratio for example 0.15)  
+--val_ratio= (set your test_ratio for example 0.15)  
+```
+
 ### Model Training
 To train the multi-network model `train_foundation_tgc.py` should be used. Examples include:
 ```
